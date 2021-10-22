@@ -1,0 +1,6 @@
+domain: kmdkuk.com
+layout:
+- go.kubebuilder.io/v3
+projectName: mcing
+repo: github.com/kmdkuk/mcing
+version: "3"
