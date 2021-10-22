@@ -1,0 +1,24 @@
+# permissions for end users to edit minecrafts.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: minecraft-editor-role
+rules:
+- apiGroups:
+  - mcing.kmdkuk.com
+  resources:
+  - minecrafts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mcing.kmdkuk.com
+  resources:
+  - minecrafts/status
+  verbs:
+  - get
