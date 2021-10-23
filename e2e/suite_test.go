@@ -1,11 +1,20 @@
 package e2e
 
 import (
+	"os"
 	"testing"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+)
+
+const (
+	controllerNS = "mcing-system"
+)
+
+var (
+	binDir = os.Getenv("BIN_DIR")
 )
 
 func TestE2e(t *testing.T) {
@@ -14,3 +23,7 @@ func TestE2e(t *testing.T) {
 	SetDefaultEventuallyPollingInterval(100 * time.Millisecond)
 	RunSpecs(t, "E2e Suite")
 }
+
+var _ = Describe("mcing", func() {
+	Context("bootstrap", testBootstrap)
+})

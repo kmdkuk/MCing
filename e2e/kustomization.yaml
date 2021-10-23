@@ -7,4 +7,4 @@ patchesStrategicMerge:
 images:
 - name: ghcr.io/kmdkuk/mcing
   newName: mcing
-  newTag: dev
+  newTag: e2e

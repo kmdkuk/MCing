@@ -1,9 +1,10 @@
 KIND_VERSION = 0.11.1
-KUBERNETES_VERSION = 1.21.1
+KUBERNETES_VERSION = 1.21.2
 CERT_MANAGER_VERSION = 1.4.0
 KUSTOMIZE_VERSION = 4.1.3
 
-BIN_DIR := $(dir $(shell pwd))/bin
+PROJECT_DIR :=$(dir $(shell pwd))
+BIN_DIR := ${PROJECT_DIR}/bin
 KIND := ${BIN_DIR}/kind
 KUSTOMIZE := ${BIN_DIR}/kustomize
 KUBECTL := ${BIN_DIR}/kubectl
@@ -15,16 +16,37 @@ export KUBECTL KUBECONFIG
 setup: $(KIND) $(KUBECTL)
 
 .PHONY: start
-start: $(KIND) $(KUBECTL) $(KUSTOMIZE)
+start: $(KIND) $(KUBECTL)
 	$(KIND) create cluster --name=mcing --config=$(KIND_CONFIG) --image=kindest/node:v$(KUBERNETES_VERSION) --wait 1m
-	cd ..; docker build --no-cache -t mcing:dev .
-	$(KIND) load docker-image mcing:dev --name=mcing
+	$(MAKE) load
+	$(MAKE) cert-manager
+	$(KUBECTL) -n kube-system wait --for=condition=available --timeout=180s --all deployments
+
+.PHONY: test
+test: $(KUSTOMIZE)
+	KINDTEST=1 BIN_DIR=$(BIN_DIR) \
+	go test . -v -timeout=15m -ginkgo.v -ginkgo.failFast $(GINKGO_OPT)
+
+.PHONY: bootstrap
+bootstrap:
+	$(MAKE) test GINKGO_OPT="-ginkgo.focus 'bootstrap'"
+
+.PHONY: load
+load: $(KIND)
+	$(MAKE) -C $(PROJECT_DIR) build-image tag IMAGE_TAG=e2e
+	$(KIND) load docker-image mcing:e2e --name mcing
+
+.PHONY: cert-manager
+cert-manager: $(KUBECTL)
 	$(KUBECTL) apply -f https://github.com/jetstack/cert-manager/releases/download/v$(CERT_MANAGER_VERSION)/cert-manager.yaml
 	$(KUBECTL) -n cert-manager wait --for=condition=available --timeout=180s --all deployments
-	$(KUBECTL) -n kube-system wait --for=condition=available --timeout=180s --all deployments
-	$(KUSTOMIZE) build . | $(KUBECTL) apply -f -
-	$(KUBECTL) -n mcing-system wait --for=condition=available --timeout=180s --all deployments
 
+.PHONY: logs
+logs:
+	rm -rf logs.tar.gz logs
+	$(KIND) export logs --name=mcing ./logs
+	tar czf logs.tar.gz logs
+	rm -rf logs
 
 .PHONY: stop
 stop: $(KIND) 

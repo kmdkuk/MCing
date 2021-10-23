@@ -17,6 +17,9 @@ SHELL = /usr/bin/env bash
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS = "crd:crdVersions=v1,maxDescLen=220"
 
+IMAGE_PREFIX :=
+IMAGE_TAG := latest
+
 all: build
 
 ##@ General
@@ -79,6 +82,15 @@ test: test-tools
 build:
 	mkdir -p $(BIN_DIR)
 	GOBIN=$(BIN_DIR) go install ./cmd/...
+
+build-image:
+	docker build -t mcing:dev .
+
+tag:
+	docker tag mcing:dev $(IMAGE_PREFIX)mcing:$(IMAGE_TAG)
+
+push:
+	docker push $(IMAGE_PREFIX)mcing:$(IMAGE_TAG)
 
 ##@ Tools
 
