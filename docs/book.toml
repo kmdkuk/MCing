@@ -1,0 +1,10 @@
+[book]
+language = "en"
+multilingual = false
+src = "."
+title = "MCing Documentation"
+
+[output.html]
+git-repository-url = "https://github.com/kmdkuk/mcing"
+edit-url-template = "https://github.com/kmdkuk/mcing/edit/main/docs/{path}"
+site-url = "/mcing/"

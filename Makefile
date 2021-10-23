@@ -47,6 +47,11 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 apidoc: crd-to-markdown $(wildcard api/*/*_types.go)
 	$(CRD_TO_MARKDOWN) --links docs/links.csv -f api/v1alpha1/minecraft_types.go -n Minecraft > docs/crd_minecraft.md
 
+.PHONY: book
+book: mdbook
+	rm -rf docs/book
+	cd docs; $(MDBOOK) build
+
 .PHONY: check-generate
 check-generate:
 	$(MAKE) manifests generate apidoc
