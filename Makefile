@@ -1,21 +1,21 @@
+# Tool versions
+CTRL_TOOLS_VERSION=0.7.0
+CTRL_RUNTIME_VERSION := $(shell awk '/sigs.k8s.io\/controller-runtime/ {print substr($$2, 2)}' go.mod)
+KUSTOMIZE_VERSION = 4.1.3
+CRD_TO_MARKDOWN_VERSION = 0.0.3
+MDBOOK_VERSION = 0.4.9
 
-# Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+# Test tools
+BIN_DIR := $(shell pwd)/bin
+STATICCHECK := $(BIN_DIR)/staticcheck
+NILERR := $(BIN_DIR)/nilerr
+
+# Set the shell used to bash for better error handling.
+SHELL = /usr/bin/env bash
+.SHELLFLAGS = -e -o pipefail -c
+
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
-
-# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
-ifeq (,$(shell go env GOBIN))
-GOBIN=$(shell go env GOPATH)/bin
-else
-GOBIN=$(shell go env GOBIN)
-endif
-
-# Setting SHELL to bash allows bash commands to be executed by recipes.
-# This is a requirement for 'setup-envtest.sh' in the test target.
-# Options are set to exit when a recipe line exits non-zero or a piped command fails.
-SHELL = /usr/bin/env bash -o pipefail
-.SHELLFLAGS = -ec
+CRD_OPTIONS = "crd:crdVersions=v1,maxDescLen=220"
 
 all: build
 
@@ -43,66 +43,86 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-fmt: ## Run go fmt against code.
-	go fmt ./...
+.PHONY: apidoc
+apidoc: crd-to-markdown $(wildcard api/*/*_types.go)
+	$(CRD_TO_MARKDOWN) --links docs/links.csv -f api/v1alpha1/minecraft_types.go -n Minecraft > docs/crd_minecraft.md
 
-vet: ## Run go vet against code.
+.PHONY: check-generate
+check-generate:
+	$(MAKE) manifests generate apidoc
+	git diff --exit-code --name-only
+
+.PHONY: envtest
+envtest: setup-envtest
+	source <($(SETUP_ENVTEST) use -p env); \
+		export DEBUG_CONTROLLER=1; \
+		go test -v -count 1 -race ./controllers -ginkgo.progress -ginkgo.v -ginkgo.failFast
+	source <($(SETUP_ENVTEST) use -p env); \
+		go test -v -count 1 -race ./api/... -ginkgo.progress -ginkgo.v
+
+.PHONY: test
+test: test-tools
+#	go test -v -count 1 -race ./pkg/...
+	go install ./...
 	go vet ./...
-
-ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: manifests generate fmt vet ## Run tests.
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+	test -z $$(gofmt -s -l . | tee /dev/stderr)
+	$(STATICCHECK) ./...
+	$(NILERR) ./...
 
 ##@ Build
 
-build: generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
+build:
+	mkdir -p $(BIN_DIR)
+	GOBIN=$(BIN_DIR) go install ./cmd/...
 
-run: manifests generate fmt vet ## Run a controller from your host.
-	go run ./main.go
+##@ Tools
 
-docker-build: test ## Build docker image with the manager.
-	docker build -t ${IMG} .
-
-docker-push: ## Push docker image with the manager.
-	docker push ${IMG}
-
-##@ Deployment
-
-install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
-
-uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl delete -f -
-
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
-
-undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/default | kubectl delete -f -
-
-
-CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
+CONTROLLER_GEN := $(BIN_DIR)/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.7.0)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CTRL_TOOLS_VERSION))
 
-KUSTOMIZE = $(shell pwd)/bin/kustomize
-kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+SETUP_ENVTEST := $(BIN_DIR)/setup-envtest
+.PHONY: setup-envtest
+setup-envtest: ## Download setup-envtest locally if necessary
+	# see https://github.com/kubernetes-sigs/controller-runtime/tree/master/tools/setup-envtest
+	GOBIN=$(BIN_DIR) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+
+KUSTOMIZE := $(BIN_DIR)/kustomize
+.PHONY: kustomize
+kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
+
+$(KUSTOMIZE):
+	mkdir -p $(BIN_DIR)
+	curl -fsL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv$(KUSTOMIZE_VERSION)/kustomize_v$(KUSTOMIZE_VERSION)_linux_amd64.tar.gz | \
+	tar -C $(BIN_DIR) -xzf -
+
+CRD_TO_MARKDOWN := $(BIN_DIR)/crd-to-markdown
+.PHONY: crd-to-markdown
+crd-to-markdown: ## Download crd-to-markdown locally if necessary.
+	$(call go-get-tool,$(CRD_TO_MARKDOWN),github.com/clamoriniere/crd-to-markdown@v$(CRD_TO_MARKDOWN_VERSION))
+
+MDBOOK := $(BIN_DIR)/mdbook
+.PHONY: mdbook
+mdbook: ## Donwload mdbook locally if necessary
+	mkdir -p $(BIN_DIR)
+	curl -fsL https://github.com/rust-lang/mdBook/releases/download/v$(MDBOOK_VERSION)/mdbook-v$(MDBOOK_VERSION)-x86_64-unknown-linux-gnu.tar.gz | tar -C $(BIN_DIR) -xzf -
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
-PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 define go-get-tool
 @[ -f $(1) ] || { \
 set -e ;\
-TMP_DIR=$$(mktemp -d) ;\
-cd $$TMP_DIR ;\
-go mod init tmp ;\
 echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
-rm -rf $$TMP_DIR ;\
+GOBIN=$(BIN_DIR) go install $(2) ;\
 }
 endef
+
+.PHONY: test-tools
+test-tools: $(STATICCHECK) $(NILERR)
+
+$(STATICCHECK):
+	mkdir -p $(BIN_DIR)
+	GOBIN=$(BIN_DIR) go install honnef.co/go/tools/cmd/staticcheck@latest
+
+$(NILERR):
+	mkdir -p $(BIN_DIR)
+	GOBIN=$(BIN_DIR) go install github.com/gostaticanalysis/nilerr/cmd/nilerr@latest
