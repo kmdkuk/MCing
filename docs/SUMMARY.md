@@ -4,8 +4,6 @@
 
 # User manual
 
-TODO
-
 # References
 
 - [Custom resources](crd.md)
