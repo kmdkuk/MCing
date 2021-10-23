@@ -3,7 +3,7 @@ module github.com/kmdkuk/mcing
 go 1.16
 
 require (
-	github.com/go-logr/logr v0.4.0
+	github.com/go-logr/logr v1.2.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.16.0
 	github.com/spf13/cobra v1.2.1
