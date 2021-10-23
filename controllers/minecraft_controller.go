@@ -89,8 +89,6 @@ func (r *MinecraftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcingv1alpha1.Minecraft) error {
 	logger := r.log.WithName("statefulset")
 
-	stsName := "mc-" + mc.Name
-
 	owner, err := ownerRef(mc, r.scheme)
 	if err != nil {
 		return err
@@ -98,7 +96,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 
 	labels := labelSet(mc, constants.AppComponentServer)
 
-	sts := appsv1apply.StatefulSet(stsName, mc.Namespace).
+	sts := appsv1apply.StatefulSet(mc.Name, mc.Namespace).
 		WithLabels(labels).
 		WithOwnerReferences(owner).
 		WithSpec(appsv1apply.StatefulSetSpec().
@@ -113,7 +111,6 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 			WithVolumeClaimTemplates(corev1apply.PersistentVolumeClaim("minecraft-data", mc.Namespace).
 				WithSpec(corev1apply.PersistentVolumeClaimSpec().
 					WithAccessModes(corev1.ReadWriteOnce).
-					WithStorageClassName(*mc.Spec.VolumeClaimSpec.StorageClassName).
 					WithResources(corev1apply.ResourceRequirements().
 						WithLimits(mc.Spec.VolumeClaimSpec.Resources.Limits).
 						WithRequests(mc.Spec.VolumeClaimSpec.Resources.Requests),
@@ -121,6 +118,10 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 				),
 			),
 		)
+
+	if mc.Spec.VolumeClaimSpec.StorageClassName != nil {
+		sts.Spec.VolumeClaimTemplates[0].Spec = sts.Spec.VolumeClaimTemplates[0].Spec.WithStorageClassName(*mc.Spec.VolumeClaimSpec.StorageClassName)
+	}
 
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(sts)
 	if err != nil {
@@ -131,7 +132,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 	}
 
 	var current appsv1.StatefulSet
-	err = r.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: stsName}, &current)
+	err = r.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: mc.Name}, &current)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
@@ -158,10 +159,10 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 	return nil
 }
 
-func serverContainer(image *string) *corev1apply.ContainerApplyConfiguration {
+func serverContainer(image string) *corev1apply.ContainerApplyConfiguration {
 	i := constants.DefaultServerImage
-	if image != nil {
-		i = *image
+	if image != "" {
+		i = image
 	}
 	return corev1apply.Container().
 		WithName(constants.ServerContainerName).
@@ -170,9 +171,11 @@ func serverContainer(image *string) *corev1apply.ContainerApplyConfiguration {
 		WithPorts(
 			corev1apply.ContainerPort().
 				WithName("server-port").
+				WithProtocol(corev1.ProtocolTCP).
 				WithContainerPort(25565),
 			corev1apply.ContainerPort().
 				WithName("rcon-port").
+				WithProtocol(corev1.ProtocolUDP).
 				WithContainerPort(25575),
 		).
 		WithVolumeMounts(

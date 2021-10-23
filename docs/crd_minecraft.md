@@ -37,7 +37,7 @@ MinecraftSpec defines the desired state of Minecraft
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| image | Image for minecraft server | *string | false |
+| image | Image for minecraft server | string | false |
 | volumeClaimSpec | PersistentVolumeClaimSpec is a specification of `PersistentVolumeClaim` for persisting data in minecraft. | corev1.PersistentVolumeClaimSpec | true |
 
 [Back to Custom Resources](#custom-resources)
