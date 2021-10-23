@@ -1,0 +1,10 @@
+resources:
+  - ../config/default
+
+patchesStrategicMerge:
+- manager_patch.yaml
+
+images:
+- name: ghcr.io/kmdkuk/mcing
+  newName: mcing
+  newTag: e2e

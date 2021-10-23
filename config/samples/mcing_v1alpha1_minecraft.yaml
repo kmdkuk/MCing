@@ -3,5 +3,9 @@ kind: Minecraft
 metadata:
   name: minecraft-sample
 spec:
-  # Add fields here
-  foo: bar
+  volumeClaimSpec:
+    accessModes: [ "ReadWriteOnce" ]
+    storageClassName: standard
+    resources:
+      requests:
+        storage: 1Gi

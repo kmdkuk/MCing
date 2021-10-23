@@ -25,11 +25,9 @@ spec:
       securityContext:
         runAsNonRoot: true
       containers:
-      - command:
-        - /manager
-        args:
+      - args:
         - --leader-elect
-        image: controller:latest
+        image: ghcr.io/kmdkuk/mcing:latest
         name: manager
         securityContext:
           allowPrivilegeEscalation: false

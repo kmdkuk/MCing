@@ -46,13 +46,20 @@ func subMain() error {
 		return err
 	}
 
-	if err = (&controllers.MinecraftReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = (controllers.NewMinecraftReconciler(
+		mgr.GetClient(),
+		ctrl.Log.WithName("controllers"),
+		mgr.GetScheme(),
+	)).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Minecraft")
 		return err
 	}
+
+	if err = (&mcingv1alpha1.Minecraft{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Minecraft")
+		return err
+	}
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
