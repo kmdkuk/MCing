@@ -8,7 +8,7 @@ require (
 	github.com/spf13/cobra v1.2.1
 	k8s.io/api v0.22.2
 	k8s.io/apimachinery v0.22.2
-	k8s.io/client-go v0.22.2
+	k8s.io/client-go/v12 v12.0.0
 	k8s.io/klog v1.0.0
 	sigs.k8s.io/controller-runtime v0.10.2
 )
