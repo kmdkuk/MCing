@@ -1,2 +1,2 @@
-# minecraft-operator
+# MCing
 kubernetes operator for minecraft
