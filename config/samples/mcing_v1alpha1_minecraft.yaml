@@ -1,7 +1,0 @@
-apiVersion: mcing.kmdkuk.com/v1alpha1
-kind: Minecraft
-metadata:
-  name: minecraft-sample
-spec:
-  # Add fields here
-  foo: bar
