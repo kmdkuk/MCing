@@ -182,6 +182,9 @@
 <ul>
 <li><a href="crd_minecraft.html#minecraftlist">MinecraftList</a></li>
 <li><a href="crd_minecraft.html#minecraftspec">MinecraftSpec</a></li>
+<li><a href="crd_minecraft.html#objectmeta">ObjectMeta</a></li>
+<li><a href="crd_minecraft.html#podspec">PodSpec</a></li>
+<li><a href="crd_minecraft.html#podtemplatespec">PodTemplateSpec</a></li>
 </ul>
 <h4 id="minecraft"><a class="header" href="#minecraft">Minecraft</a></h4>
 <p>Minecraft is the Schema for the minecrafts API</p>
@@ -201,7 +204,33 @@
 <h4 id="minecraftspec"><a class="header" href="#minecraftspec">MinecraftSpec</a></h4>
 <p>MinecraftSpec defines the desired state of Minecraft</p>
 <table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
-<tr><td>foo</td><td>Foo is an example field of Minecraft. Edit minecraft_types.go to remove/update</td><td>string</td><td>false</td></tr>
+<tr><td>podTemplate</td><td>PodTemplate is a <code>Pod</code> template for Minecraft server container.</td><td><a href="crd_minecraft.html#podtemplatespec">PodTemplateSpec</a></td><td>true</td></tr>
+<tr><td>volumeClaimTemplates</td><td>VolumeClaimTemplates is a list of <code>PersistentVolumeClaim</code> templates for Minecraft server container. A claim named &quot;minecraft-data&quot; must be included in the list.</td><td>[]corev1.PersistentVolumeClaim</td><td>true</td></tr>
+</tbody></table>
+<p><a href="crd_minecraft.html#custom-resources">Back to Custom Resources</a></p>
+<h4 id="objectmeta"><a class="header" href="#objectmeta">ObjectMeta</a></h4>
+<p>ObjectMeta is metadata of objects. This is partially copied from metav1.ObjectMeta.</p>
+<table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
+<tr><td>name</td><td>Name is the name of the object.</td><td>string</td><td>false</td></tr>
+<tr><td>labels</td><td>Labels is a map of string keys and values.</td><td>map[string]string</td><td>false</td></tr>
+<tr><td>annotations</td><td>Annotations is a map of string keys and values.</td><td>map[string]string</td><td>false</td></tr>
+</tbody></table>
+<p><a href="crd_minecraft.html#custom-resources">Back to Custom Resources</a></p>
+<h4 id="podspec"><a class="header" href="#podspec">PodSpec</a></h4>
+<p>PodSpec is a description of a pod. This is slightly modified from corev1.PodSpec.</p>
+<table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
+<tr><td>metadata</td><td>Standard object's metadata.  The name in this metadata is ignored.</td><td><a href="crd_minecraft.html#objectmeta">ObjectMeta</a></td><td>false</td></tr>
+<tr><td>containers</td><td>List of containers belonging to the pod. The name of the Minecraft server container in this Containers must be <code>minecraft</code>.</td><td>[]corev1.Container</td><td>true</td></tr>
+<tr><td>volumes</td><td>List of volumes that can be mounted by containers belonging to the pod.</td><td>[]corev1.Volume</td><td>true</td></tr>
+<tr><td>serviceSpec</td><td>Specification of the desired behavior of the service.</td><td>corev1.ServiceSpec</td><td>false</td></tr>
+<tr><td>minecraftConfigMapName</td><td>MinecraftConfigMapName is a <code>ConfigMap</code> name of Minecraft server config.</td><td>*string</td><td>false</td></tr>
+</tbody></table>
+<p><a href="crd_minecraft.html#custom-resources">Back to Custom Resources</a></p>
+<h4 id="podtemplatespec"><a class="header" href="#podtemplatespec">PodTemplateSpec</a></h4>
+<p>PodTemplateSpec describes the data a pod should have when created from a template. This is slightly modified from corev1.PodTemplateSpec.</p>
+<table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
+<tr><td>metadata</td><td>Standard object's metadata.  The name in this metadata is ignored.</td><td><a href="crd_minecraft.html#objectmeta">ObjectMeta</a></td><td>false</td></tr>
+<tr><td>spec</td><td>Specification of the desired behavior of the pod.</td><td><a href="crd_minecraft.html#podspec">PodSpec</a></td><td>true</td></tr>
 </tbody></table>
 <p><a href="crd_minecraft.html#custom-resources">Back to Custom Resources</a></p>
 
