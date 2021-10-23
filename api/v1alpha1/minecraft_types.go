@@ -16,7 +16,7 @@ type MinecraftSpec struct {
 
 	// Image for minecraft server
 	// +optional
-	Image *string `json:"image,omitempty"`
+	Image string `json:"image,omitempty"`
 
 	// PersistentVolumeClaimSpec is a specification of `PersistentVolumeClaim` for persisting data in minecraft.
 	VolumeClaimSpec corev1.PersistentVolumeClaimSpec `json:"volumeClaimSpec"`
