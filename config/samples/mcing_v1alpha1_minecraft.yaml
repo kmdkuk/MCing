@@ -3,6 +3,9 @@ kind: Minecraft
 metadata:
   name: minecraft-sample
 spec:
+  env:
+    - name: EULA
+      value: "true"
   volumeClaimSpec:
     accessModes: [ "ReadWriteOnce" ]
     storageClassName: standard

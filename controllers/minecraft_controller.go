@@ -105,7 +105,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 			WithTemplate(corev1apply.PodTemplateSpec().
 				WithLabels(labels).
 				WithSpec(corev1apply.PodSpec().
-					WithContainers(serverContainer(mc.Spec.Image)),
+					WithContainers(serverContainer(mc.Spec)),
 				),
 			).
 			WithVolumeClaimTemplates(corev1apply.PersistentVolumeClaim("minecraft-data", mc.Namespace).
@@ -159,15 +159,23 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 	return nil
 }
 
-func serverContainer(image string) *corev1apply.ContainerApplyConfiguration {
+func serverContainer(ms mcingv1alpha1.MinecraftSpec) *corev1apply.ContainerApplyConfiguration {
 	i := constants.DefaultServerImage
-	if image != "" {
-		i = image
+	if ms.Image != "" {
+		i = ms.Image
+	}
+	env := []*corev1apply.EnvVarApplyConfiguration{}
+	for i := range ms.Env {
+		e := &ms.Env[i]
+		env = append(env, corev1apply.EnvVar().
+			WithName(e.Name).
+			WithValue(e.Value),
+		)
 	}
 	return corev1apply.Container().
 		WithName(constants.ServerContainerName).
 		WithImage(i).
-		WithCommand("pause").
+		WithEnv(env...).
 		WithPorts(
 			corev1apply.ContainerPort().
 				WithName("server-port").
@@ -181,7 +189,7 @@ func serverContainer(image string) *corev1apply.ContainerApplyConfiguration {
 		WithVolumeMounts(
 			corev1apply.VolumeMount().
 				WithName("minecraft-data").
-				WithMountPath("/minecraft-data"),
+				WithMountPath("/data"),
 		)
 }
 
