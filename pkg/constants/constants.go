@@ -4,7 +4,7 @@ const (
 	MetaPrefix = "mcing.kmdkuk.com/"
 	Finalizer  = MetaPrefix + "finalizer"
 
-	DefaultServerImage  = "quay.io/cybozu/ubuntu:20.04"
+	DefaultServerImage  = "itzg/minecraft-server:java17"
 	ServerContainerName = "minecraft"
 
 	LabelAppInstance  = "app.kubernetes.io/instance"

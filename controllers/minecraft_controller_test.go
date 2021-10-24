@@ -136,7 +136,7 @@ var _ = Describe("Minecraft controller", func() {
 			"VolumeMounts": MatchAllElementsWithIndex(IndexIdentity, Elements{
 				"0": MatchFields(IgnoreExtras, Fields{
 					"Name":      Equal("minecraft-data"),
-					"MountPath": Equal("/minecraft-data"),
+					"MountPath": Equal("/data"),
 				}),
 			}),
 		}))

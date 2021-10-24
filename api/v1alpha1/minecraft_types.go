@@ -18,6 +18,12 @@ type MinecraftSpec struct {
 	// +optional
 	Image string `json:"image,omitempty"`
 
+	// Environment variable to be set for the container
+	// `EULA` is required
+	// The server will not start unless EULA=true.
+	// +kubebuilder:validation:MinItems=1
+	Env []corev1.EnvVar `json:"env"`
+
 	// PersistentVolumeClaimSpec is a specification of `PersistentVolumeClaim` for persisting data in minecraft.
 	VolumeClaimSpec corev1.PersistentVolumeClaimSpec `json:"volumeClaimSpec"`
 }
@@ -25,13 +31,25 @@ type MinecraftSpec struct {
 func (s MinecraftSpec) validateCreate() field.ErrorList {
 	var allErrs field.ErrorList
 
+	hasEula := false
+	for i := range s.Env {
+		e := &s.Env[i]
+		if e.Name == "EULA" {
+			hasEula = true
+		}
+	}
+
+	if !hasEula {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "env"), s.Env, "EULA is required. The server will not start unless EULA=true."))
+	}
+
 	return allErrs
 }
 
 func (s MinecraftSpec) validateUpdate(old MinecraftSpec) field.ErrorList {
 	var allErrs field.ErrorList
 
-	return allErrs
+	return append(allErrs, s.validateCreate()...)
 }
 
 // MinecraftStatus defines the observed state of Minecraft

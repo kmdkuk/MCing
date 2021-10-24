@@ -102,6 +102,12 @@ func makeMinecraft(name, namespace string) *mcingv1alpha1.Minecraft {
 		},
 		Spec: mcingv1alpha1.MinecraftSpec{
 			Image: constants.DefaultServerImage,
+			Env: []corev1.EnvVar{
+				{
+					Name:  "EULA",
+					Value: "true",
+				},
+			},
 			VolumeClaimSpec: corev1.PersistentVolumeClaimSpec{
 				AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 				Resources: corev1.ResourceRequirements{
