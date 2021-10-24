@@ -25,13 +25,13 @@ metadata:
 spec:
     env:
         - name: EULA
-        value: "true"
+          value: "true"
     volumeClaimSpec:
         accessModes: [ "ReadWriteOnce" ]
         storageClassName: standard
         resources:
-        requests:
-            storage: 1Gi
+            requests:
+                storage: 1Gi
 EOF
 $ ../bin/kubectl --kubeconfig .kubeconfig apply -f minecraft-sample.yaml
 $ ../bin/kubectl --kubeconfig .kubeconfig port-forward svc/minecraft-sample 25565:25565

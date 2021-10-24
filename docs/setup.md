@@ -14,8 +14,8 @@
 
     Please Install [kustomize/v4.1.3](https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize%2Fv4.1.3)
     ```console
-    $ cd kmdkuk/mcing
-    $ kustomize build config/default | kubectl apply -f -
+    $ curl -fsLO https://github.com/kmdkuk/MCing/releases/latest/download/install.yaml
+    $ kubectl apply -f install.yaml
     ```
 
 [cert-manager]: https://cert-manager.io/

@@ -10,14 +10,14 @@
         name: minecraft-sample
     spec:
         env:
-            - name: EULA
-            value: "true"
+        - name: EULA
+          value: "true"
         volumeClaimSpec:
             accessModes: [ "ReadWriteOnce" ]
             storageClassName: standard
             resources:
-            requests:
-                storage: 1Gi
+                requests:
+                    storage: 1Gi
     EOF
     $ kubectl apply -f minecraft-sample.yaml
 
