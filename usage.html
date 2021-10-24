@@ -3,9 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>MCing Documentation</title>
-        
-        <meta name="robots" content="noindex" />
+        <title>Usage - MCing Documentation</title>
         
         
 
@@ -97,7 +95,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">MCing</a></li><li class="chapter-item expanded affix "><li class="part-title">User manual</li><li class="chapter-item expanded "><a href="getting_started.html"><strong aria-hidden="true">1.</strong> Getting started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="setup.html"><strong aria-hidden="true">1.1.</strong> Deploy MCing</a></li></ol></li><li class="chapter-item expanded "><a href="usage.html"><strong aria-hidden="true">2.</strong> Usage</a></li><li class="chapter-item expanded affix "><li class="part-title">References</li><li class="chapter-item expanded "><a href="crd.html"><strong aria-hidden="true">3.</strong> Custom resources</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="crd_minecraft.html"><strong aria-hidden="true">3.1.</strong> Minecraft</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">MCing</a></li><li class="chapter-item expanded affix "><li class="part-title">User manual</li><li class="chapter-item expanded "><a href="getting_started.html"><strong aria-hidden="true">1.</strong> Getting started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="setup.html"><strong aria-hidden="true">1.1.</strong> Deploy MCing</a></li></ol></li><li class="chapter-item expanded "><a href="usage.html" class="active"><strong aria-hidden="true">2.</strong> Usage</a></li><li class="chapter-item expanded affix "><li class="part-title">References</li><li class="chapter-item expanded "><a href="crd.html"><strong aria-hidden="true">3.</strong> Custom resources</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="crd_minecraft.html"><strong aria-hidden="true">3.1.</strong> Minecraft</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -143,6 +141,10 @@
                         </a>
                         
                         
+                        <a href="https://github.com/kmdkuk/mcing/edit/main/docs/./usage.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+                        
 
                     </div>
                 </div>
@@ -171,31 +173,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="mcing-documentation"><a class="header" href="#mcing-documentation">MCing documentation</a></h1>
-<p>This is the documentation site for <a href="https://github.com/kmdkuk/mcing">MCing</a>. MCing is a Kubernetes operator for Minecraft server.</p>
-<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h1>
-<ol>
-<li><a href="setup.html">Install cert-manager and apply MCing manifests</a></li>
-</ol>
-<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="deploying-mcing"><a class="header" href="#deploying-mcing">Deploying MCing</a></h1>
-<ol>
-<li>
-<p>(Optional) Prepare cert-manager</p>
-<p>MCing depends on <a href="https://cert-manager.io/">cert-manager</a> to issue TLS certificate for admission webhooks.
-If cert-manager is not installed on your cluster, install it as follows:</p>
-<pre><code class="language-console">$ curl -fsLO https://github.com/jetstack/cert-manager/releases/latest/download/cert-manager.yaml
-$ kubectl apply -f cert-manager.yaml
-</code></pre>
-</li>
-<li>
-<p>Apply MCing manifests</p>
-<p>Please Install <a href="https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize%2Fv4.1.3">kustomize/v4.1.3</a></p>
-<pre><code class="language-console">$ cd kmdkuk/mcing
-$ kustomize build config/default | kubectl apply -f -
-</code></pre>
-</li>
-</ol>
-<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="usage"><a class="header" href="#usage">Usage</a></h1>
+                        <h1 id="usage"><a class="header" href="#usage">Usage</a></h1>
 <ol>
 <li>
 <p>Apply Minecraft Custom Resouce</p>
@@ -243,46 +221,21 @@ minecraft-sample   ClusterIP   10.96.213.69   &lt;none&gt;        25565/TCP,2557
 </code></pre>
 </li>
 </ol>
-<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="custom-resources"><a class="header" href="#custom-resources">Custom resources</a></h1>
-<div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h3 id="custom-resources-1"><a class="header" href="#custom-resources-1">Custom Resources</a></h3>
-<ul>
-<li><a href="crd_minecraft.html#minecraft">Minecraft</a></li>
-</ul>
-<h3 id="sub-resources"><a class="header" href="#sub-resources">Sub Resources</a></h3>
-<ul>
-<li><a href="crd_minecraft.html#minecraftlist">MinecraftList</a></li>
-<li><a href="crd_minecraft.html#minecraftspec">MinecraftSpec</a></li>
-</ul>
-<h4 id="minecraft"><a class="header" href="#minecraft">Minecraft</a></h4>
-<p>Minecraft is the Schema for the minecrafts API</p>
-<table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
-<tr><td>metadata</td><td></td><td>metav1.ObjectMeta</td><td>false</td></tr>
-<tr><td>spec</td><td></td><td><a href="crd_minecraft.html#minecraftspec">MinecraftSpec</a></td><td>false</td></tr>
-<tr><td>status</td><td></td><td><a href="crd_minecraft.html#minecraftstatus">MinecraftStatus</a></td><td>false</td></tr>
-</tbody></table>
-<p><a href="crd_minecraft.html#custom-resources">Back to Custom Resources</a></p>
-<h4 id="minecraftlist"><a class="header" href="#minecraftlist">MinecraftList</a></h4>
-<p>MinecraftList contains a list of Minecraft</p>
-<table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
-<tr><td>metadata</td><td></td><td>metav1.ListMeta</td><td>false</td></tr>
-<tr><td>items</td><td></td><td>[]<a href="crd_minecraft.html#minecraft">Minecraft</a></td><td>true</td></tr>
-</tbody></table>
-<p><a href="crd_minecraft.html#custom-resources">Back to Custom Resources</a></p>
-<h4 id="minecraftspec"><a class="header" href="#minecraftspec">MinecraftSpec</a></h4>
-<p>MinecraftSpec defines the desired state of Minecraft</p>
-<table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
-<tr><td>image</td><td>Image for minecraft server</td><td>string</td><td>false</td></tr>
-<tr><td>env</td><td>Environment variable to be set for the container <code>EULA</code> is required The server will not start unless EULA=true.</td><td>[]corev1.EnvVar</td><td>true</td></tr>
-<tr><td>volumeClaimSpec</td><td>PersistentVolumeClaimSpec is a specification of <code>PersistentVolumeClaim</code> for persisting data in minecraft.</td><td>corev1.PersistentVolumeClaimSpec</td><td>true</td></tr>
-</tbody></table>
-<p><a href="crd_minecraft.html#custom-resources">Back to Custom Resources</a></p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
+                            <a rel="prev" href="setup.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
 
+                        
+                            <a rel="next" href="crd.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
                         
 
                         <div style="clear: both"></div>
@@ -292,7 +245,15 @@ minecraft-sample   ClusterIP   10.96.213.69   &lt;none&gt;        25565/TCP,2557
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
+                    <a rel="prev" href="setup.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
 
+                
+                    <a rel="next" href="crd.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
                 
             </nav>
 
@@ -325,14 +286,6 @@ minecraft-sample   ClusterIP   10.96.213.69   &lt;none&gt;        25565/TCP,2557
         <!-- Custom JS scripts -->
         
 
-        
-        
-        <script type="text/javascript">
-        window.addEventListener('load', function() {
-            window.setTimeout(window.print, 100);
-        });
-        </script>
-        
         
 
     </body>
