@@ -190,8 +190,8 @@ $ kubectl apply -f cert-manager.yaml
 <li>
 <p>Apply MCing manifests</p>
 <p>Please Install <a href="https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize%2Fv4.1.3">kustomize/v4.1.3</a></p>
-<pre><code class="language-console">$ cd kmdkuk/mcing
-$ kustomize build config/default | kubectl apply -f -
+<pre><code class="language-console">$ curl -fsLO https://github.com/kmdkuk/MCing/releases/latest/download/install.yaml
+$ kubectl apply -f install.yaml
 </code></pre>
 </li>
 </ol>
@@ -206,14 +206,14 @@ metadata:
     name: minecraft-sample
 spec:
     env:
-        - name: EULA
-        value: &quot;true&quot;
+    - name: EULA
+      value: &quot;true&quot;
     volumeClaimSpec:
         accessModes: [ &quot;ReadWriteOnce&quot; ]
         storageClassName: standard
         resources:
-        requests:
-            storage: 1Gi
+            requests:
+                storage: 1Gi
 EOF
 $ kubectl apply -f minecraft-sample.yaml
 
