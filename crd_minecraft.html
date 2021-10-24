@@ -201,6 +201,7 @@
 <p>MinecraftSpec defines the desired state of Minecraft</p>
 <table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
 <tr><td>image</td><td>Image for minecraft server</td><td>string</td><td>false</td></tr>
+<tr><td>env</td><td>Environment variable to be set for the container <code>EULA</code> is required The server will not start unless EULA=true.</td><td>[]corev1.EnvVar</td><td>true</td></tr>
 <tr><td>volumeClaimSpec</td><td>PersistentVolumeClaimSpec is a specification of <code>PersistentVolumeClaim</code> for persisting data in minecraft.</td><td>corev1.PersistentVolumeClaimSpec</td><td>true</td></tr>
 </tbody></table>
 <p><a href="#custom-resources">Back to Custom Resources</a></p>
