@@ -51,7 +51,7 @@ apidoc: crd-to-markdown $(wildcard api/*/*_types.go)
 	$(CRD_TO_MARKDOWN) --links docs/links.csv -f api/v1alpha1/minecraft_types.go -n Minecraft > docs/crd_minecraft.md
 
 .PHONY: book
-book: mdbook 
+book: mdbook
 	rm -rf docs/book
 	cd docs; $(MDBOOK) build
 
