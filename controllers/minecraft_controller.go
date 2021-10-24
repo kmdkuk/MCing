@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	appsv1apply "k8s.io/client-go/applyconfigurations/apps/v1"
 	corev1apply "k8s.io/client-go/applyconfigurations/core/v1"
 	metav1apply "k8s.io/client-go/applyconfigurations/meta/v1"
@@ -83,6 +84,12 @@ func (r *MinecraftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "failed to reconcile statefulset")
 		return ctrl.Result{}, err
 	}
+
+	if err := r.reconcileService(ctx, mc); err != nil {
+		log.Error(err, "failed to reconcile service")
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -156,6 +163,72 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 	}
 
 	logger.Info("reconcile StatefulSet successfully")
+	return nil
+}
+
+func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1alpha1.Minecraft) error {
+	logger := r.log.WithName("Service")
+
+	owner, err := ownerRef(mc, r.scheme)
+	if err != nil {
+		return err
+	}
+
+	labels := labelSet(mc, constants.AppComponentServer)
+
+	svc := corev1apply.Service(mc.Name, mc.Namespace).
+		WithLabels(labels).
+		WithOwnerReferences(owner).
+		WithSpec(corev1apply.ServiceSpec().
+			WithSelector(labels).
+			WithType(corev1.ServiceTypeClusterIP).
+			WithPorts(
+				corev1apply.ServicePort().
+					WithName("server-port").
+					WithProtocol(corev1.ProtocolTCP).
+					WithPort(25565).
+					WithTargetPort(intstr.FromInt(25565)),
+				corev1apply.ServicePort().
+					WithName("rcon-port").
+					WithProtocol(corev1.ProtocolUDP).
+					WithPort(25575).
+					WithTargetPort(intstr.FromInt(25575)),
+			),
+		)
+
+	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(svc)
+	if err != nil {
+		return err
+	}
+	patch := &unstructured.Unstructured{
+		Object: obj,
+	}
+
+	var current corev1.Service
+	err = r.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: mc.Name}, &current)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+
+	currApplyConfig, err := corev1apply.ExtractService(&current, constants.ControllerName)
+	if err != nil {
+		return err
+	}
+
+	if equality.Semantic.DeepEqual(svc, currApplyConfig) {
+		return nil
+	}
+
+	err = r.Patch(ctx, patch, client.Apply, &client.PatchOptions{
+		FieldManager: constants.ControllerName,
+		Force:        pointer.Bool(true),
+	})
+	if err != nil {
+		logger.Error(err, "unable to create or update Service")
+		return err
+	}
+
+	logger.Info("reconcile Service successfully")
 	return nil
 }
 
