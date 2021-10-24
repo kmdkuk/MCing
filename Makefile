@@ -79,6 +79,11 @@ test: test-tools
 
 ##@ Build
 
+.PHONY: release-build
+release-build: $(KUSTOMIZE)
+	mkdir -p build
+	$(KUSTOMIZE) build . > build/install.yaml
+
 build:
 	mkdir -p $(BIN_DIR)
 	GOBIN=$(BIN_DIR) go install ./cmd/...

@@ -1,0 +1,6 @@
+resources:
+- config/default
+
+images:
+- name: ghcr.io/kmdkuk/mcing
+  newTag: 0.1.0
