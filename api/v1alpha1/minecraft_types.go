@@ -206,6 +206,10 @@ type Minecraft struct {
 	Status MinecraftStatus `json:"status,omitempty"`
 }
 
+func (m *Minecraft) PrefixedName() string {
+	return "mcing-" + m.Name
+}
+
 //+kubebuilder:object:root=true
 
 // MinecraftList contains a list of Minecraft

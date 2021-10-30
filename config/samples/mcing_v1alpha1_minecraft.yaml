@@ -11,9 +11,15 @@ spec:
           env:
             - name: EULA
               value: "true"
-  volumeClaimSpec:
-    accessModes: [ "ReadWriteOnce" ]
-    storageClassName: standard
-    resources:
-      requests:
-        storage: 1Gi
+  serviceTemplate:
+    spec:
+      type: NodePort
+  volumeClaimTemplates:
+    - metadata:
+        name: minecraft-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 1Gi
