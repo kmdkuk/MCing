@@ -3,9 +3,14 @@ kind: Minecraft
 metadata:
   name: minecraft-sample
 spec:
-  env:
-    - name: EULA
-      value: "true"
+  podTemplate:
+    spec:
+      containers:
+        - name: minecraft
+          image: itzg/minecraft-server:java17
+          env:
+            - name: EULA
+              value: "true"
   volumeClaimSpec:
     accessModes: [ "ReadWriteOnce" ]
     storageClassName: standard

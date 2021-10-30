@@ -7,6 +7,10 @@
 
 * [MinecraftList](#minecraftlist)
 * [MinecraftSpec](#minecraftspec)
+* [ObjectMeta](#objectmeta)
+* [PersistentVolumeClaim](#persistentvolumeclaim)
+* [PodTemplateSpec](#podtemplatespec)
+* [ServiceTemplate](#servicetemplate)
 
 #### Minecraft
 
@@ -37,8 +41,53 @@ MinecraftSpec defines the desired state of Minecraft
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| image | Image for minecraft server | string | false |
-| env | Environment variable to be set for the container `EULA` is required The server will not start unless EULA=true. | []corev1.EnvVar | true |
-| volumeClaimSpec | PersistentVolumeClaimSpec is a specification of `PersistentVolumeClaim` for persisting data in minecraft. | corev1.PersistentVolumeClaimSpec | true |
+| podTemplate | PodTemplate is a `Pod` template for Minecraft server container. | [PodTemplateSpec](#podtemplatespec) | true |
+| volumeClaimTemplates | PersistentVolumeClaimSpec is a specification of `PersistentVolumeClaim` for persisting data in minecraft. A claim named \"minecraft-data\" must be included in the list. | [][PersistentVolumeClaim](#persistentvolumeclaim) | true |
+| serviceTemplate | ServiceTemplate is a `Service` template. | *[ServiceTemplate](#servicetemplate) | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### ObjectMeta
+
+ObjectMeta is metadata of objects. This is partially copied from metav1.ObjectMeta.
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| name | Name is the name of the object. | string | false |
+| labels | Labels is a map of string keys and values. | map[string]string | false |
+| annotations | Annotations is a map of string keys and values. | map[string]string | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### PersistentVolumeClaim
+
+PersistentVolumeClaim is a user's request for and claim to a persistent volume. This is slightly modified from corev1.PersistentVolumeClaim.
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| metadata | Standard object's metadata. | [ObjectMeta](#objectmeta) | true |
+| spec | Spec defines the desired characteristics of a volume requested by a pod author. | corev1.PersistentVolumeClaimSpec | true |
+
+[Back to Custom Resources](#custom-resources)
+
+#### PodTemplateSpec
+
+PodTemplateSpec describes the data a pod should have when created from a template. This is slightly modified from corev1.PodTemplateSpec.
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| metadata | Standard object's metadata.  The name in this metadata is ignored. | [ObjectMeta](#objectmeta) | false |
+| spec | Specification of the desired behavior of the pod. The name of the MySQL server container in this spec must be `minecraft`. | corev1.PodSpec | true |
+
+[Back to Custom Resources](#custom-resources)
+
+#### ServiceTemplate
+
+ServiceTemplate define the desired spec and annotations of Service
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| metadata | Standard object's metadata. Only `annotations` and `labels` are valid. | [ObjectMeta](#objectmeta) | false |
+| spec | Spec is the ServiceSpec | *corev1.ServiceSpec | false |
 
 [Back to Custom Resources](#custom-resources)
