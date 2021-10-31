@@ -3,12 +3,23 @@ kind: Minecraft
 metadata:
   name: minecraft-sample
 spec:
-  env:
-    - name: EULA
-      value: "true"
-  volumeClaimSpec:
-    accessModes: [ "ReadWriteOnce" ]
-    storageClassName: standard
-    resources:
-      requests:
-        storage: 1Gi
+  podTemplate:
+    spec:
+      containers:
+        - name: minecraft
+          image: itzg/minecraft-server:java17
+          env:
+            - name: EULA
+              value: "true"
+  serviceTemplate:
+    spec:
+      type: NodePort
+  volumeClaimTemplates:
+    - metadata:
+        name: minecraft-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 1Gi

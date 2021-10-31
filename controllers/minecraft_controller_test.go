@@ -92,7 +92,7 @@ var _ = Describe("Minecraft controller", func() {
 		By("getting the created StatefulSet")
 		s := new(appsv1.StatefulSet)
 		Eventually(func() error {
-			return k8sClient.Get(ctx, types.NamespacedName{Name: mc.Name, Namespace: namespace}, s)
+			return k8sClient.Get(ctx, types.NamespacedName{Name: mc.PrefixedName(), Namespace: namespace}, s)
 		}).Should(Succeed())
 
 		// labels
@@ -119,7 +119,7 @@ var _ = Describe("Minecraft controller", func() {
 		Expect(s.Spec.Replicas).To(PointTo(BeNumerically("==", 1)))
 		Expect(s.Spec.Template.Spec.Containers).To(HaveLen(1))
 		Expect(s.Spec.Template.Spec.Containers[0]).To(MatchFields(IgnoreExtras, Fields{
-			"Name":  Equal(constants.ServerContainerName),
+			"Name":  Equal(constants.MinecraftContainerName),
 			"Image": Equal(constants.DefaultServerImage),
 			"Ports": MatchAllElementsWithIndex(IndexIdentity, Elements{
 				"0": MatchFields(IgnoreExtras, Fields{

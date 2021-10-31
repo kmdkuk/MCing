@@ -101,17 +101,33 @@ func makeMinecraft(name, namespace string) *mcingv1alpha1.Minecraft {
 			Finalizers: []string{constants.Finalizer},
 		},
 		Spec: mcingv1alpha1.MinecraftSpec{
-			Image: constants.DefaultServerImage,
-			Env: []corev1.EnvVar{
-				{
-					Name:  "EULA",
-					Value: "true",
+			PodTemplate: mcingv1alpha1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  constants.MinecraftContainerName,
+							Image: "itzg/minecraft-server:java17",
+							Env: []corev1.EnvVar{
+								{
+									Name:  "EULA",
+									Value: "true",
+								},
+							},
+						},
+					},
 				},
 			},
-			VolumeClaimSpec: corev1.PersistentVolumeClaimSpec{
-				AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{corev1.ResourceStorage: resource.MustParse("1Gi")},
+			VolumeClaimTemplates: []mcingv1alpha1.PersistentVolumeClaim{
+				{
+					ObjectMeta: mcingv1alpha1.ObjectMeta{
+						Name: constants.DataVolumeName,
+					},
+					Spec: corev1.PersistentVolumeClaimSpec{
+						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{corev1.ResourceStorage: resource.MustParse("1Gi")},
+						},
+					},
 				},
 			},
 		},
