@@ -181,6 +181,10 @@
 <ul>
 <li><a href="#minecraftlist">MinecraftList</a></li>
 <li><a href="#minecraftspec">MinecraftSpec</a></li>
+<li><a href="#objectmeta">ObjectMeta</a></li>
+<li><a href="#persistentvolumeclaim">PersistentVolumeClaim</a></li>
+<li><a href="#podtemplatespec">PodTemplateSpec</a></li>
+<li><a href="#servicetemplate">ServiceTemplate</a></li>
 </ul>
 <h4 id="minecraft"><a class="header" href="#minecraft">Minecraft</a></h4>
 <p>Minecraft is the Schema for the minecrafts API</p>
@@ -200,9 +204,38 @@
 <h4 id="minecraftspec"><a class="header" href="#minecraftspec">MinecraftSpec</a></h4>
 <p>MinecraftSpec defines the desired state of Minecraft</p>
 <table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
-<tr><td>image</td><td>Image for minecraft server</td><td>string</td><td>false</td></tr>
-<tr><td>env</td><td>Environment variable to be set for the container <code>EULA</code> is required The server will not start unless EULA=true.</td><td>[]corev1.EnvVar</td><td>true</td></tr>
-<tr><td>volumeClaimSpec</td><td>PersistentVolumeClaimSpec is a specification of <code>PersistentVolumeClaim</code> for persisting data in minecraft.</td><td>corev1.PersistentVolumeClaimSpec</td><td>true</td></tr>
+<tr><td>podTemplate</td><td>PodTemplate is a <code>Pod</code> template for Minecraft server container.</td><td><a href="#podtemplatespec">PodTemplateSpec</a></td><td>true</td></tr>
+<tr><td>volumeClaimTemplates</td><td>PersistentVolumeClaimSpec is a specification of <code>PersistentVolumeClaim</code> for persisting data in minecraft. A claim named &quot;minecraft-data&quot; must be included in the list.</td><td>[]<a href="#persistentvolumeclaim">PersistentVolumeClaim</a></td><td>true</td></tr>
+<tr><td>serviceTemplate</td><td>ServiceTemplate is a <code>Service</code> template.</td><td>*<a href="#servicetemplate">ServiceTemplate</a></td><td>false</td></tr>
+</tbody></table>
+<p><a href="#custom-resources">Back to Custom Resources</a></p>
+<h4 id="objectmeta"><a class="header" href="#objectmeta">ObjectMeta</a></h4>
+<p>ObjectMeta is metadata of objects. This is partially copied from metav1.ObjectMeta.</p>
+<table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
+<tr><td>name</td><td>Name is the name of the object.</td><td>string</td><td>false</td></tr>
+<tr><td>labels</td><td>Labels is a map of string keys and values.</td><td>map[string]string</td><td>false</td></tr>
+<tr><td>annotations</td><td>Annotations is a map of string keys and values.</td><td>map[string]string</td><td>false</td></tr>
+</tbody></table>
+<p><a href="#custom-resources">Back to Custom Resources</a></p>
+<h4 id="persistentvolumeclaim"><a class="header" href="#persistentvolumeclaim">PersistentVolumeClaim</a></h4>
+<p>PersistentVolumeClaim is a user's request for and claim to a persistent volume. This is slightly modified from corev1.PersistentVolumeClaim.</p>
+<table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
+<tr><td>metadata</td><td>Standard object's metadata.</td><td><a href="#objectmeta">ObjectMeta</a></td><td>true</td></tr>
+<tr><td>spec</td><td>Spec defines the desired characteristics of a volume requested by a pod author.</td><td>corev1.PersistentVolumeClaimSpec</td><td>true</td></tr>
+</tbody></table>
+<p><a href="#custom-resources">Back to Custom Resources</a></p>
+<h4 id="podtemplatespec"><a class="header" href="#podtemplatespec">PodTemplateSpec</a></h4>
+<p>PodTemplateSpec describes the data a pod should have when created from a template. This is slightly modified from corev1.PodTemplateSpec.</p>
+<table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
+<tr><td>metadata</td><td>Standard object's metadata.  The name in this metadata is ignored.</td><td><a href="#objectmeta">ObjectMeta</a></td><td>false</td></tr>
+<tr><td>spec</td><td>Specification of the desired behavior of the pod. The name of the MySQL server container in this spec must be <code>minecraft</code>.</td><td>corev1.PodSpec</td><td>true</td></tr>
+</tbody></table>
+<p><a href="#custom-resources">Back to Custom Resources</a></p>
+<h4 id="servicetemplate"><a class="header" href="#servicetemplate">ServiceTemplate</a></h4>
+<p>ServiceTemplate define the desired spec and annotations of Service</p>
+<table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
+<tr><td>metadata</td><td>Standard object's metadata. Only <code>annotations</code> and <code>labels</code> are valid.</td><td><a href="#objectmeta">ObjectMeta</a></td><td>false</td></tr>
+<tr><td>spec</td><td>Spec is the ServiceSpec</td><td>*corev1.ServiceSpec</td><td>false</td></tr>
 </tbody></table>
 <p><a href="#custom-resources">Back to Custom Resources</a></p>
 
