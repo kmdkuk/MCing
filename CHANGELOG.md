@@ -7,7 +7,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
--  Add service template (#23) 
+- Add service template (#23) 
+- Use ConfigMap for server.properties (#31) 
 
 ### Changed
 
