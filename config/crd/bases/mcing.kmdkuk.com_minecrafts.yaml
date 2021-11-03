@@ -5819,6 +5819,11 @@ spec:
                 required:
                 - spec
                 type: object
+              serverPropertiesConfigMapName:
+                description: ServerPropertiesConfigMapName is a `ConfigMap` name of
+                  `server.properties`.
+                nullable: true
+                type: string
               serviceTemplate:
                 description: ServiceTemplate is a `Service` template.
                 properties:

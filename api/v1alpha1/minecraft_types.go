@@ -28,6 +28,11 @@ type MinecraftSpec struct {
 	// ServiceTemplate is a `Service` template.
 	// +optional
 	ServiceTemplate *ServiceTemplate `json:"serviceTemplate,omitempty"`
+
+	// ServerPropertiesConfigMapName is a `ConfigMap` name of `server.properties`.
+	// +nullable
+	// +optional
+	ServerPropertiesConfigMapName *string `json:"serverPropertiesConfigMapName,omitempty"`
 }
 
 // PodTemplateSpec describes the data a pod should have when created from a template.
