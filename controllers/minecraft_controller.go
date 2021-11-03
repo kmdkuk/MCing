@@ -25,6 +25,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 const defaultTerminationGracePeriodSeconds = 30
@@ -469,10 +472,27 @@ func mergeMap(m1, m2 map[string]string) map[string]string {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *MinecraftReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	configMapHandler := handler.EnqueueRequestsFromMapFunc(func(a client.Object) []reconcile.Request {
+		mcs := &mcingv1alpha1.MinecraftList{}
+		if err := r.List(context.Background(), mcs, client.InNamespace(a.GetNamespace())); err != nil {
+			return nil
+		}
+		var reqs []reconcile.Request
+		for _, mc := range mcs.Items {
+			if mc.Spec.ServerPropertiesConfigMapName == nil {
+				continue
+			}
+			if *mc.Spec.ServerPropertiesConfigMapName == a.GetName() {
+				reqs = append(reqs, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(&mc)})
+			}
+		}
+		return reqs
+	})
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mcingv1alpha1.Minecraft{}).
 		Owns(&appsv1.StatefulSet{}).
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ConfigMap{}).
+		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, configMapHandler).
 		Complete(r)
 }

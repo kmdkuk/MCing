@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
@@ -11,6 +12,7 @@ import (
 	. "github.com/onsi/gomega/gstruct"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -145,5 +147,67 @@ var _ = Describe("Minecraft controller", func() {
 		}))
 		Expect(s.Spec.VolumeClaimTemplates).To(HaveLen(1))
 		Expect(s.Spec.VolumeClaimTemplates[0].ObjectMeta.Name).To(Equal("minecraft-data"))
+	})
+
+	It("should update generated ConfigMap, when update specified ConfigMap", func() {
+		By("deploying ConfigMap and Minecraft resource")
+		testCmName := "test-configmap"
+		cm := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      testCmName,
+				Namespace: namespace,
+			},
+			Data: map[string]string{
+				"motd":       "A vanila",
+				"difficulty": "hard",
+				"pvp":        "false",
+			},
+		}
+		mc := makeMinecraft("test", namespace)
+		mc.Spec.ServerPropertiesConfigMapName = &cm.Name
+		Expect(k8sClient.Create(ctx, cm)).To(Succeed())
+		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+		By("getting generated ConfigMap")
+		generatedCm := &corev1.ConfigMap{}
+		Eventually(func() error {
+			cms := &corev1.ConfigMapList{}
+			if err := k8sClient.List(ctx, cms, client.InNamespace(mc.Namespace)); err != nil {
+				return err
+			}
+			for _, cm := range cms.Items {
+				if v, ok := cm.Labels[constants.LabelAppInstance]; ok && v == mc.Name {
+					generatedCm = cm.DeepCopy()
+					return nil
+				}
+			}
+			return fmt.Errorf("The generated ConfigMap is not found.")
+		}).Should(Succeed())
+		By("updating ConfigMap")
+		cm.Data = map[string]string{
+			"motd":       "updated",
+			"difficulty": "easy",
+			"pvp":        "true",
+		}
+		Expect(k8sClient.Update(ctx, cm)).To(Succeed())
+
+		By("getting generated ConfigMap")
+		Eventually(func() error {
+			cm := &corev1.ConfigMap{}
+			cms := &corev1.ConfigMapList{}
+			if err := k8sClient.List(ctx, cms, client.InNamespace(mc.Namespace)); err != nil {
+				return err
+			}
+			for _, c := range cms.Items {
+				if v, ok := c.Labels[constants.LabelAppInstance]; ok && v == mc.Name {
+					cm = &c
+					break
+				}
+			}
+			if generatedCm.Name == cm.Name {
+				return fmt.Errorf("The generated ConfigMap has not been updated.")
+			}
+			return nil
+		}).Should(Succeed())
 	})
 })

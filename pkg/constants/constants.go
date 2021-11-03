@@ -15,6 +15,7 @@ const (
 	ControllerName     = "mcing-controller"
 )
 
+// Container
 const (
 	MinecraftContainerName = "minecraft"
 	ServerPortName         = "server-port"
