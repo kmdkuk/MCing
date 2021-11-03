@@ -2,9 +2,7 @@ package controllers
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
-	"hash/fnv"
 	"os"
 	"strings"
 
@@ -407,15 +405,9 @@ func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv
 
 	props := config.GenServerProps(userProps)
 
-	fnv32a := fnv.New32a()
-	fnv32a.Write([]byte(props))
-	suffix := hex.EncodeToString(fnv32a.Sum(nil))
-
-	prefix := mc.PrefixedName() + "-server-properties-"
-
 	cm := &corev1.ConfigMap{}
 	cm.Namespace = mc.Namespace
-	cm.Name = prefix + suffix
+	cm.Name = mc.PrefixedName()
 	result, err := ctrl.CreateOrUpdate(ctx, r.Client, cm, func() error {
 		cm.Labels = mergeMap(cm.Labels, labelSet(mc, constants.AppComponentServer))
 		cm.Data = map[string]string{
@@ -430,18 +422,6 @@ func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv
 
 	if result != controllerutil.OperationResultNone {
 		logger.Info("reconciled server.properties configmap", "operation", string(result))
-	}
-
-	cms := &corev1.ConfigMapList{}
-	if err := r.List(ctx, cms, client.InNamespace(mc.Namespace)); err != nil {
-		return nil, err
-	}
-	for _, old := range cms.Items {
-		if strings.HasPrefix(old.Name, prefix) && old.Name != cm.Name {
-			if err := r.Delete(ctx, &old); err != nil {
-				return nil, fmt.Errorf("failed to delete old server.properties configmap %s/%s: %w", old.Namespace, old.Name, err)
-			}
-		}
 	}
 
 	return cm, nil

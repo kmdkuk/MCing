@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
 	"github.com/kmdkuk/mcing/pkg/constants"
 	. "github.com/onsi/ginkgo"
@@ -171,17 +172,10 @@ var _ = Describe("Minecraft controller", func() {
 		By("getting generated ConfigMap")
 		generatedCm := &corev1.ConfigMap{}
 		Eventually(func() error {
-			cms := &corev1.ConfigMapList{}
-			if err := k8sClient.List(ctx, cms, client.InNamespace(mc.Namespace)); err != nil {
+			if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: mc.PrefixedName()}, generatedCm); err != nil {
 				return err
 			}
-			for _, cm := range cms.Items {
-				if v, ok := cm.Labels[constants.LabelAppInstance]; ok && v == mc.Name {
-					generatedCm = cm.DeepCopy()
-					return nil
-				}
-			}
-			return fmt.Errorf("The generated ConfigMap is not found.")
+			return nil
 		}).Should(Succeed())
 		By("updating ConfigMap")
 		cm.Data = map[string]string{
@@ -194,17 +188,11 @@ var _ = Describe("Minecraft controller", func() {
 		By("getting generated ConfigMap")
 		Eventually(func() error {
 			cm := &corev1.ConfigMap{}
-			cms := &corev1.ConfigMapList{}
-			if err := k8sClient.List(ctx, cms, client.InNamespace(mc.Namespace)); err != nil {
+			if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: mc.PrefixedName()}, cm); err != nil {
 				return err
 			}
-			for _, c := range cms.Items {
-				if v, ok := c.Labels[constants.LabelAppInstance]; ok && v == mc.Name {
-					cm = &c
-					break
-				}
-			}
-			if generatedCm.Name == cm.Name {
+
+			if !cmp.Equal(generatedCm.Data[constants.ServerPropsName], cm.Data[constants.ServerPropsName]) {
 				return fmt.Errorf("The generated ConfigMap has not been updated.")
 			}
 			return nil
