@@ -2,5 +2,5 @@ resources:
 - config/default
 
 images:
-- name: ghcr.io/kmdkuk/mcing
+- name: ghcr.io/kmdkuk/mcing-controller
   newTag: 0.1.0

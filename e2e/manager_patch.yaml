@@ -11,3 +11,6 @@ spec:
       - name: manager
         args:
         - --zap-log-level=5
+        env:
+          - name: DEBUG_CONTROLLER
+            value: "1"

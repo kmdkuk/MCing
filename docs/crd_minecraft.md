@@ -44,6 +44,7 @@ MinecraftSpec defines the desired state of Minecraft
 | podTemplate | PodTemplate is a `Pod` template for Minecraft server container. | [PodTemplateSpec](#podtemplatespec) | true |
 | volumeClaimTemplates | PersistentVolumeClaimSpec is a specification of `PersistentVolumeClaim` for persisting data in minecraft. A claim named \"minecraft-data\" must be included in the list. | [][PersistentVolumeClaim](#persistentvolumeclaim) | true |
 | serviceTemplate | ServiceTemplate is a `Service` template. | *[ServiceTemplate](#servicetemplate) | false |
+| serverPropertiesConfigMapName | ServerPropertiesConfigMapName is a `ConfigMap` name of `server.properties`. | *string | false |
 
 [Back to Custom Resources](#custom-resources)
 

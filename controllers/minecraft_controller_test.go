@@ -123,20 +123,23 @@ var _ = Describe("Minecraft controller", func() {
 			"Image": Equal(constants.DefaultServerImage),
 			"Ports": MatchAllElementsWithIndex(IndexIdentity, Elements{
 				"0": MatchFields(IgnoreExtras, Fields{
-					"Name":          Equal("server-port"),
-					"ContainerPort": Equal(int32(25565)),
+					"Name":          Equal(constants.ServerPortName),
+					"ContainerPort": Equal(constants.ServerPort),
 					"Protocol":      Equal(corev1.ProtocolTCP),
 				}),
 				"1": MatchFields(IgnoreExtras, Fields{
-					"Name":          Equal("rcon-port"),
-					"ContainerPort": Equal(int32(25575)),
+					"Name":          Equal(constants.RconPortName),
+					"ContainerPort": Equal(constants.RconPort),
 					"Protocol":      Equal(corev1.ProtocolUDP),
 				}),
 			}),
 			"VolumeMounts": MatchAllElementsWithIndex(IndexIdentity, Elements{
 				"0": MatchFields(IgnoreExtras, Fields{
-					"Name":      Equal("minecraft-data"),
-					"MountPath": Equal("/data"),
+					"Name":      Equal(constants.DataVolumeName),
+					"MountPath": Equal(constants.DataPath),
+				}),
+				"1": MatchFields(IgnoreExtras, Fields{
+					"MountPath": Equal(constants.ConfigPath),
 				}),
 			}),
 		}))

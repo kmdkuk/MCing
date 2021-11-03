@@ -5,6 +5,6 @@ patchesStrategicMerge:
 - manager_patch.yaml
 
 images:
-- name: ghcr.io/kmdkuk/mcing
-  newName: mcing
+- name: ghcr.io/kmdkuk/mcing-controller
+  newName: mcing-controller
   newTag: e2e

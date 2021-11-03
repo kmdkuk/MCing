@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcing-server-props
+data:
+  motd: "[this is test]A Vanilla Minecraft Server powered by MCing"
+  pvp: "true"
+  difficulty: "hard"

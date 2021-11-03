@@ -20,6 +20,24 @@ CRD_OPTIONS = "crd:crdVersions=v1,maxDescLen=220"
 IMAGE_PREFIX :=
 IMAGE_TAG := latest
 
+BUILD_FILES = $(shell go list -f '{{range .GoFiles}}{{$$.Dir}}/{{.}}\
+{{end}}' ./...)
+
+VERSION := $(shell git describe --tags $(shell git rev-list --tags --max-count=1))
+DATE_FMT = +%Y-%m-%d
+ifdef SOURCE_DATE_EPOCH
+    BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u "$(DATE_FMT)")
+else
+    BUILD_DATE ?= $(shell date "$(DATE_FMT)")
+endif
+
+REVISION := $(shell git rev-parse --short HEAD)
+
+GO_LDFLAGS := -X github.com/kmdkuk/mcing/pkg/version.Revision=$(REVISION) $(GO_LDFLAGS)
+GO_LDFLAGS := -X github.com/kmdkuk/mcing/pkg/version.BuildDate=$(BUILD_DATE) $(GO_LDFLAGS)
+DEV_LDFLAGS := $(GO_LDFLAGS)
+GO_LDFLAGS := -X github.com/kmdkuk/mcing/pkg/version.Version=$(VERSION) $(GO_LDFLAGS)
+
 all: build
 
 ##@ General
@@ -88,18 +106,22 @@ release-build: kustomize
 	mkdir -p build
 	$(KUSTOMIZE) build . > build/install.yaml
 
-build:
+build: $(BUILD_FILES)
 	mkdir -p $(BIN_DIR)
-	GOBIN=$(BIN_DIR) go install ./cmd/...
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o bin/mcing-controller cmd/mcing-controller/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o bin/mcing-init cmd/mcing-init/main.go
 
 build-image:
-	docker build -t mcing:dev .
+	docker build --target controller -t mcing-controller:dev .
+	docker build --target init -t mcing-init:dev .
 
 tag:
-	docker tag mcing:dev $(IMAGE_PREFIX)mcing:$(IMAGE_TAG)
+	docker tag mcing-controller:dev $(IMAGE_PREFIX)mcing-controller:$(IMAGE_TAG)
+	docker tag mcing-init:dev $(IMAGE_PREFIX)mcing-init:$(IMAGE_TAG)
 
 push:
-	docker push $(IMAGE_PREFIX)mcing:$(IMAGE_TAG)
+	docker push $(IMAGE_PREFIX)mcing-controller:$(IMAGE_TAG)
+	docker push $(IMAGE_PREFIX)mcing-init:$(IMAGE_TAG)
 
 ##@ Tools
 

@@ -34,7 +34,8 @@ bootstrap:
 .PHONY: load
 load: $(KIND)
 	$(MAKE) -C $(PROJECT_DIR) build-image tag IMAGE_TAG=e2e
-	$(KIND) load docker-image mcing:e2e --name mcing
+	$(KIND) load docker-image mcing-controller:e2e --name mcing
+	$(KIND) load docker-image mcing-init:e2e --name mcing
 
 .PHONY: cert-manager
 cert-manager: $(KUBECTL)

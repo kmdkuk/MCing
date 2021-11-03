@@ -2,18 +2,24 @@ package controllers
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+	"hash/fnv"
 	"os"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
+	"github.com/kmdkuk/mcing/pkg/config"
 	"github.com/kmdkuk/mcing/pkg/constants"
+	"github.com/kmdkuk/mcing/pkg/version"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -84,8 +90,9 @@ func (r *MinecraftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
-	if err := r.reconcileStatefulSet(ctx, mc); err != nil {
-		log.Error(err, "failed to reconcile statefulset")
+	props, err := r.reconcileConfigMap(ctx, mc)
+	if err != nil {
+		log.Error(err, "failed to reconcile configmap")
 		return ctrl.Result{}, err
 	}
 
@@ -94,10 +101,15 @@ func (r *MinecraftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
+	if err := r.reconcileStatefulSet(ctx, mc, props); err != nil {
+		log.Error(err, "failed to reconcile statefulset")
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 
-func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcingv1alpha1.Minecraft) error {
+func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcingv1alpha1.Minecraft, props *corev1.ConfigMap) error {
 	logger := r.log.WithName("statefulset")
 
 	sts := &appsv1.StatefulSet{}
@@ -150,6 +162,19 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 			podSpec.SchedulerName = sts.Spec.Template.Spec.SchedulerName
 		}
 
+		podSpec.Volumes = append(podSpec.Volumes,
+			corev1.Volume{
+				Name: constants.ConfigVolumeName, VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: props.Name,
+						},
+						DefaultMode: pointer.Int32(0644),
+					},
+				},
+			},
+		)
+
 		containers := make([]corev1.Container, 0)
 		minecraftContainer, err := makeMinecraftContainer(mc, podSpec.Containers, sts.Spec.Template.Spec.Containers)
 		if err != nil {
@@ -157,6 +182,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 		}
 		containers = append(containers, minecraftContainer)
 		podSpec.Containers = containers
+		podSpec.InitContainers = makeInitContainer(mc, sts.Spec.Template.Spec.InitContainers)
 
 		podSpec.DeepCopyInto(&sts.Spec.Template.Spec)
 
@@ -201,8 +227,45 @@ func makeMinecraftContainer(mc *mcingv1alpha1.Minecraft, desired, current []core
 			MountPath: constants.DataPath,
 			Name:      constants.DataVolumeName,
 		},
+		corev1.VolumeMount{
+			MountPath: constants.ConfigPath,
+			Name:      constants.ConfigVolumeName,
+			ReadOnly:  true,
+		},
 	)
 	return *c, nil
+}
+
+func makeInitContainer(mc *mcingv1alpha1.Minecraft, current []corev1.Container) []corev1.Container {
+	var image string
+	if debugController {
+		image = constants.InitContainerImage + ":e2e"
+	} else {
+		tag := strings.TrimPrefix(version.Version, "v")
+		image = constants.ImagePrefix + constants.InitContainerImage + ":" + tag
+	}
+	c := corev1.Container{
+		Name:  constants.InitContainerName,
+		Image: image,
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				MountPath: constants.ConfigPath,
+				Name:      constants.ConfigVolumeName,
+			},
+			{
+				MountPath: constants.DataPath,
+				Name:      constants.DataVolumeName,
+			},
+		},
+	}
+
+	var initContainers []corev1.Container
+	initContainers = append(initContainers, c)
+	for _, given := range mc.Spec.PodTemplate.Spec.InitContainers {
+		ic := given.DeepCopy()
+		initContainers = append(initContainers, *ic)
+	}
+	return initContainers
 }
 
 func (r *MinecraftReconciler) reconcileAllService(ctx context.Context, mc *mcingv1alpha1.Minecraft) error {
@@ -323,6 +386,62 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 	}
 
 	return nil
+}
+
+func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv1alpha1.Minecraft) (*corev1.ConfigMap, error) {
+	logger := r.log.WithName("configmap")
+
+	var userProps map[string]string
+	if mc.Spec.ServerPropertiesConfigMapName != nil {
+		cm := &corev1.ConfigMap{}
+		err := r.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: *mc.Spec.ServerPropertiesConfigMapName}, cm)
+		if err != nil {
+			logger.Error(err, "failed to get specified configmap", "configmap", *mc.Spec.ServerPropertiesConfigMapName)
+			return nil, err
+		}
+		userProps = cm.Data
+	}
+
+	props := config.GenServerProps(userProps)
+
+	fnv32a := fnv.New32a()
+	fnv32a.Write([]byte(props))
+	suffix := hex.EncodeToString(fnv32a.Sum(nil))
+
+	prefix := mc.PrefixedName() + "-server-properties-"
+
+	cm := &corev1.ConfigMap{}
+	cm.Namespace = mc.Namespace
+	cm.Name = prefix + suffix
+	result, err := ctrl.CreateOrUpdate(ctx, r.Client, cm, func() error {
+		cm.Labels = mergeMap(cm.Labels, labelSet(mc, constants.AppComponentServer))
+		cm.Data = map[string]string{
+			constants.ServerPropsName: props,
+		}
+		return ctrl.SetControllerReference(mc, cm, r.scheme)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if result != controllerutil.OperationResultNone {
+		logger.Info("reconciled server.properties configmap", "operation", string(result))
+	}
+
+	cms := &corev1.ConfigMapList{}
+	if err := r.List(ctx, cms, client.InNamespace(mc.Namespace)); err != nil {
+		return nil, err
+	}
+	for _, old := range cms.Items {
+		if strings.HasPrefix(old.Name, prefix) && old.Name != cm.Name {
+			if err := r.Delete(ctx, &old); err != nil {
+				return nil, fmt.Errorf("failed to delete old server.properties configmap %s/%s: %w", old.Namespace, old.Name, err)
+			}
+		}
+	}
+
+	return cm, nil
 }
 
 func labelSet(mc *mcingv1alpha1.Minecraft, component string) map[string]string {
