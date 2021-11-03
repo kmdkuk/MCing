@@ -1,0 +1,3 @@
+resources:
+  - mcing_v1alpha1_minecraft.yaml
+  - server_properties_cm.yaml

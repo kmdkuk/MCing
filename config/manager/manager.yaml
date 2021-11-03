@@ -27,7 +27,7 @@ spec:
       containers:
       - args:
         - --leader-elect
-        image: ghcr.io/kmdkuk/mcing:latest
+        image: ghcr.io/kmdkuk/mcing-controller:latest
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
