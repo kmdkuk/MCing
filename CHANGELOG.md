@@ -5,6 +5,15 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+-  Add service template (#23) 
+
+### Changed
+
+- **Refact Change MinecraftSpec** (#23)
+- Change the generated Service's suffix (#30) 
+
 ## [0.1.0] - 2021-10-24
 
 ### Added
