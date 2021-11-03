@@ -116,7 +116,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 		sts.Spec.Selector = &metav1.LabelSelector{
 			MatchLabels: labels,
 		}
-		sts.Spec.ServiceName = mc.PrefixedName()
+		sts.Spec.ServiceName = mc.HeadlessServiceName()
 		sts.Spec.VolumeClaimTemplates = make([]corev1.PersistentVolumeClaim, len(mc.Spec.VolumeClaimTemplates))
 		for i, v := range mc.Spec.VolumeClaimTemplates {
 			pvc := v.ToCoreV1()
@@ -223,8 +223,8 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 	svc := &corev1.Service{}
 	svc.Namespace = mc.Namespace
 	svc.Name = mc.PrefixedName()
-	if !headless {
-		svc.Name = mc.PrefixedName() + "-tmpl"
+	if headless {
+		svc.Name = mc.HeadlessServiceName()
 	}
 	var orig, updated *corev1.ServiceSpec
 	result, err := ctrl.CreateOrUpdate(ctx, r.Client, svc, func() error {
