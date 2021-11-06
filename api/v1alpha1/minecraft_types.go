@@ -33,6 +33,11 @@ type MinecraftSpec struct {
 	// +nullable
 	// +optional
 	ServerPropertiesConfigMapName *string `json:"serverPropertiesConfigMapName,omitempty"`
+
+	// OtherConfigMapName is a `ConfigMap` name of other configurations file(eg. banned-ips.json, ops.json etc)
+	// +nullable
+	// +optional
+	OtherConfigMapName *string `json:"otherConfigMapName,omitempty"`
 }
 
 // PodTemplateSpec describes the data a pod should have when created from a template.
