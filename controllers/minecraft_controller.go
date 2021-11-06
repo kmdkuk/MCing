@@ -182,6 +182,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 			return err
 		}
 		containers = append(containers, minecraftContainer)
+		containers = append(containers, makeAgentContainer())
 		podSpec.Containers = containers
 		podSpec.InitContainers = makeInitContainer(mc, sts.Spec.Template.Spec.InitContainers)
 
@@ -235,6 +236,31 @@ func makeMinecraftContainer(mc *mcingv1alpha1.Minecraft, desired, current []core
 		},
 	)
 	return *c, nil
+}
+
+func makeAgentContainer() corev1.Container {
+	c := corev1.Container{}
+	c.Name = constants.AgentContainerName
+	c.Image = constants.DefaultAgentImage
+	c.Ports = []corev1.ContainerPort{
+		{
+			ContainerPort: constants.AgentPort,
+			Name:          constants.AgentPortName,
+			Protocol:      corev1.ProtocolTCP,
+		},
+	}
+	c.VolumeMounts = append(c.VolumeMounts,
+		corev1.VolumeMount{
+			MountPath: constants.DataPath,
+			Name:      constants.DataVolumeName,
+		},
+		corev1.VolumeMount{
+			MountPath: constants.ConfigPath,
+			Name:      constants.ConfigVolumeName,
+			ReadOnly:  true,
+		},
+	)
+	return c
 }
 
 func makeInitContainer(mc *mcingv1alpha1.Minecraft, current []corev1.Container) []corev1.Container {

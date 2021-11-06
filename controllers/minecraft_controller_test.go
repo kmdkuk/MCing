@@ -120,7 +120,7 @@ var _ = Describe("Minecraft controller", func() {
 
 		// statefulset/pod spec
 		Expect(s.Spec.Replicas).To(PointTo(BeNumerically("==", 1)))
-		Expect(s.Spec.Template.Spec.Containers).To(HaveLen(1))
+		Expect(s.Spec.Template.Spec.Containers).To(HaveLen(2))
 		Expect(s.Spec.Template.Spec.Containers[0]).To(MatchFields(IgnoreExtras, Fields{
 			"Name":  Equal(constants.MinecraftContainerName),
 			"Image": Equal(constants.DefaultServerImage),
@@ -142,6 +142,28 @@ var _ = Describe("Minecraft controller", func() {
 					"MountPath": Equal(constants.DataPath),
 				}),
 				"1": MatchFields(IgnoreExtras, Fields{
+					"Name":      Equal(constants.ConfigVolumeName),
+					"MountPath": Equal(constants.ConfigPath),
+				}),
+			}),
+		}))
+		Expect(s.Spec.Template.Spec.Containers[1]).To(MatchFields(IgnoreExtras, Fields{
+			"Name":  Equal(constants.AgentContainerName),
+			"Image": Equal(constants.DefaultAgentImage),
+			"Ports": MatchAllElementsWithIndex(IndexIdentity, Elements{
+				"0": MatchFields(IgnoreExtras, Fields{
+					"Name":          Equal(constants.AgentPortName),
+					"ContainerPort": Equal(constants.AgentPort),
+					"Protocol":      Equal(corev1.ProtocolTCP),
+				}),
+			}),
+			"VolumeMounts": MatchAllElementsWithIndex(IndexIdentity, Elements{
+				"0": MatchFields(IgnoreExtras, Fields{
+					"Name":      Equal(constants.DataVolumeName),
+					"MountPath": Equal(constants.DataPath),
+				}),
+				"1": MatchFields(IgnoreExtras, Fields{
+					"Name":      Equal(constants.ConfigVolumeName),
 					"MountPath": Equal(constants.ConfigPath),
 				}),
 			}),
