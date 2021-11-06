@@ -45,6 +45,7 @@ MinecraftSpec defines the desired state of Minecraft
 | volumeClaimTemplates | PersistentVolumeClaimSpec is a specification of `PersistentVolumeClaim` for persisting data in minecraft. A claim named \"minecraft-data\" must be included in the list. | [][PersistentVolumeClaim](#persistentvolumeclaim) | true |
 | serviceTemplate | ServiceTemplate is a `Service` template. | *[ServiceTemplate](#servicetemplate) | false |
 | serverPropertiesConfigMapName | ServerPropertiesConfigMapName is a `ConfigMap` name of `server.properties`. | *string | false |
+| otherConfigMapName | OtherConfigMapName is a `ConfigMap` name of other configurations file(eg. banned-ips.json, ops.json etc) | *string | false |
 
 [Back to Custom Resources](#custom-resources)
 

@@ -26,6 +26,14 @@ const (
 	DataPath               = "/data"
 	ServerPropsName        = "server.properties"
 	ServerPropsPath        = DataPath + "/" + ServerPropsName
+	BanIPName              = "banned-ips.json"
+	BanIPPath              = DataPath + "/" + BanIPName
+	BanPlayerName          = "banned-players.json"
+	BanPlayerPath          = DataPath + "/" + BanPlayerName
+	OpsName                = "ops.json"
+	OpsPath                = DataPath + "/" + OpsName
+	WhiteListName          = "whitelist.json"
+	WhiteListPath          = DataPath + "/" + WhiteListName
 	ConfigVolumeName       = "config"
 	ConfigPath             = "/mcing-config"
 

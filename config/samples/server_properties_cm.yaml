@@ -6,3 +6,17 @@ data:
   motd: "[this is test]A Vanilla Minecraft Server powered by MCing"
   pvp: "true"
   difficulty: "hard"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: other-props
+data:
+  banned-ips.json: |
+    []
+  banned-players.json: |
+    []
+  whitelist.json: |
+    []
+  ops.json: |
+    []

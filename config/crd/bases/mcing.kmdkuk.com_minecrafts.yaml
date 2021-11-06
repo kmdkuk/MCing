@@ -36,6 +36,11 @@ spec:
           spec:
             description: MinecraftSpec defines the desired state of Minecraft
             properties:
+              otherConfigMapName:
+                description: OtherConfigMapName is a `ConfigMap` name of other configurations
+                  file(eg. banned-ips.json, ops.json etc)
+                nullable: true
+                type: string
               podTemplate:
                 description: PodTemplate is a `Pod` template for Minecraft server
                   container.
