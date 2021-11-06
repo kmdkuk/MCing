@@ -7,8 +7,10 @@ spec:
     spec:
       containers:
         - name: minecraft
-          image: itzg/minecraft-server:java17
+          image: itzg/minecraft-server:java8
           env:
+            - name: TYPE
+              value: "SPIGOT"
             - name: EULA
               value: "true"
   serviceTemplate:

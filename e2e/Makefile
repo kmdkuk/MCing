@@ -3,6 +3,8 @@ KUBERNETES_VERSION = 1.21.2
 CERT_MANAGER_VERSION = 1.4.0
 KUSTOMIZE_VERSION = 4.1.3
 
+AGENT_VERSION = 0.0.3
+
 PROJECT_DIR :=$(dir $(shell pwd))
 BIN_DIR := ${PROJECT_DIR}/bin
 KIND := ${BIN_DIR}/kind
@@ -34,8 +36,10 @@ bootstrap:
 .PHONY: load
 load: $(KIND)
 	$(MAKE) -C $(PROJECT_DIR) build-image tag IMAGE_TAG=e2e
+	docker pull ghcr.io/kmdkuk/mcing-agent:${AGENT_VERSION}
 	$(KIND) load docker-image mcing-controller:e2e --name mcing
 	$(KIND) load docker-image mcing-init:e2e --name mcing
+	$(KIND) load docker-image ghcr.io/kmdkuk/mcing-agent:${AGENT_VERSION} --name mcing
 
 .PHONY: cert-manager
 cert-manager: $(KUBECTL)
@@ -52,7 +56,8 @@ logs:
 .PHONY: stop
 stop: $(KIND) 
 	$(KIND) delete cluster --name=mcing
-	-docker image rm mcing:dev
+	-docker image rm mcing-controller:dev
+	-docker image rm mcing-init:dev
 	-docker image prune -f
 
 $(KIND):

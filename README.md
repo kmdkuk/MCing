@@ -23,15 +23,39 @@ kind: Minecraft
 metadata:
     name: minecraft-sample
 spec:
-    env:
-        - name: EULA
-          value: "true"
-    volumeClaimSpec:
+    podTemplate:
+    spec:
+        containers:
+        - name: minecraft
+            image: itzg/minecraft-server:java8
+            env:
+            - name: TYPE
+                value: "SPIGOT"
+            - name: EULA
+                value: "true"
+    serviceTemplate:
+    spec:
+        type: NodePort
+    volumeClaimTemplates:
+    - metadata:
+        name: minecraft-data
+        spec:
         accessModes: [ "ReadWriteOnce" ]
         storageClassName: standard
         resources:
             requests:
-                storage: 1Gi
+            storage: 1Gi
+    serverPropertiesConfigMapName: mcing-server-props
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: mcing-server-props
+data:
+    motd: "[this is test]A Vanilla Minecraft Server powered by MCing"
+    pvp: "true"
+    difficulty: "hard"
+EOF
 EOF
 $ ../bin/kubectl --kubeconfig .kubeconfig apply -f minecraft-sample.yaml
 $ ../bin/kubectl --kubeconfig .kubeconfig port-forward svc/minecraft-sample 25565:25565

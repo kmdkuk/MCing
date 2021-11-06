@@ -2,9 +2,7 @@ package controllers
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
-	"hash/fnv"
 	"os"
 	"strings"
 
@@ -25,6 +23,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 const defaultTerminationGracePeriodSeconds = 30
@@ -181,6 +182,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 			return err
 		}
 		containers = append(containers, minecraftContainer)
+		containers = append(containers, makeAgentContainer())
 		podSpec.Containers = containers
 		podSpec.InitContainers = makeInitContainer(mc, sts.Spec.Template.Spec.InitContainers)
 
@@ -234,6 +236,31 @@ func makeMinecraftContainer(mc *mcingv1alpha1.Minecraft, desired, current []core
 		},
 	)
 	return *c, nil
+}
+
+func makeAgentContainer() corev1.Container {
+	c := corev1.Container{}
+	c.Name = constants.AgentContainerName
+	c.Image = constants.DefaultAgentImage
+	c.Ports = []corev1.ContainerPort{
+		{
+			ContainerPort: constants.AgentPort,
+			Name:          constants.AgentPortName,
+			Protocol:      corev1.ProtocolTCP,
+		},
+	}
+	c.VolumeMounts = append(c.VolumeMounts,
+		corev1.VolumeMount{
+			MountPath: constants.DataPath,
+			Name:      constants.DataVolumeName,
+		},
+		corev1.VolumeMount{
+			MountPath: constants.ConfigPath,
+			Name:      constants.ConfigVolumeName,
+			ReadOnly:  true,
+		},
+	)
+	return c
 }
 
 func makeInitContainer(mc *mcingv1alpha1.Minecraft, current []corev1.Container) []corev1.Container {
@@ -404,15 +431,9 @@ func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv
 
 	props := config.GenServerProps(userProps)
 
-	fnv32a := fnv.New32a()
-	fnv32a.Write([]byte(props))
-	suffix := hex.EncodeToString(fnv32a.Sum(nil))
-
-	prefix := mc.PrefixedName() + "-server-properties-"
-
 	cm := &corev1.ConfigMap{}
 	cm.Namespace = mc.Namespace
-	cm.Name = prefix + suffix
+	cm.Name = mc.PrefixedName()
 	result, err := ctrl.CreateOrUpdate(ctx, r.Client, cm, func() error {
 		cm.Labels = mergeMap(cm.Labels, labelSet(mc, constants.AppComponentServer))
 		cm.Data = map[string]string{
@@ -427,18 +448,6 @@ func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv
 
 	if result != controllerutil.OperationResultNone {
 		logger.Info("reconciled server.properties configmap", "operation", string(result))
-	}
-
-	cms := &corev1.ConfigMapList{}
-	if err := r.List(ctx, cms, client.InNamespace(mc.Namespace)); err != nil {
-		return nil, err
-	}
-	for _, old := range cms.Items {
-		if strings.HasPrefix(old.Name, prefix) && old.Name != cm.Name {
-			if err := r.Delete(ctx, &old); err != nil {
-				return nil, fmt.Errorf("failed to delete old server.properties configmap %s/%s: %w", old.Namespace, old.Name, err)
-			}
-		}
 	}
 
 	return cm, nil
@@ -469,10 +478,27 @@ func mergeMap(m1, m2 map[string]string) map[string]string {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *MinecraftReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	configMapHandler := handler.EnqueueRequestsFromMapFunc(func(a client.Object) []reconcile.Request {
+		mcs := &mcingv1alpha1.MinecraftList{}
+		if err := r.List(context.Background(), mcs, client.InNamespace(a.GetNamespace())); err != nil {
+			return nil
+		}
+		var reqs []reconcile.Request
+		for _, mc := range mcs.Items {
+			if mc.Spec.ServerPropertiesConfigMapName == nil {
+				continue
+			}
+			if *mc.Spec.ServerPropertiesConfigMapName == a.GetName() {
+				reqs = append(reqs, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(&mc)})
+			}
+		}
+		return reqs
+	})
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mcingv1alpha1.Minecraft{}).
 		Owns(&appsv1.StatefulSet{}).
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ConfigMap{}).
+		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, configMapHandler).
 		Complete(r)
 }

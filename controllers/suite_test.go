@@ -106,7 +106,7 @@ func makeMinecraft(name, namespace string) *mcingv1alpha1.Minecraft {
 					Containers: []corev1.Container{
 						{
 							Name:  constants.MinecraftContainerName,
-							Image: "itzg/minecraft-server:java17",
+							Image: constants.DefaultServerImage,
 							Env: []corev1.EnvVar{
 								{
 									Name:  "EULA",

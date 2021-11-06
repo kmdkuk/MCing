@@ -15,6 +15,7 @@ const (
 	ControllerName     = "mcing-controller"
 )
 
+// Container
 const (
 	MinecraftContainerName = "minecraft"
 	ServerPortName         = "server-port"
@@ -26,14 +27,19 @@ const (
 	ServerPropsName        = "server.properties"
 	ServerPropsPath        = DataPath + "/" + ServerPropsName
 	ConfigVolumeName       = "config"
-	ConfigPath             = "/config"
+	ConfigPath             = "/mcing-config"
+
+	AgentContainerName = "mcing-agent"
+	AgentPort          = int32(9080)
+	AgentPortName      = "agent-port"
+	DefaultAgentImage  = ImagePrefix + "mcing-agent:0.0.3"
 
 	InitContainerName  = "mcing-init"
 	ImagePrefix        = "ghcr.io/kmdkuk/"
 	InitContainerImage = "mcing-init"
 	InitCommand        = "mcing-init"
 
-	DefaultServerImage = "itzg/minecraft-server:java17"
+	DefaultServerImage = "itzg/minecraft-server:java8"
 )
 
 const (

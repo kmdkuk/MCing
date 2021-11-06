@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
 	"github.com/kmdkuk/mcing/pkg/constants"
 	. "github.com/onsi/ginkgo"
@@ -11,6 +13,7 @@ import (
 	. "github.com/onsi/gomega/gstruct"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -117,7 +120,7 @@ var _ = Describe("Minecraft controller", func() {
 
 		// statefulset/pod spec
 		Expect(s.Spec.Replicas).To(PointTo(BeNumerically("==", 1)))
-		Expect(s.Spec.Template.Spec.Containers).To(HaveLen(1))
+		Expect(s.Spec.Template.Spec.Containers).To(HaveLen(2))
 		Expect(s.Spec.Template.Spec.Containers[0]).To(MatchFields(IgnoreExtras, Fields{
 			"Name":  Equal(constants.MinecraftContainerName),
 			"Image": Equal(constants.DefaultServerImage),
@@ -139,11 +142,82 @@ var _ = Describe("Minecraft controller", func() {
 					"MountPath": Equal(constants.DataPath),
 				}),
 				"1": MatchFields(IgnoreExtras, Fields{
+					"Name":      Equal(constants.ConfigVolumeName),
+					"MountPath": Equal(constants.ConfigPath),
+				}),
+			}),
+		}))
+		Expect(s.Spec.Template.Spec.Containers[1]).To(MatchFields(IgnoreExtras, Fields{
+			"Name":  Equal(constants.AgentContainerName),
+			"Image": Equal(constants.DefaultAgentImage),
+			"Ports": MatchAllElementsWithIndex(IndexIdentity, Elements{
+				"0": MatchFields(IgnoreExtras, Fields{
+					"Name":          Equal(constants.AgentPortName),
+					"ContainerPort": Equal(constants.AgentPort),
+					"Protocol":      Equal(corev1.ProtocolTCP),
+				}),
+			}),
+			"VolumeMounts": MatchAllElementsWithIndex(IndexIdentity, Elements{
+				"0": MatchFields(IgnoreExtras, Fields{
+					"Name":      Equal(constants.DataVolumeName),
+					"MountPath": Equal(constants.DataPath),
+				}),
+				"1": MatchFields(IgnoreExtras, Fields{
+					"Name":      Equal(constants.ConfigVolumeName),
 					"MountPath": Equal(constants.ConfigPath),
 				}),
 			}),
 		}))
 		Expect(s.Spec.VolumeClaimTemplates).To(HaveLen(1))
 		Expect(s.Spec.VolumeClaimTemplates[0].ObjectMeta.Name).To(Equal("minecraft-data"))
+	})
+
+	It("should update generated ConfigMap, when update specified ConfigMap", func() {
+		By("deploying ConfigMap and Minecraft resource")
+		testCmName := "test-configmap"
+		cm := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      testCmName,
+				Namespace: namespace,
+			},
+			Data: map[string]string{
+				"motd":       "A vanila",
+				"difficulty": "hard",
+				"pvp":        "false",
+			},
+		}
+		mc := makeMinecraft("test", namespace)
+		mc.Spec.ServerPropertiesConfigMapName = &cm.Name
+		Expect(k8sClient.Create(ctx, cm)).To(Succeed())
+		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+		By("getting generated ConfigMap")
+		generatedCm := &corev1.ConfigMap{}
+		Eventually(func() error {
+			if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: mc.PrefixedName()}, generatedCm); err != nil {
+				return err
+			}
+			return nil
+		}).Should(Succeed())
+		By("updating ConfigMap")
+		cm.Data = map[string]string{
+			"motd":       "updated",
+			"difficulty": "easy",
+			"pvp":        "true",
+		}
+		Expect(k8sClient.Update(ctx, cm)).To(Succeed())
+
+		By("getting generated ConfigMap")
+		Eventually(func() error {
+			cm := &corev1.ConfigMap{}
+			if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: mc.PrefixedName()}, cm); err != nil {
+				return err
+			}
+
+			if !cmp.Equal(generatedCm.Data[constants.ServerPropsName], cm.Data[constants.ServerPropsName]) {
+				return fmt.Errorf("The generated ConfigMap has not been updated.")
+			}
+			return nil
+		}).Should(Succeed())
 	})
 })

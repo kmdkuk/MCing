@@ -8,7 +8,11 @@ import (
 )
 
 func subMain() error {
-	serverPropsPath := filepath.Join("/", "config", constants.ServerPropsName)
+	serverPropsPath := filepath.Join(constants.ConfigPath, constants.ServerPropsName)
 	os.Remove(constants.ServerPropsPath)
-	return os.Symlink(serverPropsPath, constants.ServerPropsPath)
+	b, err := os.ReadFile(serverPropsPath)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(constants.ServerPropsPath, b, 0644)
 }
