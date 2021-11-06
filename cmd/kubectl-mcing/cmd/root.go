@@ -34,7 +34,7 @@ func init() {
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "kubectl mcing",
+	Use:   "kubectl-mcing",
 	Short: "kubectl mcing",
 	Long:  "kubectl mcing",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
