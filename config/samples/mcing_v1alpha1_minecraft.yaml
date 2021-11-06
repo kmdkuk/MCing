@@ -11,6 +11,8 @@ spec:
           env:
             - name: TYPE
               value: "SPIGOT"
+            - name: VERSION
+              value: "1.16.3"
             - name: EULA
               value: "true"
   serviceTemplate:
@@ -26,3 +28,4 @@ spec:
           requests:
             storage: 1Gi
   serverPropertiesConfigMapName: mcing-server-props
+  otherConfigMapName: other-props

@@ -431,6 +431,16 @@ func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv
 
 	props := config.GenServerProps(userProps)
 
+	var otherProps map[string]string
+	if mc.Spec.OtherConfigMapName != nil {
+		cm := &corev1.ConfigMap{}
+		err := r.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: *mc.Spec.OtherConfigMapName}, cm)
+		if err != nil {
+			logger.Error(err, "failed to get configmap", "configmap", *mc.Spec.OtherConfigMapName)
+		}
+		otherProps = cm.Data
+	}
+
 	cm := &corev1.ConfigMap{}
 	cm.Namespace = mc.Namespace
 	cm.Name = mc.PrefixedName()
@@ -438,6 +448,18 @@ func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv
 		cm.Labels = mergeMap(cm.Labels, labelSet(mc, constants.AppComponentServer))
 		cm.Data = map[string]string{
 			constants.ServerPropsName: props,
+		}
+		if v, ok := otherProps[constants.BanIPName]; ok {
+			cm.Data[constants.BanIPName] = v
+		}
+		if v, ok := otherProps[constants.BanPlayerName]; ok {
+			cm.Data[constants.BanPlayerName] = v
+		}
+		if v, ok := otherProps[constants.OpsName]; ok {
+			cm.Data[constants.OpsName] = v
+		}
+		if v, ok := otherProps[constants.WhiteListName]; ok {
+			cm.Data[constants.WhiteListName] = v
 		}
 		return ctrl.SetControllerReference(mc, cm, r.scheme)
 	})
