@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 - Add service template (#23) 
 - Use ConfigMap for server.properties (#31) 
+- Enable config autoreload (#35)
 
 ### Changed
 
