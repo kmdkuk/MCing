@@ -80,7 +80,29 @@
     $ kubectl port-forward svc/minecraft-sample 25565:25565
     ```
 
-## Auto reload configuration
+## Configuration by ConfigMap
 
 If you edit the ConfigMap specified by `.spec.serverPropertiesConfigMapName` in the Minecraft resource, it will automatically replace server.properties and then execute the `/reload` command.
 Note: There are some cases where the configuration will not be updated even if you run the `/reload` command. (In the case of TYPE=SPIGOT, we have confirmed that the configuration is updated automatically.)
+
+The following ConfigMap can be applied to other JSON configuration files.
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: other-props
+data:
+  banned-ips.json: |
+    []
+  banned-players.json: |
+    []
+  whitelist.json: |
+    []
+  ops.json: |
+    []
+```
+
+It can be applied by specifying a name, such as `otherConfigMapName: other-props`.
+However, these files are updated from the command in actual operation. Therefore, they will be applied if the target files are not present at startup.
+(TODO: I'm trying to figure out how to successfully merge the JSON specified in ConfigMap with the JSON that actually exists).
