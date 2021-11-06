@@ -104,13 +104,22 @@ test: test-tools
 .PHONY: release-build
 release-build: kustomize
 	mkdir -p build
+	$(MAKE) kubectl-mcing GOOS=windows GOARCH=amd64 SUFFIX=.exe
+	$(MAKE) kubectl-mcing GOOS=darwin GOARCH=amd64
+	$(MAKE) kubectl-mcing GOOS=darwin GOARCH=arm64
+	$(MAKE) kubectl-mcing GOOS=linux GOARCH=amd64
+	$(MAKE) kubectl-mcing GOOS=linux GOARCH=arm64
 	$(KUSTOMIZE) build . > build/install.yaml
 	$(KUSTOMIZE) build config/samples > build/minecraft-sample.yaml
+
+.PHONY: kubectl-mcing
+kubectl-mcing: build/kubectl-moco-$(GOOS)-$(GOARCH)$(SUFFIX)
 
 build: $(BUILD_FILES)
 	mkdir -p $(BIN_DIR)
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o bin/mcing-controller cmd/mcing-controller/main.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o bin/mcing-init cmd/mcing-init/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o bin/kubectl-mcing cmd/kubectl-mcing/main.go
 
 build-image:
 	docker build --target controller -t mcing-controller:dev .
