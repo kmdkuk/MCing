@@ -105,6 +105,7 @@ test: test-tools
 release-build: kustomize
 	mkdir -p build
 	$(KUSTOMIZE) build . > build/install.yaml
+	$(KUSTOMIZE) build config/samples > build/minecraft-sample.yaml
 
 build: $(BUILD_FILES)
 	mkdir -p $(BIN_DIR)
