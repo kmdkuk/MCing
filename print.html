@@ -274,9 +274,27 @@ mcing-server-props       3      2m47s
 </code></pre>
 </li>
 </ol>
-<h2 id="auto-reload-configuration"><a class="header" href="#auto-reload-configuration">Auto reload configuration</a></h2>
+<h2 id="configuration-by-configmap"><a class="header" href="#configuration-by-configmap">Configuration by ConfigMap</a></h2>
 <p>If you edit the ConfigMap specified by <code>.spec.serverPropertiesConfigMapName</code> in the Minecraft resource, it will automatically replace server.properties and then execute the <code>/reload</code> command.
 Note: There are some cases where the configuration will not be updated even if you run the <code>/reload</code> command. (In the case of TYPE=SPIGOT, we have confirmed that the configuration is updated automatically.)</p>
+<p>The following ConfigMap can be applied to other JSON configuration files.</p>
+<pre><code class="language-yaml">apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: other-props
+data:
+  banned-ips.json: |
+    []
+  banned-players.json: |
+    []
+  whitelist.json: |
+    []
+  ops.json: |
+    []
+</code></pre>
+<p>It can be applied by specifying a name, such as <code>otherConfigMapName: other-props</code>.
+However, these files are updated from the command in actual operation. Therefore, they will be applied if the target files are not present at startup.
+(TODO: I'm trying to figure out how to successfully merge the JSON specified in ConfigMap with the JSON that actually exists).</p>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h1 id="custom-resources"><a class="header" href="#custom-resources">Custom resources</a></h1>
 <div id="chapter_begin" style="break-before: page; page-break-before: always;"></div><h3 id="custom-resources-1"><a class="header" href="#custom-resources-1">Custom Resources</a></h3>
 <ul>
@@ -313,6 +331,7 @@ Note: There are some cases where the configuration will not be updated even if y
 <tr><td>volumeClaimTemplates</td><td>PersistentVolumeClaimSpec is a specification of <code>PersistentVolumeClaim</code> for persisting data in minecraft. A claim named &quot;minecraft-data&quot; must be included in the list.</td><td>[]<a href="crd_minecraft.html#persistentvolumeclaim">PersistentVolumeClaim</a></td><td>true</td></tr>
 <tr><td>serviceTemplate</td><td>ServiceTemplate is a <code>Service</code> template.</td><td>*<a href="crd_minecraft.html#servicetemplate">ServiceTemplate</a></td><td>false</td></tr>
 <tr><td>serverPropertiesConfigMapName</td><td>ServerPropertiesConfigMapName is a <code>ConfigMap</code> name of <code>server.properties</code>.</td><td>*string</td><td>false</td></tr>
+<tr><td>otherConfigMapName</td><td>OtherConfigMapName is a <code>ConfigMap</code> name of other configurations file(eg. banned-ips.json, ops.json etc)</td><td>*string</td><td>false</td></tr>
 </tbody></table>
 <p><a href="crd_minecraft.html#custom-resources">Back to Custom Resources</a></p>
 <h4 id="objectmeta"><a class="header" href="#objectmeta">ObjectMeta</a></h4>
