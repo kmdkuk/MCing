@@ -2,7 +2,7 @@
 CTRL_TOOLS_VERSION=0.9.0
 CTRL_RUNTIME_VERSION := $(shell awk '/sigs.k8s.io\/controller-runtime/ {print substr($$2, 2)}' go.mod)
 ENVTEST_K8S_VERSION=1.24.2
-KUSTOMIZE_VERSION = 4.1.3
+KUSTOMIZE_VERSION = 4.5.5
 CRD_TO_MARKDOWN_VERSION = 0.0.3
 MDBOOK_VERSION = 0.4.9
 
@@ -14,9 +14,6 @@ NILERR := $(BIN_DIR)/nilerr
 # Set the shell used to bash for better error handling.
 SHELL = /usr/bin/env bash
 .SHELLFLAGS = -e -o pipefail -c
-
-# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS = "crd:crdVersions=v1,maxDescLen=220"
 
 IMAGE_PREFIX :=
 IMAGE_TAG := latest
@@ -63,8 +60,18 @@ clean:
 
 ##@ Development
 
+.PHONY: start
+start:
+	ctlptl apply -f ./cluster.yaml
+	kubectl apply -f https://github.com/jetstack/cert-manager/releases/latest/download/cert-manager.yaml
+	kubectl -n cert-manager wait --for=condition=available --timeout=180s --all deployments
+
+.PHONY: stop
+stop:
+	ctlptl delete -f ./cluster.yaml
+
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."

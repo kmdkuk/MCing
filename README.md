@@ -61,6 +61,31 @@ $ ../bin/kubectl --kubeconfig .kubeconfig apply -f minecraft-sample.yaml
 $ ../bin/kubectl --kubeconfig .kubeconfig port-forward svc/minecraft-sample 25565:25565
 ```
 
+if you can use aqua, it can be developed as follows
+
+```
+$ cd MCing
+$ aqua i
+$ make start
+$ tilt up
+Tilt started on http://localhost:10350/
+v0.30.4, built 2022-06-16
+
+(space) to open the browser
+(s) to stream logs (--stream=true)
+(t) to open legacy terminal mode (--legacy=true)
+(ctrl-c) to exit
+```
+
+You can access localhost:10350 to check build and controller logs.
+
+For termination, the following
+```
+# Exit the tilt up command by typing ctrl-c
+$ tilt down
+$ make stop
+```
+
 ## Documentation
 
 See https://kmdk.uk/MCing
