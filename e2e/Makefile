@@ -1,6 +1,6 @@
-KIND_VERSION = 0.11.1
-KUBERNETES_VERSION = 1.21.2
-CERT_MANAGER_VERSION = 1.4.0
+KIND_VERSION = 0.14.0
+KUBERNETES_VERSION = 1.24.2
+CERT_MANAGER_VERSION = 1.8.2
 KUSTOMIZE_VERSION = 4.1.3
 
 AGENT_VERSION = 0.0.3
@@ -27,7 +27,7 @@ start: $(KIND) $(KUBECTL)
 .PHONY: test
 test: $(KUSTOMIZE)
 	KINDTEST=1 BIN_DIR=$(BIN_DIR) \
-	go test . -v -timeout=15m -ginkgo.v -ginkgo.failFast $(GINKGO_OPT)
+	go test . -v -timeout=15m -ginkgo.v -ginkgo.fail-fast $(GINKGO_OPT)
 
 .PHONY: bootstrap
 bootstrap:
