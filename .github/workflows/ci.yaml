@@ -5,7 +5,7 @@ on:
     branches:
     - 'main'
 env:
-  go-version: 1.16
+  go-version: 1.18
   cache-version: 1
 jobs:
   build:
@@ -27,12 +27,11 @@ jobs:
         go-version: ${{ env.go-version }}
     - run: make test
     - run: make check-generate
-    - run: make envtest
   e2e:
     name: End-to-End Tests
     strategy:
       matrix:
-        k8s-version: ["1.19.11", "1.20.7", "1.21.2"]
+        k8s-version: ["1.22.1", "1.23.5", "1.24.2"]
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2

@@ -10,6 +10,7 @@ import (
 	agent "github.com/kmdkuk/mcing-agent/proto"
 	"github.com/kmdkuk/mcing/pkg/constants"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
 
@@ -52,7 +53,7 @@ func (f defaultAgentFactory) New(ctx context.Context, podIP string) (AgentConn, 
 	conn, err := grpc.DialContext(ctx, addr,
 		grpc.WithBlock(),
 		grpc.WithKeepaliveParams(kp),
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		return agentConn{}, err

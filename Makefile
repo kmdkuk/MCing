@@ -1,6 +1,7 @@
 # Tool versions
-CTRL_TOOLS_VERSION=0.7.0
+CTRL_TOOLS_VERSION=0.9.0
 CTRL_RUNTIME_VERSION := $(shell awk '/sigs.k8s.io\/controller-runtime/ {print substr($$2, 2)}' go.mod)
+ENVTEST_K8S_VERSION=1.24.2
 KUSTOMIZE_VERSION = 4.1.3
 CRD_TO_MARKDOWN_VERSION = 0.0.3
 MDBOOK_VERSION = 0.4.9
@@ -86,18 +87,24 @@ check-generate:
 envtest: setup-envtest
 	source <($(SETUP_ENVTEST) use -p env); \
 		export DEBUG_CONTROLLER=1; \
-		go test -v -count 1 -race ./controllers -ginkgo.progress -ginkgo.v -ginkgo.failFast
+		go test -v -count 1 -race ./controllers -ginkgo.progress -ginkgo.v -ginkgo.fail-fast
 	source <($(SETUP_ENVTEST) use -p env); \
 		go test -v -count 1 -race ./api/... -ginkgo.progress -ginkgo.v
 
-.PHONY: test
-test: test-tools
-#	go test -v -count 1 -race ./pkg/...
-	go install ./...
+.PHONY: fmt
+fmt: ## Run go fmt against code.
+	go fmt ./...
+
+.PHONY: vet
+vet: ## Run go vet against code.
 	go vet ./...
-	test -z $$(gofmt -s -l . | tee /dev/stderr)
+
+.PHONY: test
+test: manifests generate fmt vet setup-envtest test-tools ## Run tests.
 	$(STATICCHECK) ./...
-	$(NILERR) ./...
+	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) --arch=amd64 use $(ENVTEST_K8S_VERSION) -p path)" go test -v ./api/... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) --arch=amd64 use $(ENVTEST_K8S_VERSION) -p path)" go test -v ./controllers/... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) --arch=amd64 use $(ENVTEST_K8S_VERSION) -p path)" go test -v ./pkg/... -coverprofile cover.out
 
 ##@ Build
 
@@ -132,7 +139,9 @@ controller-gen: ## Download controller-gen locally if necessary.
 
 SETUP_ENVTEST := $(BIN_DIR)/setup-envtest
 .PHONY: setup-envtest
-setup-envtest: ## Download setup-envtest locally if necessary
+setup-envtest: $(SETUP_ENVTEST)
+
+$(SETUP_ENVTEST): ## Download setup-envtest locally if necessary
 	# see https://github.com/kubernetes-sigs/controller-runtime/tree/master/tools/setup-envtest
 	GOBIN=$(BIN_DIR) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
@@ -166,12 +175,8 @@ GOBIN=$(BIN_DIR) go install $(2) ;\
 endef
 
 .PHONY: test-tools
-test-tools: $(STATICCHECK) $(NILERR)
+test-tools: $(STATICCHECK)
 
 $(STATICCHECK):
 	mkdir -p $(BIN_DIR)
 	GOBIN=$(BIN_DIR) go install honnef.co/go/tools/cmd/staticcheck@latest
-
-$(NILERR):
-	mkdir -p $(BIN_DIR)
-	GOBIN=$(BIN_DIR) go install github.com/gostaticanalysis/nilerr/cmd/nilerr@latest
