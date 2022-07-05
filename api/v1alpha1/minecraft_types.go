@@ -206,6 +206,8 @@ type MinecraftStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="TYPE",type="string",JSONPath=".spec.podTemplate.spec.containers[?(.name=='minecraft')].env[?(.name=='TYPE')].value"
+//+kubebuilder:printcolumn:name="VERSION",type="string",JSONPath=".spec.podTemplate.spec.containers[?(.name=='minecraft')].env[?(.name=='VERSION')].value"
 
 // Minecraft is the Schema for the minecrafts API
 type Minecraft struct {
