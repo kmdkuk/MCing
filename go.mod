@@ -3,7 +3,7 @@ module github.com/kmdkuk/mcing
 go 1.18
 
 require (
-	github.com/go-logr/logr v1.2.3
+	github.com/go-logr/logr v1.3.0
 	github.com/google/go-cmp v0.5.8
 	github.com/kmdkuk/mcing-agent v0.0.3
 	github.com/onsi/ginkgo/v2 v2.1.4
