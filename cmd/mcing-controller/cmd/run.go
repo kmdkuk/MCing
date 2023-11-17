@@ -6,15 +6,15 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
+	"github.com/kmdkuk/mcing/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
-	"github.com/kmdkuk/mcing/controllers"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -35,8 +35,7 @@ func subMain() error {
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
-		MetricsBindAddress:     config.metricsAddr,
-		Port:                   9443,
+		Metrics:                metricsserver.Options{BindAddress: config.metricsAddr},
 		HealthProbeBindAddress: config.probeAddr,
 		LeaderElection:         config.enableLeaderElection,
 		LeaderElectionID:       "6f987ab0.kmdkuk.com",

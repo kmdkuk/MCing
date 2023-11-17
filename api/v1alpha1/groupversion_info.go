@@ -1,6 +1,6 @@
 // Package v1alpha1 contains API Schema definitions for the mcing v1alpha1 API group
-//+kubebuilder:object:generate=true
-//+groupName=mcing.kmdkuk.com
+// +kubebuilder:object:generate=true
+// +groupName=mcing.kmdkuk.com
 package v1alpha1
 
 import (

@@ -19,13 +19,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 const defaultTerminationGracePeriodSeconds = 30
@@ -125,7 +124,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 		labels := labelSet(mc, constants.AppComponentServer)
 		sts.Labels = mergeMap(sts.Labels, labels)
 
-		sts.Spec.Replicas = pointer.Int32(1)
+		sts.Spec.Replicas = ptr.To[int32](1)
 		sts.Spec.Selector = &metav1.LabelSelector{
 			MatchLabels: labels,
 		}
@@ -151,7 +150,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 			podSpec.RestartPolicy = sts.Spec.Template.Spec.RestartPolicy
 		}
 		if podSpec.TerminationGracePeriodSeconds == nil {
-			podSpec.TerminationGracePeriodSeconds = pointer.Int64(defaultTerminationGracePeriodSeconds)
+			podSpec.TerminationGracePeriodSeconds = ptr.To[int64](defaultTerminationGracePeriodSeconds)
 		}
 		if len(podSpec.DNSPolicy) == 0 {
 			podSpec.DNSPolicy = sts.Spec.Template.Spec.DNSPolicy
@@ -170,7 +169,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 						LocalObjectReference: corev1.LocalObjectReference{
 							Name: props.Name,
 						},
-						DefaultMode: pointer.Int32(0644),
+						DefaultMode: ptr.To[int32](0644),
 					},
 				},
 			},
@@ -500,9 +499,9 @@ func mergeMap(m1, m2 map[string]string) map[string]string {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *MinecraftReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	configMapHandler := handler.EnqueueRequestsFromMapFunc(func(a client.Object) []reconcile.Request {
+	configMapHandler := handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, a client.Object) []reconcile.Request {
 		mcs := &mcingv1alpha1.MinecraftList{}
-		if err := r.List(context.Background(), mcs, client.InNamespace(a.GetNamespace())); err != nil {
+		if err := r.List(ctx, mcs, client.InNamespace(a.GetNamespace())); err != nil {
 			return nil
 		}
 		var reqs []reconcile.Request
@@ -521,6 +520,6 @@ func (r *MinecraftReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&appsv1.StatefulSet{}).
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ConfigMap{}).
-		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, configMapHandler).
+		Watches(&corev1.ConfigMap{}, configMapHandler).
 		Complete(r)
 }

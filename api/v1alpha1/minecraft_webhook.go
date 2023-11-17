@@ -7,6 +7,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -37,26 +38,26 @@ func (r *Minecraft) Default() {
 var _ webhook.Validator = &Minecraft{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Minecraft) ValidateCreate() error {
+func (r *Minecraft) ValidateCreate() (admission.Warnings, error) {
 	errs := r.Spec.validateCreate()
 	if len(errs) != 0 {
-		return apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, r.Name, errs)
+		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, r.Name, errs)
 	}
 
-	return nil
+	return admission.Warnings{}, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Minecraft) ValidateUpdate(old runtime.Object) error {
+func (r *Minecraft) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	errs := r.Spec.validateUpdate(old.(*Minecraft).Spec)
 	if len(errs) != 0 {
-		return apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, r.Name, errs)
+		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, r.Name, errs)
 	}
 
-	return nil
+	return admission.Warnings{}, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Minecraft) ValidateDelete() error {
-	return nil
+func (r *Minecraft) ValidateDelete() (admission.Warnings, error) {
+	return admission.Warnings{}, nil
 }

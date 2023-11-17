@@ -1,10 +1,10 @@
 # Tool versions
-CTRL_TOOLS_VERSION=0.9.0
+CTRL_TOOLS_VERSION=0.13.0
 CTRL_RUNTIME_VERSION := $(shell awk '/sigs.k8s.io\/controller-runtime/ {print substr($$2, 2)}' go.mod)
-ENVTEST_K8S_VERSION=1.24.2
+ENVTEST_K8S_VERSION=1.28.3
 KUSTOMIZE_VERSION = 4.5.5
 CRD_TO_MARKDOWN_VERSION = 0.0.3
-MDBOOK_VERSION = 0.4.9
+MDBOOK_VERSION = 0.4.35
 
 # Test tools
 BIN_DIR := $(shell pwd)/bin
