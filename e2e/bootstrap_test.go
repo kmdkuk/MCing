@@ -41,7 +41,7 @@ func testBootstrap() {
 		By("applying manifests")
 		stdout, stderr, err := kustomizeBuild(".")
 		Expect(err).ShouldNot(HaveOccurred(), "stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
-		kubectlSafeWithInput(stdout, "apply", "-f", "-")
+		kubectlSafeWithInput(stdout, "apply", "-f", "-", "--server-side", "--force-conflicts")
 
 		By("confirming all controller pods are ready")
 		waitDeployment(controllerNS, "mcing-controller-manager", 1)

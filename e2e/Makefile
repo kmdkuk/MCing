@@ -1,7 +1,6 @@
-KIND_VERSION = 0.14.0
-KUBERNETES_VERSION = 1.24.2
-CERT_MANAGER_VERSION = 1.8.2
-KUSTOMIZE_VERSION = 4.1.3
+KIND_VERSION = 0.20.0
+KUBERNETES_VERSION = 1.28.0
+KUSTOMIZE_VERSION = 5.2.1
 
 AGENT_VERSION = 0.0.3
 
@@ -43,7 +42,7 @@ load: $(KIND)
 
 .PHONY: cert-manager
 cert-manager: $(KUBECTL)
-	$(KUBECTL) apply -f https://github.com/jetstack/cert-manager/releases/download/v$(CERT_MANAGER_VERSION)/cert-manager.yaml
+	$(KUBECTL) apply -f https://github.com/jetstack/cert-manager/releases/latest/download/cert-manager.yaml
 	$(KUBECTL) -n cert-manager wait --for=condition=available --timeout=180s --all deployments
 
 .PHONY: logs
