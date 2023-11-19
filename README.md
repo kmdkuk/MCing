@@ -8,7 +8,7 @@ MCing is a Kubernetes operator for Minecraft server.
 ## Supported software
 
 - Support Server Image: [itzg/minecraft-server](https://hub.docker.com/r/itzg/minecraft-server)
-- Kubernetes: 1.19, 1.20, 1.21
+- Kubernetes: 1.26, 1.27, 1.28
 
 ## Quick start
 

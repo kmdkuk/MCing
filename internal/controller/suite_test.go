@@ -1,4 +1,4 @@
-package controllers
+package controller
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
+	"github.com/kmdkuk/mcing/pkg/constants"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap/zapcore"
@@ -19,9 +21,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
-	"github.com/kmdkuk/mcing/pkg/constants"
 	//+kubebuilder:scaffold:imports
 )
 

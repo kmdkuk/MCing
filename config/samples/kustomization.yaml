@@ -1,4 +1,4 @@
+## Append samples of your project ##
 resources:
-  - mcing_v1alpha1_minecraft.yaml
-  - server_properties_cm.yaml
-  - other-props.yaml
+- mcing_v1alpha1_minecraft.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples
