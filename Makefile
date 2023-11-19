@@ -12,7 +12,7 @@ KUBERNETES_VERSION = 1.28.4
 IMAGE_PREFIX :=
 IMAGE_TAG := latest
 CONTROLLER_IMG ?= mcing-controller:dev
-INIT_IMG ?= mcing-controller:dev
+INIT_IMG ?= mcing-init:dev
 
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
@@ -139,7 +139,7 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 ##@ Build
 
 .PHONY: build
-build: manifests generate fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
+build: fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o $(LOCALBIN)/mcing-controller cmd/mcing-controller/main.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o $(LOCALBIN)/mcing-init cmd/mcing-init/main.go
 
@@ -149,12 +149,12 @@ build: manifests generate fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager bi
 .PHONY: build-image
 build-image: ## Build docker image with the manager.
 	$(CONTAINER_TOOL) build --target controller -t ${CONTROLLER_IMG} .
-	$(CONTAINER_TOOL) build --target init -t ${CONTROLLER_IMG} .
+	$(CONTAINER_TOOL) build --target init -t ${INIT_IMG} .
 
 .PHONY: tag
 tag:
-	$(CONTAINER_TOOL) tag mcing-controller:dev $(IMAGE_PREFIX)mcing-controller:$(IMAGE_TAG)
-	$(CONTAINER_TOOL) tag mcing-init:dev $(IMAGE_PREFIX)mcing-init:$(IMAGE_TAG)
+	$(CONTAINER_TOOL) tag ${CONTROLLER_IMG} $(IMAGE_PREFIX)mcing-controller:$(IMAGE_TAG)
+	$(CONTAINER_TOOL) tag ${INIT_IMG} $(IMAGE_PREFIX)mcing-init:$(IMAGE_TAG)
 
 .PHONY: docker-push
 push: ## Push docker image with the manager.

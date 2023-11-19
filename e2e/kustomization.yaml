@@ -1,8 +1,8 @@
 resources:
   - ../config/default
 
-patchesStrategicMerge:
-- manager_patch.yaml
+patches:
+- path: manager_patch.yaml
 
 images:
 - name: ghcr.io/kmdkuk/mcing-controller
