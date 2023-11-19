@@ -211,6 +211,9 @@ KUBECTL ?= kubectl
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
+CRD_TO_MARKDOWN ?= $(LOCALBIN)/crd-to-markdown
+MDBOOK ?= $(LOCALBIN)/mdbook
+STATICCHECK ?= $(LOCALBIN)/staticcheck
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.2.1
