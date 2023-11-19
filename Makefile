@@ -116,7 +116,9 @@ vet: ## Run go vet against code.
 .PHONY: test
 test: manifests generate fmt vet envtest staticcheck ## Run tests.
 	$(STATICCHECK) ./...
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./api/... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./internal/... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./pkg/... -coverprofile cover.out
 
 GOLANGCI_LINT = $(LOCCALBIN)/golangci-lint
 GOLANGCI_LINT_VERSION ?= v1.54.2
