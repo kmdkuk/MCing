@@ -1,12 +1,31 @@
 apiVersion: mcing.kmdkuk.com/v1alpha1
 kind: Minecraft
 metadata:
-  labels:
-    app.kubernetes.io/name: minecraft
-    app.kubernetes.io/instance: minecraft-sample
-    app.kubernetes.io/part-of: mcing
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: mcing
   name: minecraft-sample
 spec:
-  # TODO(user): Add fields here
+  podTemplate:
+    spec:
+      containers:
+        - name: minecraft
+          image: itzg/minecraft-server:java8
+          env:
+            - name: TYPE
+              value: "SPIGOT"
+            - name: VERSION
+              value: "1.16.3"
+            - name: EULA
+              value: "true"
+  serviceTemplate:
+    spec:
+      type: NodePort
+  volumeClaimTemplates:
+    - metadata:
+        name: minecraft-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 1Gi
+  serverPropertiesConfigMapName: mcing-server-props
+  otherConfigMapName: other-props

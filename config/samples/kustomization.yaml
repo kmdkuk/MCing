@@ -2,3 +2,5 @@
 resources:
 - mcing_v1alpha1_minecraft.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
+- server_properties_cm.yaml
+- other-props.yaml
