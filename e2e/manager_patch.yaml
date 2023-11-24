@@ -11,6 +11,7 @@ spec:
       - name: manager
         args:
         - --zap-log-level=5
+        - --agent-image-name=mcing-agent:e2e
         env:
           - name: DEBUG_CONTROLLER
             value: "1"

@@ -2,8 +2,6 @@ KIND_VERSION = 0.20.0
 KUBERNETES_VERSION = 1.28.0
 KUSTOMIZE_VERSION = 5.2.1
 
-AGENT_VERSION = 0.0.3
-
 PROJECT_DIR :=$(dir $(shell pwd))
 BIN_DIR := ${PROJECT_DIR}/bin
 KIND := ${BIN_DIR}/kind
@@ -37,7 +35,7 @@ load: $(KIND)
 	$(MAKE) -C $(PROJECT_DIR) build-image tag IMAGE_TAG=e2e
 	$(KIND) load docker-image mcing-controller:e2e --name mcing
 	$(KIND) load docker-image mcing-init:e2e --name mcing
-	$(KIND) load docker-image ghcr.io/kmdkuk/mcing-agent:${AGENT_VERSION} --name mcing
+	$(KIND) load docker-image mcing-agent:e2e --name mcing
 
 .PHONY: cert-manager
 cert-manager: $(KUBECTL)
