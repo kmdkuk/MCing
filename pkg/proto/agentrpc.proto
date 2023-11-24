@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package mcing;
-option go_package = "github.com/kmdkuk/mcing/pkgproto";
+option go_package = "github.com/kmdkuk/mcing/pkg/proto";
 
 /**
  * ReloadRequest is the request message to execute `/reload` via rcon.

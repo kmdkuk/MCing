@@ -93,5 +93,5 @@ var _Agent_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/agentrpc.proto",
+	Metadata: "pkg/proto/agentrpc.proto",
 }
