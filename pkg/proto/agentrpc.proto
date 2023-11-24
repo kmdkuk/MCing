@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package mcing;
+option go_package = "github.com/kmdkuk/mcing/pkgproto";
+
+/**
+ * ReloadRequest is the request message to execute `/reload` via rcon.
+*/
+message ReloadRequest {}
+
+/**
+ * ReloadResponse is the response message of Reload
+*/
+message ReloadResponse {}
+
+/**
+ * Agent provides services for MCing.
+*/
+service Agent {
+    rpc Reload(ReloadRequest) returns (ReloadResponse);
+}

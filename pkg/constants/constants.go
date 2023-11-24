@@ -40,7 +40,7 @@ const (
 	AgentContainerName = "mcing-agent"
 	AgentPort          = int32(9080)
 	AgentPortName      = "agent-port"
-	DefaultAgentImage  = ImagePrefix + "mcing-agent:0.0.3"
+	DefaultAgentImage  = ImagePrefix + "mcing-agent:latest"
 
 	InitContainerName  = "mcing-init"
 	ImagePrefix        = "ghcr.io/kmdkuk/"

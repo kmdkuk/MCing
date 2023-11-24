@@ -13,6 +13,7 @@ IMAGE_PREFIX :=
 IMAGE_TAG := latest
 CONTROLLER_IMG ?= mcing-controller:dev
 INIT_IMG ?= mcing-init:dev
+AGENT_IMG ?= mcing-agent:dev
 
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
@@ -142,6 +143,7 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 build: fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o $(LOCALBIN)/mcing-controller cmd/mcing-controller/main.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o $(LOCALBIN)/mcing-init cmd/mcing-init/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o $(LOCALBIN)/mcing-agent cmd/mcing-agent/main.go
 
 # If you wish to build the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64). However, you must enable docker buildKit for it.
@@ -150,16 +152,19 @@ build: fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
 build-image: ## Build docker image with the manager.
 	$(CONTAINER_TOOL) build --target controller -t ${CONTROLLER_IMG} .
 	$(CONTAINER_TOOL) build --target init -t ${INIT_IMG} .
+	$(CONTAINER_TOOL) build --target init -t ${AGENT_IMG} .
 
 .PHONY: tag
 tag:
 	$(CONTAINER_TOOL) tag ${CONTROLLER_IMG} $(IMAGE_PREFIX)mcing-controller:$(IMAGE_TAG)
 	$(CONTAINER_TOOL) tag ${INIT_IMG} $(IMAGE_PREFIX)mcing-init:$(IMAGE_TAG)
+	$(CONTAINER_TOOL) tag ${AGENT_IMG} $(IMAGE_PREFIX)mcing-agent:$(IMAGE_TAG)
 
 .PHONY: docker-push
 push: ## Push docker image with the manager.
 	$(CONTAINER_TOOL) push $(IMAGE_PREFIX)mcing-controller:$(IMAGE_TAG)
 	$(CONTAINER_TOOL) push $(IMAGE_PREFIX)mcing-init:$(IMAGE_TAG)
+	$(CONTAINER_TOOL) push $(IMAGE_PREFIX)mcing-agent:$(IMAGE_TAG)
 
 # PLATFORMS defines the target platforms for the manager image be built to provide support to multiple
 # architectures. (i.e. make docker-buildx IMG=myregistry/mypoperator:0.0.1). To use this option you need to:

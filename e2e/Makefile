@@ -35,7 +35,6 @@ bootstrap:
 .PHONY: load
 load: $(KIND)
 	$(MAKE) -C $(PROJECT_DIR) build-image tag IMAGE_TAG=e2e
-	docker pull ghcr.io/kmdkuk/mcing-agent:${AGENT_VERSION}
 	$(KIND) load docker-image mcing-controller:e2e --name mcing
 	$(KIND) load docker-image mcing-init:e2e --name mcing
 	$(KIND) load docker-image ghcr.io/kmdkuk/mcing-agent:${AGENT_VERSION} --name mcing

@@ -37,3 +37,10 @@ COPY --from=builder /workspace/bin/mcing-init .
 USER 65532:65532
 
 ENTRYPOINT ["/mcing-init"]
+
+FROM gcr.io/distroless/static:nonroot as agent
+WORKDIR /
+COPY --from=builder /workspace/bin/mcing-agent .
+USER 1000:1000
+
+ENTRYPOINT ["/mcing-agent"]
