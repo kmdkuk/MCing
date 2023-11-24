@@ -1,4 +1,4 @@
 resources:
   - ../default
-patchesStrategicMerge:
-  - ./manager.yaml
+patches:
+  - path: ./manager.yaml

@@ -1,5 +1,7 @@
 # Build the manager binary
 FROM golang:1.21 as builder
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -14,7 +16,7 @@ COPY .git .git
 COPY Makefile Makefile
 COPY cmd/ cmd/
 COPY api/ api/
-COPY controllers/ controllers/
+COPY internal/controller/ internal/controller/
 COPY pkg/ pkg/
 
 # Build
