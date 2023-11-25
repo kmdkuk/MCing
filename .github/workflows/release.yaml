@@ -32,7 +32,7 @@ jobs:
         run: |
           make release-build
       - name: GoReleaser
-        uses: goreleaser/goreleaser-action@5
+        uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
           args: release --clean
