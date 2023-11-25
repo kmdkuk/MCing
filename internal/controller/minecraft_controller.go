@@ -221,6 +221,31 @@ func makeMinecraftContainer(mc *mcingv1alpha1.Minecraft, desired, current []core
 	}
 
 	c := source.DeepCopy()
+	c.Stdin = true
+	c.TTY = true
+	c.LivenessProbe = &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"mc-health",
+				},
+			},
+		},
+		InitialDelaySeconds: 120,
+		PeriodSeconds:       60,
+	}
+	c.ReadinessProbe = &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"mc-health",
+				},
+			},
+		},
+		InitialDelaySeconds: 20,
+		PeriodSeconds:       10,
+		FailureThreshold:    12,
+	}
 	c.Ports = append(c.Ports,
 		corev1.ContainerPort{ContainerPort: constants.ServerPort, Name: constants.ServerPortName, Protocol: corev1.ProtocolTCP},
 		corev1.ContainerPort{ContainerPort: constants.RconPort, Name: constants.RconPortName, Protocol: corev1.ProtocolUDP},

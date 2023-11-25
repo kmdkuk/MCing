@@ -34,7 +34,7 @@ ENTRYPOINT ["/mcing-controller"]
 FROM gcr.io/distroless/static:nonroot as init
 WORKDIR /
 COPY --from=builder /workspace/bin/mcing-init .
-USER 65532:65532
+USER 1000:1000
 
 ENTRYPOINT ["/mcing-init"]
 

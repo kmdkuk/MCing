@@ -174,7 +174,7 @@ build: fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
 build-image: ## Build docker image with the manager.
 	$(CONTAINER_TOOL) build --target controller -t ${CONTROLLER_IMG} .
 	$(CONTAINER_TOOL) build --target init -t ${INIT_IMG} .
-	$(CONTAINER_TOOL) build --target init -t ${AGENT_IMG} .
+	$(CONTAINER_TOOL) build --target agent -t ${AGENT_IMG} .
 
 .PHONY: tag
 tag:
