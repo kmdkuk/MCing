@@ -1,0 +1,30 @@
+name: tag push
+on:
+  pull_request:
+    branches:
+      - 'main'
+    types:
+      - closed
+
+jobs:
+  push-tag:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate GitHub Apps token
+        id: generate
+        uses: actions/create-github-app-token@v2
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.PRIVATE_KEY }}
+      - name: push tag
+        env:
+          GITHUB_TOKEN: ${{ steps.generate.outputs.token }}
+        run: |
+          TAG=${${{ github.event.pull_request.head.ref }}##*/}
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a -m "Release $TAG" $TAG
+          git push origin $TAG
+          
