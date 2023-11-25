@@ -17,6 +17,7 @@ var config struct {
 	probeAddr            string
 	enableLeaderElection bool
 	zapOpts              zap.Options
+	initImageName        string
 	agentImageName       string
 }
 
@@ -45,7 +46,8 @@ func init() {
 	fs.BoolVar(&config.enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	fs.StringVar(&config.agentImageName, "agent-image-name", "ghcr.io/kmdkuk/mcing-agent:"+strings.TrimPrefix(version.Version, "v"), "The address the probe endpoint binds to.")
+	fs.StringVar(&config.initImageName, "init-image-name", "ghcr.io/kmdkuk/mcing-init:"+strings.TrimPrefix(version.Version, "v"), "mcing-init image name")
+	fs.StringVar(&config.agentImageName, "agent-image-name", "ghcr.io/kmdkuk/mcing-agent:"+strings.TrimPrefix(version.Version, "v"), "mcing-agent image name")
 
 	goflags := flag.NewFlagSet("klog", flag.ExitOnError)
 	klog.InitFlags(goflags)

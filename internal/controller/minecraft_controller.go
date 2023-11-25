@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
 	"github.com/kmdkuk/mcing/pkg/config"
 	"github.com/kmdkuk/mcing/pkg/constants"
-	"github.com/kmdkuk/mcing/pkg/version"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -39,15 +37,17 @@ type MinecraftReconciler struct {
 	client.Client
 	log            logr.Logger
 	scheme         *runtime.Scheme
+	initImageName  string
 	agentImageName string
 }
 
-func NewMinecraftReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, agentImageName string) *MinecraftReconciler {
+func NewMinecraftReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, initImageName, agentImageName string) *MinecraftReconciler {
 	l := log.WithName("Minecraft")
 	return &MinecraftReconciler{
 		Client:         client,
 		log:            l,
 		scheme:         scheme,
+		initImageName:  initImageName,
 		agentImageName: agentImageName,
 	}
 }
@@ -185,7 +185,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 		containers = append(containers, minecraftContainer)
 		containers = append(containers, r.makeAgentContainer())
 		podSpec.Containers = containers
-		podSpec.InitContainers = makeInitContainer(mc, sts.Spec.Template.Spec.InitContainers)
+		podSpec.InitContainers = r.makeInitContainer(mc, sts.Spec.Template.Spec.InitContainers)
 
 		podSpec.DeepCopyInto(&sts.Spec.Template.Spec)
 
@@ -289,13 +289,12 @@ func (r *MinecraftReconciler) makeAgentContainer() corev1.Container {
 	return c
 }
 
-func makeInitContainer(mc *mcingv1alpha1.Minecraft, current []corev1.Container) []corev1.Container {
+func (r *MinecraftReconciler) makeInitContainer(mc *mcingv1alpha1.Minecraft, current []corev1.Container) []corev1.Container {
 	var image string
 	if debugController {
 		image = constants.InitContainerImage + ":e2e"
 	} else {
-		tag := strings.TrimPrefix(version.Version, "v")
-		image = constants.ImagePrefix + constants.InitContainerImage + ":" + tag
+		image = r.initImageName
 	}
 	c := corev1.Container{
 		Name:  constants.InitContainerName,

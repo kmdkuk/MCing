@@ -1,5 +1,5 @@
 KIND_VERSION = 0.20.0
-KUBERNETES_VERSION = 1.28.0
+KUBERNETES_VERSION = 1.28.0 # renovate: kindest/node
 KUSTOMIZE_VERSION = 5.2.1
 
 PROJECT_DIR :=$(dir $(shell pwd))

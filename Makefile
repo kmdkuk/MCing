@@ -176,10 +176,20 @@ build: fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
 # (i.e. docker build --platform linux/arm64). However, you must enable docker buildKit for it.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: build-image
-build-image: build ## Build docker image with the manager.
+build-image: build-image-controller build-image-init build-image-agent build ## Build docker image with the manager.
+
+.PHONY: build-image-controller
+build-image-controller:
 	$(CONTAINER_TOOL) build --target controller -t ${CONTROLLER_IMG} .
+
+.PHONY: build-image-init
+build-image-init:
 	$(CONTAINER_TOOL) build --target init -t ${INIT_IMG} .
+
+.PHONY: build-image-agent
+build-image-agent:
 	$(CONTAINER_TOOL) build --target agent -t ${AGENT_IMG} .
+
 
 .PHONY: tag
 tag:
@@ -218,7 +228,7 @@ endif
 
 .PHONY: install
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | $(KUBECTL) apply -f -
+	($(KUSTOMIZE) build config/crd | $(KUBECTL) replace -f -) || ($(KUSTOMIZE) build config/crd | $(KUBECTL) create -f -)
 
 .PHONY: uninstall
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
