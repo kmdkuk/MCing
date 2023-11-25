@@ -3,24 +3,24 @@
 
 ## Table of Contents
 
-- [pkg/proto/agentrpc.proto](#pkg/proto/agentrpc.proto)
-    - [ReloadRequest](#mcing.ReloadRequest)
-    - [ReloadResponse](#mcing.ReloadResponse)
+- [pkg/proto/agentrpc.proto](#pkg_proto_agentrpc-proto)
+    - [ReloadRequest](#mcing-ReloadRequest)
+    - [ReloadResponse](#mcing-ReloadResponse)
   
-    - [Agent](#mcing.Agent)
+    - [Agent](#mcing-Agent)
   
 - [Scalar Value Types](#scalar-value-types)
 
 
 
-<a name="pkg/proto/agentrpc.proto"></a>
+<a name="pkg_proto_agentrpc-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
 ## pkg/proto/agentrpc.proto
 
 
 
-<a name="mcing.ReloadRequest"></a>
+<a name="mcing-ReloadRequest"></a>
 
 ### ReloadRequest
 ReloadRequest is the request message to execute `/reload` via rcon.
@@ -30,7 +30,7 @@ ReloadRequest is the request message to execute `/reload` via rcon.
 
 
 
-<a name="mcing.ReloadResponse"></a>
+<a name="mcing-ReloadResponse"></a>
 
 ### ReloadResponse
 ReloadResponse is the response message of Reload
@@ -46,14 +46,14 @@ ReloadResponse is the response message of Reload
  
 
 
-<a name="mcing.Agent"></a>
+<a name="mcing-Agent"></a>
 
 ### Agent
 Agent provides services for MCing.
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| Reload | [ReloadRequest](#mcing.ReloadRequest) | [ReloadResponse](#mcing.ReloadResponse) |  |
+| Reload | [ReloadRequest](#mcing-ReloadRequest) | [ReloadResponse](#mcing-ReloadResponse) |  |
 
  
 
