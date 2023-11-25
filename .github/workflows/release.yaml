@@ -28,6 +28,9 @@ jobs:
         run: |
           export TAG=$(curl -s "https://api.github.com/repos/kmdkuk/MCing/releases/latest" | jq -r .tag_name)
           echo "GORELEASER_PREVIOUS_TAG=${TAG}" >> $GITHUB_ENV
+      - name: Run release-build
+        run: |
+          make release-build
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@5
         with:

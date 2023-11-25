@@ -87,6 +87,11 @@ dockers:
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
 
+release:
+  extra_files:
+    - glob: ./install.yaml
+    - glob: ./minecraft-sample.yaml
+
 changelog:
   use: github-native
   filters:

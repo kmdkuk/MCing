@@ -7,27 +7,6 @@ This document describes how to release a new version of MCing.
 
 Follow [semantic versioning 2.0.0][semver] to choose a new version number.
 
-## Prepare change log entries
-
-Add notable changes since the last release to [CHANGELOG.md](CHANGELOG.md).
-It should look like:
-
-```markdown
-(snip)
-## [Unreleased]
-
-### Added
-- Implement ... (#35)
-
-### Changed
-- Fix a bug in ... (#33)
-
-### Removed
-- Deprecated `-option` is removed ... (#39)
-
-(snip)
-```
-
 ## Bump version
 
 1. Determine a new version number.  Export it as an environment variable:
@@ -38,7 +17,6 @@ It should look like:
 
 2. Make a new branch from the latest `main` with `git checkout -b bump-v$VERSION`
 3. Update version strings in `kustomization.yaml`.
-4. Edit `CHANGELOG.md` for the new version.
 5. Commit the change and create a pull request:
 
     ```console
