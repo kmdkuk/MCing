@@ -3,11 +3,13 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
 	"github.com/kmdkuk/mcing/pkg/constants"
+	"github.com/kmdkuk/mcing/pkg/version"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
@@ -65,7 +67,7 @@ var _ = Describe("Minecraft controller", func() {
 			mgr.GetClient(),
 			log,
 			mgr.GetScheme(),
-			constants.DefaultAgentImage,
+			"ghcr.io/kmdkuk/mcing-agent:"+strings.TrimPrefix(version.Version, "v"),
 		)
 		err = r.SetupWithManager(mgr)
 		Expect(err).ToNot(HaveOccurred())
@@ -151,7 +153,7 @@ var _ = Describe("Minecraft controller", func() {
 		}))
 		Expect(s.Spec.Template.Spec.Containers[1]).To(MatchFields(IgnoreExtras, Fields{
 			"Name":  Equal(constants.AgentContainerName),
-			"Image": Equal(constants.DefaultAgentImage),
+			"Image": Equal("ghcr.io/kmdkuk/mcing-agent:" + strings.TrimPrefix(version.Version, "v")),
 			"Ports": MatchAllElementsWithIndex(IndexIdentity, Elements{
 				"0": MatchFields(IgnoreExtras, Fields{
 					"Name":          Equal(constants.AgentPortName),
