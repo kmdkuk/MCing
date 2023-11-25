@@ -3,39 +3,35 @@ on:
   push:
     tags:
     - 'v*'
-env:
-  go-version: 1.21
 jobs:
-  image:
-    name: Push Container Image
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v4
-    - name: Build images
-      run: |
-        make build-image
-    - name: Login to ghcr.io
-      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
-    - name: Push images
-      run: |
-        make tag push IMAGE_TAG=${GITHUB_REF#refs/tags/v} IMAGE_PREFIX=ghcr.io/kmdkuk/
-        
   release:
-    name: Release on GitHub
-    needs: image
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-go@v4
-      with:
-        go-version: ${{ env.go-version }}
-    - run: make release-build
-    - name: Create Release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        tagname="${GITHUB_REF#refs/tags/}"
-        if echo ${{ github.ref }} | grep -q -e '-'; then prerelease=-p; fi
-        gh release create -t "Release $tagname" $prerelease \
-          -n "See [CHANGELOG.md](./CHANGELOG.md) for details." \
-          "$tagname" build/*
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: docker/setup-qemu-action@v1
+      - uses: docker/setup-buildx-action@v1
+      - name: GHCR Login
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Set previous release tag for GoReleaser
+        run: |
+          export TAG=$(curl -s "https://api.github.com/repos/kmdkuk/MCing/releases/latest" | jq -r .tag_name)
+          echo "GORELEASER_PREVIOUS_TAG=${TAG}" >> $GITHUB_ENV
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@5
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -22,3 +22,9 @@ build/
 
 include/
 tmp/
+
+dist/
+
+mcing-controller
+mcing-init
+mcing-agent

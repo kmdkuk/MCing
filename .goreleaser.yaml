@@ -1,0 +1,95 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 1
+project_name: mcing
+builds:
+  - id: mcing-controller
+    env:
+      - CGO_ENABLED=0
+    main: ./cmd/mcing-controller
+    binary: mcing-controller
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -X github.com/kmdkuk/mcing/pkg/version.Revision={{ .ShortCommit }}
+      - -X github.com/kmdkuk/mcing/pkg/version.BuildDate={{ .Date }}
+      - -X github.com/kmdkuk/mcing/pkg/version.Version={{ .Version }}
+  - id: mcing-init
+    env:
+      - CGO_ENABLED=0
+    main: ./cmd/mcing-init
+    binary: mcing-init
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -X github.com/kmdkuk/mcing/pkg/version.Revision={{ .ShortCommit }}
+      - -X github.com/kmdkuk/mcing/pkg/version.BuildDate={{ .Date }}
+      - -X github.com/kmdkuk/mcing/pkg/version.Version={{ .Version }}
+  - id: mcing-agent
+    env:
+      - CGO_ENABLED=0
+    main: ./cmd/mcing-agent
+    binary: mcing-agent
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -X github.com/kmdkuk/mcing/pkg/version.Revision={{ .ShortCommit }}
+      - -X github.com/kmdkuk/mcing/pkg/version.BuildDate={{ .Date }}
+      - -X github.com/kmdkuk/mcing/pkg/version.Version={{ .Version }}
+
+dockers:
+  - image_templates:
+    - "ghcr.io/kmdkuk/{{.ProjectName}}-controller:{{ .Version }}"
+    use: buildx
+    dockerfile: Dockerfile
+    extra_files:
+      - LICENSE
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--target=controller"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+  - image_templates:
+    - "ghcr.io/kmdkuk/{{.ProjectName}}-init:{{ .Version }}"
+    use: buildx
+    dockerfile: Dockerfile
+    extra_files:
+      - LICENSE
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--target=init"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+  - image_templates:
+    - "ghcr.io/kmdkuk/{{.ProjectName}}-agent:{{ .Version }}"
+    use: buildx
+    dockerfile: Dockerfile
+    extra_files:
+      - LICENSE
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--target=agent"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+
+changelog:
+  use: github-native
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"

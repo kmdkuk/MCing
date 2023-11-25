@@ -53,3 +53,16 @@ jobs:
       with:
         name: logs-${{ matrix.k8s-version }}.tar.gz
         path: e2e/logs.tar.gz
+  dry-run-release:
+    name: Dry-run release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          version: latest
+          args: --snapshot --skip=publish --clean
