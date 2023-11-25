@@ -82,3 +82,24 @@ func waitDeployment(namespace, name string, replicas int) {
 		return nil
 	}).ShouldNot(HaveOccurred())
 }
+
+func waitStatefullSet(namespace, name string, replicas int) {
+	EventuallyWithOffset(1, func() error {
+		stdout, stderr, err := kubectl("get", "statefulset", name, "-n", namespace, "-o", "json")
+		if err != nil {
+			return fmt.Errorf("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
+		}
+
+		d := new(appsv1.StatefulSet)
+		err = json.Unmarshal(stdout, d)
+		if err != nil {
+			return err
+		}
+
+		if int(d.Status.AvailableReplicas) != replicas {
+			return fmt.Errorf("AvailableReplicas is not %d: %d", replicas, int(d.Status.AvailableReplicas))
+		}
+
+		return nil
+	}).ShouldNot(HaveOccurred())
+}

@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	agent "github.com/kmdkuk/mcing-agent/proto"
 	"github.com/kmdkuk/mcing/pkg/constants"
+	agent "github.com/kmdkuk/mcing/pkg/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"

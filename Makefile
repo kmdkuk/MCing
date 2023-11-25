@@ -13,6 +13,17 @@ IMAGE_PREFIX :=
 IMAGE_TAG := latest
 CONTROLLER_IMG ?= mcing-controller:dev
 INIT_IMG ?= mcing-init:dev
+AGENT_IMG ?= mcing-agent:dev
+
+PROTOC := PATH=$(PWD)/bin $(PWD)/bin/protoc -I=$(PWD)/include:.
+PROTOC_BIN := $(PWD)/bin/protoc
+PROTOC_GEN_GO := $(PWD)/bin/protoc-gen-go
+PROTOC_GEN_GO_GRPC := $(PWD)/bin/protoc-gen-go-grpc
+PROTOC_GEN_DOC := $(PWD)/bin/protoc-gen-doc
+PROTOC_VERSION := 25.1
+PROTOC_GEN_GO_VERSION := $(shell awk '/google.golang.org\/protobuf/ {print substr($$2, 2)}' go.mod)
+PROTOC_GEN_GO_GRPC_VERSON=1.2
+PROTOC_GEN_DOC_VERSION=1.5.1
 
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
@@ -91,6 +102,18 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
+.PHONY: proto
+proto: pkg/proto/agentrpc.pb.go pkg/proto/agentrpc_grpc.pb.go docs/agentrpc.md
+
+pkg/proto/agentrpc.pb.go: pkg/proto/agentrpc.proto protoc protoc-gen-go protoc-gen-go-grpc
+	$(PROTOC) --go_out=module=github.com/kmdkuk/mcing:. $<
+
+pkg/proto/agentrpc_grpc.pb.go: pkg/proto/agentrpc.proto protoc protoc-gen-go protoc-gen-go-grpc
+	$(PROTOC) --go-grpc_out=module=github.com/kmdkuk/mcing:. $<
+
+docs/agentrpc.md: pkg/proto/agentrpc.proto protoc protoc-gen-doc
+	$(PROTOC) --doc_out=docs --doc_opt=markdown,$@ $<
+
 .PHONY: apidoc
 apidoc: crd-to-markdown $(wildcard api/*/*_types.go)
 	$(CRD_TO_MARKDOWN) --links docs/links.csv -f api/v1alpha1/minecraft_types.go -n Minecraft > docs/crd_minecraft.md
@@ -102,7 +125,7 @@ book: mdbook
 
 .PHONY: check-generate
 check-generate:
-	$(MAKE) manifests generate apidoc
+	$(MAKE) manifests generate apidoc proto
 	git diff --exit-code --name-only
 
 .PHONY: fmt
@@ -142,6 +165,7 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 build: fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o $(LOCALBIN)/mcing-controller cmd/mcing-controller/main.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o $(LOCALBIN)/mcing-init cmd/mcing-init/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o $(LOCALBIN)/mcing-agent cmd/mcing-agent/main.go
 
 # If you wish to build the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64). However, you must enable docker buildKit for it.
@@ -150,16 +174,19 @@ build: fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
 build-image: ## Build docker image with the manager.
 	$(CONTAINER_TOOL) build --target controller -t ${CONTROLLER_IMG} .
 	$(CONTAINER_TOOL) build --target init -t ${INIT_IMG} .
+	$(CONTAINER_TOOL) build --target agent -t ${AGENT_IMG} .
 
 .PHONY: tag
 tag:
 	$(CONTAINER_TOOL) tag ${CONTROLLER_IMG} $(IMAGE_PREFIX)mcing-controller:$(IMAGE_TAG)
 	$(CONTAINER_TOOL) tag ${INIT_IMG} $(IMAGE_PREFIX)mcing-init:$(IMAGE_TAG)
+	$(CONTAINER_TOOL) tag ${AGENT_IMG} $(IMAGE_PREFIX)mcing-agent:$(IMAGE_TAG)
 
 .PHONY: docker-push
 push: ## Push docker image with the manager.
 	$(CONTAINER_TOOL) push $(IMAGE_PREFIX)mcing-controller:$(IMAGE_TAG)
 	$(CONTAINER_TOOL) push $(IMAGE_PREFIX)mcing-init:$(IMAGE_TAG)
+	$(CONTAINER_TOOL) push $(IMAGE_PREFIX)mcing-agent:$(IMAGE_TAG)
 
 # PLATFORMS defines the target platforms for the manager image be built to provide support to multiple
 # architectures. (i.e. make docker-buildx IMG=myregistry/mypoperator:0.0.1). To use this option you need to:
@@ -255,3 +282,24 @@ $(MDBOOK): $(LOCALBIN)
 staticcheck: $(STATICCHECK)
 $(STATICCHECK): $(LOCALBIN)
 	test -s $(LOCALBIN)/staticcheck || GOBIN=$(LOCALBIN) go install honnef.co/go/tools/cmd/staticcheck@latest
+.PHONY: protoc
+protoc: $(PROTOC_BIN)
+$(PROTOC_BIN): $(LOCALBIN)
+	curl -sfL -o protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-linux-x86_64.zip
+	unzip -o protoc.zip bin/protoc 'include/*'
+	rm -f protoc.zip
+
+.PHONY: protoc-gen-go
+protoc-gen-go: $(PROTOC_GEN_GO)
+$(PROTOC_GEN_GO): $(LOCALBIN)
+	GOBIN=$(LOCALBIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@v$(PROTOC_GEN_GO_VERSION)
+
+.PHONY: protoc-gen-go-grpc
+protoc-gen-go-grpc: $(PROTOC_GEN_GO_GRPC)
+$(PROTOC_GEN_GO_GRPC): $(LOCALBIN)
+	GOBIN=$(LOCALBIN) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v$(PROTOC_GEN_GO_GRPC_VERSON)
+
+.PHONY: protoc-gen-doc
+protoc-gen-doc: $(PROTOC_GEN_DOC)
+$(PROTOC_GEN_DOC): $(LOCALBIN)
+	GOBIN=$(LOCALBIN) go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@v$(PROTOC_GEN_DOC_VERSION)

@@ -65,6 +65,7 @@ var _ = Describe("Minecraft controller", func() {
 			mgr.GetClient(),
 			log,
 			mgr.GetScheme(),
+			constants.DefaultAgentImage,
 		)
 		err = r.SetupWithManager(mgr)
 		Expect(err).ToNot(HaveOccurred())

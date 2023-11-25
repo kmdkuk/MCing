@@ -37,16 +37,18 @@ var (
 // MinecraftReconciler reconciles a Minecraft object
 type MinecraftReconciler struct {
 	client.Client
-	log    logr.Logger
-	scheme *runtime.Scheme
+	log            logr.Logger
+	scheme         *runtime.Scheme
+	agentImageName string
 }
 
-func NewMinecraftReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) *MinecraftReconciler {
+func NewMinecraftReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, agentImageName string) *MinecraftReconciler {
 	l := log.WithName("Minecraft")
 	return &MinecraftReconciler{
-		Client: client,
-		log:    l,
-		scheme: scheme,
+		Client:         client,
+		log:            l,
+		scheme:         scheme,
+		agentImageName: agentImageName,
 	}
 }
 
@@ -181,7 +183,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 			return err
 		}
 		containers = append(containers, minecraftContainer)
-		containers = append(containers, makeAgentContainer())
+		containers = append(containers, r.makeAgentContainer())
 		podSpec.Containers = containers
 		podSpec.InitContainers = makeInitContainer(mc, sts.Spec.Template.Spec.InitContainers)
 
@@ -219,6 +221,31 @@ func makeMinecraftContainer(mc *mcingv1alpha1.Minecraft, desired, current []core
 	}
 
 	c := source.DeepCopy()
+	c.Stdin = true
+	c.TTY = true
+	c.LivenessProbe = &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"mc-health",
+				},
+			},
+		},
+		InitialDelaySeconds: 120,
+		PeriodSeconds:       60,
+	}
+	c.ReadinessProbe = &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"mc-health",
+				},
+			},
+		},
+		InitialDelaySeconds: 20,
+		PeriodSeconds:       10,
+		FailureThreshold:    12,
+	}
 	c.Ports = append(c.Ports,
 		corev1.ContainerPort{ContainerPort: constants.ServerPort, Name: constants.ServerPortName, Protocol: corev1.ProtocolTCP},
 		corev1.ContainerPort{ContainerPort: constants.RconPort, Name: constants.RconPortName, Protocol: corev1.ProtocolUDP},
@@ -237,10 +264,10 @@ func makeMinecraftContainer(mc *mcingv1alpha1.Minecraft, desired, current []core
 	return *c, nil
 }
 
-func makeAgentContainer() corev1.Container {
+func (r *MinecraftReconciler) makeAgentContainer() corev1.Container {
 	c := corev1.Container{}
 	c.Name = constants.AgentContainerName
-	c.Image = constants.DefaultAgentImage
+	c.Image = r.agentImageName
 	c.Ports = []corev1.ContainerPort{
 		{
 			ContainerPort: constants.AgentPort,

@@ -10,7 +10,8 @@ spec:
       containers:
         - command:
             - /mcing-controller
-          args: null
+          args:
+            - --agent-image-name=ghcr.io/kmdkuk/mcing-agent:e2e
           name: manager
           securityContext: null
           resources: null

@@ -46,4 +46,14 @@ func testBootstrap() {
 		By("confirming all controller pods are ready")
 		waitDeployment(controllerNS, "mcing-controller-manager", 1)
 	})
+
+	It("should deploy ../config/samples", func() {
+		By("applying manifests")
+		stdout, stderr, err := kustomizeBuild("../config/samples")
+		Expect(err).ShouldNot(HaveOccurred(), "stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
+		kubectlSafeWithInput(stdout, "apply", "-f", "-")
+
+		By("confirming all minecraft pods are ready")
+		waitStatefullSet("default", "mcing-minecraft-sample", 1)
+	})
 }
