@@ -178,15 +178,15 @@ build:fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
 build-image: build build-image-controller build-image-init build-image-agent ## Build docker image with the manager.
 
 .PHONY: build-image-controller
-build-image-controller:
+build-image-controller: build
 	$(CONTAINER_TOOL) build --target controller -t ${CONTROLLER_IMG} .
 
 .PHONY: build-image-init
-build-image-init:
+build-image-init: build
 	$(CONTAINER_TOOL) build --target init -t ${INIT_IMG} .
 
 .PHONY: build-image-agent
-build-image-agent:
+build-image-agent: build
 	$(CONTAINER_TOOL) build --target agent -t ${AGENT_IMG} .
 
 
