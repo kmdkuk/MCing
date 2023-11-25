@@ -166,8 +166,7 @@ release-build: kustomize
 	$(KUSTOMIZE) build . > install.yaml
 	$(KUSTOMIZE) build config/samples > minecraft-sample.yaml
 
-.PHONY: build
-build: fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
+build:fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o mcing-controller cmd/mcing-controller/main.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o mcing-init cmd/mcing-init/main.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o mcing-agent cmd/mcing-agent/main.go
@@ -176,7 +175,7 @@ build: fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
 # (i.e. docker build --platform linux/arm64). However, you must enable docker buildKit for it.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: build-image
-build-image: build-image-controller build-image-init build-image-agent build ## Build docker image with the manager.
+build-image: build build-image-controller build-image-init build-image-agent ## Build docker image with the manager.
 
 .PHONY: build-image-controller
 build-image-controller:
