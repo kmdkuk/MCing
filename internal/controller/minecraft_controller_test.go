@@ -67,6 +67,7 @@ var _ = Describe("Minecraft controller", func() {
 			mgr.GetClient(),
 			log,
 			mgr.GetScheme(),
+			"ghcr.io/kmdkuk/mcing-init:"+strings.TrimPrefix(version.Version, "v"),
 			"ghcr.io/kmdkuk/mcing-agent:"+strings.TrimPrefix(version.Version, "v"),
 		)
 		err = r.SetupWithManager(mgr)

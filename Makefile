@@ -166,8 +166,7 @@ release-build: kustomize
 	$(KUSTOMIZE) build . > install.yaml
 	$(KUSTOMIZE) build config/samples > minecraft-sample.yaml
 
-.PHONY: build
-build: fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
+build:fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o mcing-controller cmd/mcing-controller/main.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o mcing-init cmd/mcing-init/main.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o mcing-agent cmd/mcing-agent/main.go
@@ -180,6 +179,7 @@ build-image: build ## Build docker image with the manager.
 	$(CONTAINER_TOOL) build --target controller -t ${CONTROLLER_IMG} .
 	$(CONTAINER_TOOL) build --target init -t ${INIT_IMG} .
 	$(CONTAINER_TOOL) build --target agent -t ${AGENT_IMG} .
+
 
 .PHONY: tag
 tag:
@@ -218,7 +218,7 @@ endif
 
 .PHONY: install
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | $(KUBECTL) apply -f -
+	($(KUSTOMIZE) build config/crd | $(KUBECTL) replace -f -) || ($(KUSTOMIZE) build config/crd | $(KUBECTL) create -f -)
 
 .PHONY: uninstall
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.

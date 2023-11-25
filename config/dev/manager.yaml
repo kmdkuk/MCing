@@ -12,6 +12,7 @@ spec:
             - /mcing-controller
           args:
             - --agent-image-name=ghcr.io/kmdkuk/mcing-agent:e2e
+            - --init-image-name=ghcr.io/kmdkuk/mcing-init:e2e
           name: manager
           securityContext: null
           resources: null
