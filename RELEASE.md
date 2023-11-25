@@ -15,13 +15,13 @@ Follow [semantic versioning 2.0.0][semver] to choose a new version number.
     $ VERSION=1.2.3
     ```
 
-2. Make a new branch from the latest `main` with `git checkout -b bump-v$VERSION`
+2. Make a new branch from the latest `main` with `git checkout -b release/v$VERSION`
 3. Update version strings in `kustomization.yaml`.
 5. Commit the change and create a pull request:
 
     ```console
     $ git commit -a -m "Bump version to $VERSION"
-    $ git push origin bump-v$VERSION
+    $ git push origin release/v$VERSION
     ```
 
 6. Merge the new pull request.
