@@ -68,7 +68,6 @@ spec:
       containers:
       - args:
         - --leader-elect
-        - --agent-image-name=ghcr.io/kmdkuk/mcing-controller:0.3.0
         image: ghcr.io/kmdkuk/mcing-controller:latest
         name: manager
         securityContext:
