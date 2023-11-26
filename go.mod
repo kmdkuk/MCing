@@ -7,7 +7,7 @@ require (
 	github.com/go-logr/logr v1.3.0
 	github.com/google/go-cmp v0.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/itzg/rcon-cli v0.0.0-20231111195522-7f9723ac4f4a
+	github.com/itzg/rcon-cli v0.0.0-20231126000727-43ccb0311317
 	github.com/onsi/ginkgo/v2 v2.13.1
 	github.com/onsi/gomega v1.30.0
 	github.com/spf13/cobra v1.8.0
