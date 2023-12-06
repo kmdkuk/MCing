@@ -20,7 +20,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true

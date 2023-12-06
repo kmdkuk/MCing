@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version-file: go.mod
     - run: make build
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version-file: go.mod
     - run: make test
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v5
       with:
         go-version-file: go.mod
     - run: make start KUBERNETES_VERSION=${{ matrix.k8s-version }}
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
       - uses: aquaproj/aqua-installer@v2.2.0
