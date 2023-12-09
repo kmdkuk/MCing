@@ -21,40 +21,40 @@ $ cat <<EOF > minecraft-sample.yaml
 apiVersion: mcing.kmdkuk.com/v1alpha1
 kind: Minecraft
 metadata:
-    name: minecraft-sample
+  name: minecraft-sample
 spec:
-    podTemplate:
-        spec:
-            containers:
-            - name: minecraft
-                image: itzg/minecraft-server:java17
-                env:
-                - name: TYPE
-                    value: "PAPER"
-                - name: EULA
-                    value: "true"
-    serviceTemplate:
-        spec:
-            type: NodePort
-    volumeClaimTemplates:
-    - metadata:
-        name: minecraft-data
-        spec:
-        accessModes: [ "ReadWriteOnce" ]
-        storageClassName: standard
-        resources:
-            requests:
-            storage: 1Gi
-    serverPropertiesConfigMapName: mcing-server-props
+  podTemplate:
+    spec:
+      containers:
+      - name: minecraft
+        image: itzg/minecraft-server:java17
+        env:
+        - name: TYPE
+          value: "PAPER"
+        - name: EULA
+          value: "true"
+  serviceTemplate:
+    spec:
+      type: NodePort
+  volumeClaimTemplates:
+  - metadata:
+      name: minecraft-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 1Gi
+  serverPropertiesConfigMapName: mcing-server-props
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-    name: mcing-server-props
+  name: mcing-server-props
 data:
-    motd: "[this is test]A Vanilla Minecraft Server powered by MCing"
-    pvp: "true"
-    difficulty: "hard"
+  motd: "[this is test]A Vanilla Minecraft Server powered by MCing"
+  pvp: "true"
+  difficulty: "hard"
 EOF
 $ ../bin/kubectl --kubeconfig .kubeconfig apply -f minecraft-sample.yaml
 $ ../bin/kubectl --kubeconfig .kubeconfig port-forward svc/minecraft-sample 25565:25565
