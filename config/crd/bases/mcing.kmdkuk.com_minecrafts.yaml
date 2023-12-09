@@ -34,6 +34,15 @@ spec:
           spec:
             description: MinecraftSpec defines the desired state of Minecraft
             properties:
+              ops:
+                description: operators on server. exec /op or /deop
+                properties:
+                  users:
+                    description: user name exec /op or /deop
+                    items:
+                      type: string
+                    type: array
+                type: object
               otherConfigMapName:
                 description: OtherConfigMapName is a `ConfigMap` name of other configurations
                   file(eg. banned-ips.json, ops.json etc)
@@ -8193,6 +8202,19 @@ spec:
                   type: object
                 minItems: 1
                 type: array
+              whitelist:
+                description: whitelist
+                properties:
+                  enabled:
+                    default: true
+                    description: exec /whitelist on
+                    type: boolean
+                  users:
+                    description: user name exec /whitelist add or /whitelist remove
+                    items:
+                      type: string
+                    type: array
+                type: object
             required:
             - podTemplate
             - volumeClaimTemplates
