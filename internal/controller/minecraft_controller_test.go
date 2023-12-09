@@ -63,7 +63,9 @@ var _ = Describe("Minecraft controller", func() {
 
 		log := ctrl.Log.WithName("controllers")
 
-		mockMinecraftMgr := &mockManager{}
+		mockMinecraftMgr := &mockManager{
+			minecrafts: make(map[string]struct{}),
+		}
 
 		r := NewMinecraftReconciler(
 			mgr.GetClient(),
