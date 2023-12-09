@@ -24,18 +24,18 @@ metadata:
     name: minecraft-sample
 spec:
     podTemplate:
-    spec:
-        containers:
-        - name: minecraft
-            image: itzg/minecraft-server:java8
-            env:
-            - name: TYPE
-                value: "SPIGOT"
-            - name: EULA
-                value: "true"
+        spec:
+            containers:
+            - name: minecraft
+                image: itzg/minecraft-server:java17
+                env:
+                - name: TYPE
+                    value: "PAPER"
+                - name: EULA
+                    value: "true"
     serviceTemplate:
-    spec:
-        type: NodePort
+        spec:
+            type: NodePort
     volumeClaimTemplates:
     - metadata:
         name: minecraft-data
@@ -55,7 +55,6 @@ data:
     motd: "[this is test]A Vanilla Minecraft Server powered by MCing"
     pvp: "true"
     difficulty: "hard"
-EOF
 EOF
 $ ../bin/kubectl --kubeconfig .kubeconfig apply -f minecraft-sample.yaml
 $ ../bin/kubectl --kubeconfig .kubeconfig port-forward svc/minecraft-sample 25565:25565

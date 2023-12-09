@@ -8,6 +8,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
+	"github.com/kmdkuk/mcing/internal/minecraft"
 	"github.com/kmdkuk/mcing/pkg/config"
 	"github.com/kmdkuk/mcing/pkg/constants"
 	appsv1 "k8s.io/api/apps/v1"
@@ -35,20 +36,22 @@ var (
 // MinecraftReconciler reconciles a Minecraft object
 type MinecraftReconciler struct {
 	client.Client
-	log            logr.Logger
-	scheme         *runtime.Scheme
-	initImageName  string
-	agentImageName string
+	log              logr.Logger
+	scheme           *runtime.Scheme
+	initImageName    string
+	agentImageName   string
+	minecraftManager minecraft.MinecraftManager
 }
 
-func NewMinecraftReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, initImageName, agentImageName string) *MinecraftReconciler {
+func NewMinecraftReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, initImageName, agentImageName string, minecraftManager minecraft.MinecraftManager) *MinecraftReconciler {
 	l := log.WithName("Minecraft")
 	return &MinecraftReconciler{
-		Client:         client,
-		log:            l,
-		scheme:         scheme,
-		initImageName:  initImageName,
-		agentImageName: agentImageName,
+		Client:           client,
+		log:              l,
+		scheme:           scheme,
+		initImageName:    initImageName,
+		agentImageName:   agentImageName,
+		minecraftManager: minecraftManager,
 	}
 }
 
@@ -108,6 +111,7 @@ func (r *MinecraftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
+	r.minecraftManager.Update(client.ObjectKeyFromObject(mc))
 	return ctrl.Result{}, nil
 }
 
