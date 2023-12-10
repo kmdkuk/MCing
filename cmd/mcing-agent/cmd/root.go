@@ -31,6 +31,7 @@ import (
 
 	"github.com/cybozu-go/well"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	james4krcon "github.com/james4k/rcon"
 	"github.com/kmdkuk/mcing/pkg/config"
 	"github.com/kmdkuk/mcing/pkg/constants"
 	"github.com/kmdkuk/mcing/pkg/proto"
@@ -139,9 +140,19 @@ to quickly create a Cobra application.`,
 		hostPort := "localhost:" + props[constants.RconPortProps]
 		password := props[constants.RconPasswordProps]
 
-		conn, err := rcon.NewConn(hostPort, password)
-		if err != nil {
-			return err
+		retryCount := 0
+		var conn *james4krcon.RemoteConsole
+		for {
+			conn, err = rcon.NewConn(hostPort, password)
+			if err == nil {
+				break
+			}
+			if retryCount > 10 {
+				return err
+			}
+			retryCount++
+			wait := 5 * retryCount
+			time.Sleep(time.Duration(wait) * time.Second)
 		}
 		defer conn.Close()
 
