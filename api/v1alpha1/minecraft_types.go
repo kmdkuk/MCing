@@ -34,7 +34,6 @@ type MinecraftSpec struct {
 	Ops Ops `json:"ops,omitempty"`
 
 	// whitelist
-	// +optional
 	Whitelist Whitelist `json:"whitelist,omitempty"`
 
 	// ServerPropertiesConfigMapName is a `ConfigMap` name of `server.properties`.
@@ -56,9 +55,7 @@ type Ops struct {
 
 type Whitelist struct {
 	// exec /whitelist on
-	// +optional
-	// +kubebuilder:default=true
-	Enabled bool `json:"enabled,omitempty"`
+	Enabled bool `json:"enabled"`
 
 	// user name exec /whitelist add or /whitelist remove
 	// +optional

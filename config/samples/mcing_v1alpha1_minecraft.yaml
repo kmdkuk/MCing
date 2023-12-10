@@ -3,6 +3,13 @@ kind: Minecraft
 metadata:
   name: minecraft-sample
 spec:
+  whitelist:
+    enabled: true
+    users:
+    - kmdkuk
+  ops:
+    users:
+    - kmdkuk
   podTemplate:
     spec:
       containers:

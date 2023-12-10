@@ -8206,7 +8206,6 @@ spec:
                 description: whitelist
                 properties:
                   enabled:
-                    default: true
                     description: exec /whitelist on
                     type: boolean
                   users:
@@ -8214,6 +8213,8 @@ spec:
                     items:
                       type: string
                     type: array
+                required:
+                - enabled
                 type: object
             required:
             - podTemplate

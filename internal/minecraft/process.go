@@ -76,6 +76,7 @@ func (p *managerProcess) syncWhitelist(ctx context.Context, mc *mcingv1alpha1.Mi
 		Enabled: mc.Spec.Whitelist.Enabled,
 		Users:   mc.Spec.Whitelist.Users,
 	}
+	p.log.Info("syncWhitelist", "in", in)
 	agent, err := p.newAgent(ctx, mc)
 	if err != nil {
 		return err

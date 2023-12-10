@@ -114,7 +114,7 @@ ServiceTemplate define the desired spec and annotations of Service
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| enabled | exec /whitelist on | bool | false |
+| enabled | exec /whitelist on | bool | true |
 | users | user name exec /whitelist add or /whitelist remove | []string | false |
 
 [Back to Custom Resources](#custom-resources)

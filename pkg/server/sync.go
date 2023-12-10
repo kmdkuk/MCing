@@ -16,19 +16,22 @@ func (s agentService) SyncWhitelist(ctx context.Context, req *proto.SyncWhitelis
 	// parse /data/server.peroperties using config.ParseServerProps
 	props, err := config.ParseServerProps(path.Join(constants.DataPath, constants.ServerPropsName))
 	if err != nil {
-		return nil, err
+		return &proto.SyncWhitelistResponse{}, err
 	}
-	enabled, err := strconv.ParseBool(props[constants.Whitelist])
+	enabled, err := strconv.ParseBool(props[constants.WhitelistProps])
 	if err != nil {
-		return nil, err
+		return &proto.SyncWhitelistResponse{}, err
 	}
 	if enabled != req.Enabled {
-		rcon.WhitelistSwitch(req.Enabled)
+		rcon.WhitelistSwitch(s.conn, req.Enabled)
 	}
 	if !req.Enabled {
-		return nil, nil
+		return &proto.SyncWhitelistResponse{}, nil
 	}
-	users := rcon.Whitelistlist()
+	users, err := rcon.Whitelistlist(s.conn)
+	if err != nil {
+		return &proto.SyncWhitelistResponse{}, err
+	}
 	fmt.Println(users)
-	return nil, nil
+	return &proto.SyncWhitelistResponse{}, nil
 }

@@ -55,5 +55,7 @@ const (
 
 // server.properties
 const (
-	Whitelist = "white-list"
+	WhitelistProps    = "white-list"
+	RconPasswordProps = "rcon.password"
+	RconPortProps     = "rcon.port"
 )

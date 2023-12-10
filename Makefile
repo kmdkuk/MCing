@@ -166,20 +166,34 @@ release-build: kustomize
 	$(KUSTOMIZE) build . > install.yaml
 	$(KUSTOMIZE) build config/samples > minecraft-sample.yaml
 
-build:fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
+build:fmt vet $(BUILD_FILES) build-controller build-init build-agent ## Build manager binary.
+
+build-controller:fmt vet $(BUILD_FILES) $(LOCALBIN) ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o mcing-controller cmd/mcing-controller/main.go
+
+build-init:fmt vet $(BUILD_FILES) ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o mcing-init cmd/mcing-init/main.go
+
+build-agent:fmt vet $(BUILD_FILES) ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o mcing-agent cmd/mcing-agent/main.go
 
 # If you wish to build the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64). However, you must enable docker buildKit for it.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: build-image
-build-image: build ## Build docker image with the manager.
-	$(CONTAINER_TOOL) build --target controller -t ${CONTROLLER_IMG} .
-	$(CONTAINER_TOOL) build --target init -t ${INIT_IMG} .
-	$(CONTAINER_TOOL) build --target agent -t ${AGENT_IMG} .
+build-image: build build-image-controller build-image-init build-image-agent ## Build docker image with the manager.
 
+.PHONY: build-image-controller
+build-image-controller: build-controller ## Build docker image with the manager.
+	$(CONTAINER_TOOL) build --target controller -t ${CONTROLLER_IMG} .
+
+.PHONY: build-image-init
+build-image-init: build-init ## Build docker image with the manager.
+	$(CONTAINER_TOOL) build --target init -t ${INIT_IMG} .
+
+.PHONY: build-image-agent
+build-image-agent: build-agent ## Build docker image with the manager.
+	$(CONTAINER_TOOL) build --target agent -t ${AGENT_IMG} .
 
 .PHONY: tag
 tag:

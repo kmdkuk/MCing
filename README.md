@@ -57,7 +57,7 @@ data:
   difficulty: "hard"
 EOF
 $ ../bin/kubectl --kubeconfig .kubeconfig apply -f minecraft-sample.yaml
-$ ../bin/kubectl --kubeconfig .kubeconfig port-forward svc/minecraft-sample 25565:25565
+$ ../bin/kubectl --kubeconfig .kubeconfig port-forward svc/mcing-minecraft-sample 25565:25565
 ```
 
 if you can use aqua, it can be developed as follows
