@@ -15,28 +15,28 @@ func subMain() error {
 	}
 
 	banIPPath := filepath.Join(constants.ConfigPath, constants.BanIPName)
-	if !isFileExists(banIPPath) {
+	if isFileExists(banIPPath) {
 		if err := copyFile(banIPPath, constants.BanIPPath); err != nil {
 			return err
 		}
 	}
 
 	banPlayerPath := filepath.Join(constants.ConfigPath, constants.BanPlayerName)
-	if !isFileExists(banPlayerPath) {
+	if isFileExists(banPlayerPath) {
 		if err := copyFile(banPlayerPath, constants.BanPlayerPath); err != nil {
 			return err
 		}
 	}
 
 	opsPath := filepath.Join(constants.ConfigPath, constants.OpsName)
-	if !isFileExists(opsPath) {
+	if isFileExists(opsPath) {
 		if err := copyFile(opsPath, constants.OpsPath); err != nil {
 			return err
 		}
 	}
 
 	whiteListPath := filepath.Join(constants.ConfigPath, constants.WhiteListName)
-	if !isFileExists(whiteListPath) {
+	if isFileExists(whiteListPath) {
 		if err := copyFile(whiteListPath, constants.WhiteListPath); err != nil {
 			return err
 		}
