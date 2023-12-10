@@ -55,5 +55,5 @@ local_resource('Build & Load (mcing-init)',
     deps=["Dockerfile", 'pkg', 'cmd/mcing-init'])
 
 local_resource('Build & Load (mcing-agent)',
-    'make build-image-agent tag IMAGE_PREFIX=ghcr.io/kmdkuk/ IMAGE_TAG=e2e; kind load docker-image ghcr.io/kmdkuk/mcing-agent:e2e --name mcing-dev;kubectl rollout restart sts',
+    'make build-image-agent tag IMAGE_PREFIX=ghcr.io/kmdkuk/ IMAGE_TAG=e2e; kind load docker-image ghcr.io/kmdkuk/mcing-agent:e2e --name mcing-dev',
     deps=["Dockerfile", 'pkg', 'cmd/mcing-agent'])
