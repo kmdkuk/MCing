@@ -13,6 +13,7 @@ spec:
           args:
             - --agent-image-name=ghcr.io/kmdkuk/mcing-agent:e2e
             - --init-image-name=ghcr.io/kmdkuk/mcing-init:e2e
+            - --check-interval=2s
           name: manager
           securityContext: null
           resources: null

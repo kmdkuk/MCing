@@ -63,12 +63,17 @@ var _ = Describe("Minecraft controller", func() {
 
 		log := ctrl.Log.WithName("controllers")
 
+		mockMinecraftMgr := &mockManager{
+			minecrafts: make(map[string]struct{}),
+		}
+
 		r := NewMinecraftReconciler(
 			mgr.GetClient(),
 			log,
 			mgr.GetScheme(),
 			"ghcr.io/kmdkuk/mcing-init:"+strings.TrimPrefix(version.Version, "v"),
 			"ghcr.io/kmdkuk/mcing-agent:"+strings.TrimPrefix(version.Version, "v"),
+			mockMinecraftMgr,
 		)
 		err = r.SetupWithManager(mgr)
 		Expect(err).ToNot(HaveOccurred())

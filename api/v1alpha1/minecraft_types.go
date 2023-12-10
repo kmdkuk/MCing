@@ -29,6 +29,13 @@ type MinecraftSpec struct {
 	// +optional
 	ServiceTemplate *ServiceTemplate `json:"serviceTemplate,omitempty"`
 
+	// operators on server. exec /op or /deop
+	// +optional
+	Ops Ops `json:"ops,omitempty"`
+
+	// whitelist
+	Whitelist Whitelist `json:"whitelist,omitempty"`
+
 	// ServerPropertiesConfigMapName is a `ConfigMap` name of `server.properties`.
 	// +nullable
 	// +optional
@@ -38,6 +45,21 @@ type MinecraftSpec struct {
 	// +nullable
 	// +optional
 	OtherConfigMapName *string `json:"otherConfigMapName,omitempty"`
+}
+
+type Ops struct {
+	// user name exec /op or /deop
+	// +optional
+	Users []string `json:"users,omitempty"`
+}
+
+type Whitelist struct {
+	// exec /whitelist on
+	Enabled bool `json:"enabled"`
+
+	// user name exec /whitelist add or /whitelist remove
+	// +optional
+	Users []string `json:"users,omitempty"`
 }
 
 // PodTemplateSpec describes the data a pod should have when created from a template.
@@ -218,6 +240,10 @@ type Minecraft struct {
 
 func (m *Minecraft) PrefixedName() string {
 	return "mcing-" + m.Name
+}
+
+func (m *Minecraft) PodName() string {
+	return m.PrefixedName() + "-0"
 }
 
 func (m *Minecraft) HeadlessServiceName() string {

@@ -1,20 +1,21 @@
 package server
 
-import "github.com/kmdkuk/mcing/pkg/proto"
+import (
+	"github.com/james4k/rcon"
+	"github.com/kmdkuk/mcing/pkg/proto"
+	"go.uber.org/zap"
+)
 
 // NewAgentService creates a new AgentServer
-func NewAgentService(agent *Agent) proto.AgentServer {
-	return agentService{agent: agent}
+func NewAgentService(logger *zap.Logger, conn *rcon.RemoteConsole) proto.AgentServer {
+	return agentService{
+		logger: logger.With(zap.String("service", "mcing-agent")),
+		conn:   conn,
+	}
 }
 
 type agentService struct {
-	agent *Agent
+	logger *zap.Logger
+	conn   *rcon.RemoteConsole
 	proto.UnimplementedAgentServer
-}
-
-func New() *Agent {
-	return &Agent{}
-}
-
-type Agent struct {
 }

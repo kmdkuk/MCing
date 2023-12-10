@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	james4krcon "github.com/james4k/rcon"
 	"github.com/kmdkuk/mcing/pkg/log"
 	"github.com/kmdkuk/mcing/pkg/rcon"
 )
@@ -18,7 +19,7 @@ const (
 	serverPropsPath = configPath + "/" + serverPropsName
 )
 
-func Watch(ctx context.Context, interval time.Duration) error {
+func Watch(ctx context.Context, conn *james4krcon.RemoteConsole, interval time.Duration) error {
 	tick := time.NewTicker(interval)
 	defer tick.Stop()
 
@@ -61,7 +62,7 @@ func Watch(ctx context.Context, interval time.Duration) error {
 		}
 
 		if reload {
-			rcon.Reload()
+			rcon.Reload(conn)
 		}
 	}
 }

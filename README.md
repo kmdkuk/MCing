@@ -21,44 +21,50 @@ $ cat <<EOF > minecraft-sample.yaml
 apiVersion: mcing.kmdkuk.com/v1alpha1
 kind: Minecraft
 metadata:
-    name: minecraft-sample
+  name: minecraft-sample
 spec:
-    podTemplate:
+  # whitelist:
+  #   enabled: true
+  #   users:
+  #     - <invite player name>
+  # ops:
+  #   users:
+  #     - <operator player name>
+  podTemplate:
     spec:
-        containers:
-        - name: minecraft
-            image: itzg/minecraft-server:java8
-            env:
-            - name: TYPE
-                value: "SPIGOT"
-            - name: EULA
-                value: "true"
-    serviceTemplate:
+      containers:
+      - name: minecraft
+        image: itzg/minecraft-server:java17
+        env:
+        - name: TYPE
+          value: "PAPER"
+        - name: EULA
+          value: "true"
+  serviceTemplate:
     spec:
-        type: NodePort
-    volumeClaimTemplates:
-    - metadata:
-        name: minecraft-data
-        spec:
-        accessModes: [ "ReadWriteOnce" ]
-        storageClassName: standard
-        resources:
-            requests:
-            storage: 1Gi
-    serverPropertiesConfigMapName: mcing-server-props
+      type: NodePort
+  volumeClaimTemplates:
+  - metadata:
+      name: minecraft-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 1Gi
+  serverPropertiesConfigMapName: mcing-server-props
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-    name: mcing-server-props
+  name: mcing-server-props
 data:
-    motd: "[this is test]A Vanilla Minecraft Server powered by MCing"
-    pvp: "true"
-    difficulty: "hard"
-EOF
+  motd: "[this is test]A Vanilla Minecraft Server powered by MCing"
+  pvp: "true"
+  difficulty: "hard"
 EOF
 $ ../bin/kubectl --kubeconfig .kubeconfig apply -f minecraft-sample.yaml
-$ ../bin/kubectl --kubeconfig .kubeconfig port-forward svc/minecraft-sample 25565:25565
+$ ../bin/kubectl --kubeconfig .kubeconfig port-forward svc/mcing-minecraft-sample 25565:25565
 ```
 
 if you can use aqua, it can be developed as follows

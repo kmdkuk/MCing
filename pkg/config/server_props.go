@@ -1,7 +1,10 @@
 package config
 
 import (
+	"bufio"
 	"fmt"
+	"io"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -69,7 +72,7 @@ var constServerProps = map[string]string{
 	"server-port": strconv.Itoa(int(constants.ServerPort)),
 }
 
-func GenServerProps(userProps map[string]string) string {
+func GenServerProps(userProps map[string]string) (string, error) {
 	serverProps := mergeProps(defaultServerProps, userProps)
 	serverProps = mergeProps(serverProps, constServerProps)
 
@@ -83,10 +86,10 @@ func GenServerProps(userProps map[string]string) string {
 	for _, k := range keys {
 		_, err := fmt.Fprintf(b, "%s=%s\n", k, serverProps[k])
 		if err != nil {
-			panic(err)
+			return "", err
 		}
 	}
-	return b.String()
+	return b.String(), nil
 }
 
 func mergeProps(props1, props2 map[string]string) map[string]string {
@@ -100,5 +103,29 @@ func mergeProps(props1, props2 map[string]string) map[string]string {
 		props[k] = v
 	}
 
+	return props
+}
+
+func ParseServerPropsFromPath(path string) (map[string]string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	return ParseServerProps(f), nil
+}
+
+func ParseServerProps(r io.Reader) map[string]string {
+	props := make(map[string]string)
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		l := scanner.Text()
+		if strings.HasPrefix(l, "#") {
+			continue
+		}
+		split := strings.SplitN(l, "=", 2)
+		props[split[0]] = split[1]
+	}
 	return props
 }

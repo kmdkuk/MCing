@@ -1,15 +1,8 @@
 apiVersion: mcing.kmdkuk.com/v1alpha1
 kind: Minecraft
 metadata:
-  name: minecraft-sample
+  name: ops-whitelist
 spec:
-  # whitelist:
-  #   enabled: true
-  #   users:
-  #   - <invite player name>
-  # ops:
-  #   users:
-  #   - <operator player name>
   podTemplate:
     spec:
       containers:
@@ -34,5 +27,3 @@ spec:
         resources:
           requests:
             storage: 1Gi
-  serverPropertiesConfigMapName: mcing-server-props
-  otherConfigMapName: other-props

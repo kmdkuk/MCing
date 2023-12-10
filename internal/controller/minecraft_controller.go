@@ -8,6 +8,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
+	"github.com/kmdkuk/mcing/internal/minecraft"
 	"github.com/kmdkuk/mcing/pkg/config"
 	"github.com/kmdkuk/mcing/pkg/constants"
 	appsv1 "k8s.io/api/apps/v1"
@@ -35,20 +36,22 @@ var (
 // MinecraftReconciler reconciles a Minecraft object
 type MinecraftReconciler struct {
 	client.Client
-	log            logr.Logger
-	scheme         *runtime.Scheme
-	initImageName  string
-	agentImageName string
+	log              logr.Logger
+	scheme           *runtime.Scheme
+	initImageName    string
+	agentImageName   string
+	minecraftManager minecraft.MinecraftManager
 }
 
-func NewMinecraftReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, initImageName, agentImageName string) *MinecraftReconciler {
+func NewMinecraftReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, initImageName, agentImageName string, minecraftManager minecraft.MinecraftManager) *MinecraftReconciler {
 	l := log.WithName("Minecraft")
 	return &MinecraftReconciler{
-		Client:         client,
-		log:            l,
-		scheme:         scheme,
-		initImageName:  initImageName,
-		agentImageName: agentImageName,
+		Client:           client,
+		log:              l,
+		scheme:           scheme,
+		initImageName:    initImageName,
+		agentImageName:   agentImageName,
+		minecraftManager: minecraftManager,
 	}
 }
 
@@ -56,6 +59,7 @@ func NewMinecraftReconciler(client client.Client, log logr.Logger, scheme *runti
 //+kubebuilder:rbac:groups=mcing.kmdkuk.com,resources=minecrafts/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=mcing.kmdkuk.com,resources=minecrafts/finalizers,verbs=update
 //+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 
@@ -108,6 +112,8 @@ func (r *MinecraftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
+	r.minecraftManager.Update(client.ObjectKeyFromObject(mc))
+	log.Info("finish reconcilation")
 	return ctrl.Result{}, nil
 }
 
@@ -454,7 +460,10 @@ func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv
 		userProps = cm.Data
 	}
 
-	props := config.GenServerProps(userProps)
+	props, err := config.GenServerProps(userProps)
+	if err != nil {
+		return nil, err
+	}
 
 	var otherProps map[string]string
 	if mc.Spec.OtherConfigMapName != nil {

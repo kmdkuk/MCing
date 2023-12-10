@@ -26,11 +26,16 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"path"
 	"time"
 
 	"github.com/cybozu-go/well"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	james4krcon "github.com/james4k/rcon"
+	"github.com/kmdkuk/mcing/pkg/config"
+	"github.com/kmdkuk/mcing/pkg/constants"
 	"github.com/kmdkuk/mcing/pkg/proto"
+	"github.com/kmdkuk/mcing/pkg/rcon"
 	"github.com/kmdkuk/mcing/pkg/server"
 	"github.com/kmdkuk/mcing/pkg/watcher"
 	"github.com/spf13/cobra"
@@ -44,7 +49,7 @@ const (
 	grpcDefaultAddr = ":9080"
 )
 
-var config struct {
+var flags struct {
 	address string
 }
 
@@ -106,9 +111,7 @@ to quickly create a Cobra application.`,
 		}
 		defer zapLogger.Sync()
 
-		agent := server.New()
-
-		lis, err := net.Listen("tcp", config.address)
+		lis, err := net.Listen("tcp", flags.address)
 		if err != nil {
 			return err
 		}
@@ -130,7 +133,32 @@ to quickly create a Cobra application.`,
 				// Add any other interceptor you want.
 			),
 		)
-		proto.RegisterAgentServer(grpcServer, server.NewAgentService(agent))
+		retryCount := 0
+		var conn *james4krcon.RemoteConsole
+		for {
+			props, err := config.ParseServerPropsFromPath(path.Join(constants.DataPath, constants.ServerPropsName))
+			if err != nil {
+				return err
+			}
+
+			hostPort := "localhost:" + props[constants.RconPortProps]
+			password := props[constants.RconPasswordProps]
+
+			conn, err = rcon.NewConn(hostPort, password)
+			if err == nil {
+				break
+			}
+			if retryCount > 10 {
+				return err
+			}
+			retryCount++
+			wait := 1 * retryCount
+			zapLogger.Error(fmt.Sprintf("connection error, retry after %d seconds", wait), zap.Error(err))
+			time.Sleep(time.Duration(wait) * time.Second)
+		}
+		defer conn.Close()
+
+		proto.RegisterAgentServer(grpcServer, server.NewAgentService(zapLogger, conn))
 
 		well.Go(func(ctx context.Context) error {
 			return grpcServer.Serve(lis)
@@ -142,7 +170,7 @@ to quickly create a Cobra application.`,
 		})
 
 		well.Go(func(ctx context.Context) error {
-			return watcher.Watch(ctx, 10*time.Second)
+			return watcher.Watch(ctx, conn, 10*time.Second)
 		})
 
 		if err := well.Wait(); err != nil && !well.IsSignaled(err) {
@@ -162,5 +190,5 @@ func Execute() {
 
 func init() {
 	fs := rootCmd.Flags()
-	fs.StringVar(&config.address, "address", grpcDefaultAddr, "Listening address and port for gRPC API.")
+	fs.StringVar(&flags.address, "address", grpcDefaultAddr, "Listening address and port for gRPC API.")
 }

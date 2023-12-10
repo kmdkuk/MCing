@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/kmdkuk/mcing/pkg/version"
 	"github.com/spf13/cobra"
@@ -19,6 +20,7 @@ var config struct {
 	zapOpts              zap.Options
 	initImageName        string
 	agentImageName       string
+	interval             time.Duration
 }
 
 var rootCmd = &cobra.Command{
@@ -48,6 +50,7 @@ func init() {
 			"Enabling this will ensure there is only one active controller manager.")
 	fs.StringVar(&config.initImageName, "init-image-name", "ghcr.io/kmdkuk/mcing-init:"+strings.TrimPrefix(version.Version, "v"), "mcing-init image name")
 	fs.StringVar(&config.agentImageName, "agent-image-name", "ghcr.io/kmdkuk/mcing-agent:"+strings.TrimPrefix(version.Version, "v"), "mcing-agent image name")
+	fs.DurationVar(&config.interval, "check-interval", 1*time.Minute, "Interval of minecraft maintenance")
 
 	goflags := flag.NewFlagSet("klog", flag.ExitOnError)
 	klog.InitFlags(goflags)

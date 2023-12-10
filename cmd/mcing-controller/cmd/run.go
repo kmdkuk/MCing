@@ -8,6 +8,8 @@ import (
 
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
 	"github.com/kmdkuk/mcing/internal/controller"
+	"github.com/kmdkuk/mcing/internal/minecraft"
+	"github.com/kmdkuk/mcing/pkg/agent"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -32,6 +34,7 @@ func init() {
 
 func subMain() error {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&config.zapOpts)))
+	mcMgrLog := ctrl.Log.WithName("minecraft-manager")
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -45,12 +48,18 @@ func subMain() error {
 		return err
 	}
 
+	af := agent.NewAgentFactory()
+
+	minecraftMgr := minecraft.NewManager(af, config.interval, mgr, mcMgrLog)
+	defer minecraftMgr.StopAll()
+
 	if err = (controller.NewMinecraftReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers"),
 		mgr.GetScheme(),
 		config.initImageName,
 		config.agentImageName,
+		minecraftMgr,
 	)).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Minecraft")
 		return err

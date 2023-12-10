@@ -23,6 +23,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AgentClient interface {
 	Reload(ctx context.Context, in *ReloadRequest, opts ...grpc.CallOption) (*ReloadResponse, error)
+	SyncWhitelist(ctx context.Context, in *SyncWhitelistRequest, opts ...grpc.CallOption) (*SyncWhitelistResponse, error)
+	SyncOps(ctx context.Context, in *SyncOpsRequest, opts ...grpc.CallOption) (*SyncOpsResponse, error)
 }
 
 type agentClient struct {
@@ -42,11 +44,31 @@ func (c *agentClient) Reload(ctx context.Context, in *ReloadRequest, opts ...grp
 	return out, nil
 }
 
+func (c *agentClient) SyncWhitelist(ctx context.Context, in *SyncWhitelistRequest, opts ...grpc.CallOption) (*SyncWhitelistResponse, error) {
+	out := new(SyncWhitelistResponse)
+	err := c.cc.Invoke(ctx, "/mcing.Agent/SyncWhitelist", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentClient) SyncOps(ctx context.Context, in *SyncOpsRequest, opts ...grpc.CallOption) (*SyncOpsResponse, error) {
+	out := new(SyncOpsResponse)
+	err := c.cc.Invoke(ctx, "/mcing.Agent/SyncOps", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AgentServer is the server API for Agent service.
 // All implementations must embed UnimplementedAgentServer
 // for forward compatibility
 type AgentServer interface {
 	Reload(context.Context, *ReloadRequest) (*ReloadResponse, error)
+	SyncWhitelist(context.Context, *SyncWhitelistRequest) (*SyncWhitelistResponse, error)
+	SyncOps(context.Context, *SyncOpsRequest) (*SyncOpsResponse, error)
 	mustEmbedUnimplementedAgentServer()
 }
 
@@ -56,6 +78,12 @@ type UnimplementedAgentServer struct {
 
 func (UnimplementedAgentServer) Reload(context.Context, *ReloadRequest) (*ReloadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reload not implemented")
+}
+func (UnimplementedAgentServer) SyncWhitelist(context.Context, *SyncWhitelistRequest) (*SyncWhitelistResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SyncWhitelist not implemented")
+}
+func (UnimplementedAgentServer) SyncOps(context.Context, *SyncOpsRequest) (*SyncOpsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SyncOps not implemented")
 }
 func (UnimplementedAgentServer) mustEmbedUnimplementedAgentServer() {}
 
@@ -88,6 +116,42 @@ func _Agent_Reload_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Agent_SyncWhitelist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SyncWhitelistRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServer).SyncWhitelist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/mcing.Agent/SyncWhitelist",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServer).SyncWhitelist(ctx, req.(*SyncWhitelistRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Agent_SyncOps_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SyncOpsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServer).SyncOps(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/mcing.Agent/SyncOps",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServer).SyncOps(ctx, req.(*SyncOpsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Agent_ServiceDesc is the grpc.ServiceDesc for Agent service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +162,14 @@ var Agent_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Reload",
 			Handler:    _Agent_Reload_Handler,
+		},
+		{
+			MethodName: "SyncWhitelist",
+			Handler:    _Agent_SyncWhitelist_Handler,
+		},
+		{
+			MethodName: "SyncOps",
+			Handler:    _Agent_SyncOps_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

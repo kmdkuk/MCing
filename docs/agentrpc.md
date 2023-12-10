@@ -6,6 +6,10 @@
 - [pkg/proto/agentrpc.proto](#pkg_proto_agentrpc-proto)
     - [ReloadRequest](#mcing-ReloadRequest)
     - [ReloadResponse](#mcing-ReloadResponse)
+    - [SyncOpsRequest](#mcing-SyncOpsRequest)
+    - [SyncOpsResponse](#mcing-SyncOpsResponse)
+    - [SyncWhitelistRequest](#mcing-SyncWhitelistRequest)
+    - [SyncWhitelistResponse](#mcing-SyncWhitelistResponse)
   
     - [Agent](#mcing-Agent)
   
@@ -39,6 +43,57 @@ ReloadResponse is the response message of Reload
 
 
 
+
+<a name="mcing-SyncOpsRequest"></a>
+
+### SyncOpsRequest
+SyncWhitelistRequest is the request message to exec /whitelist via rcon
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| users | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="mcing-SyncOpsResponse"></a>
+
+### SyncOpsResponse
+SyncOpsResponse is the response message of SyncOps
+
+
+
+
+
+
+<a name="mcing-SyncWhitelistRequest"></a>
+
+### SyncWhitelistRequest
+SyncWhitelistRequest is the request message to exec /whitelist via rcon
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| enabled | [bool](#bool) |  |  |
+| users | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="mcing-SyncWhitelistResponse"></a>
+
+### SyncWhitelistResponse
+SyncWhitelistResponse is the response message of SyncWhitelist
+
+
+
+
+
  
 
  
@@ -54,6 +109,8 @@ Agent provides services for MCing.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | Reload | [ReloadRequest](#mcing-ReloadRequest) | [ReloadResponse](#mcing-ReloadResponse) |  |
+| SyncWhitelist | [SyncWhitelistRequest](#mcing-SyncWhitelistRequest) | [SyncWhitelistResponse](#mcing-SyncWhitelistResponse) |  |
+| SyncOps | [SyncOpsRequest](#mcing-SyncOpsRequest) | [SyncOpsResponse](#mcing-SyncOpsResponse) |  |
 
  
 
