@@ -9,6 +9,7 @@ import (
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
 	"github.com/kmdkuk/mcing/internal/controller"
 	"github.com/kmdkuk/mcing/internal/minecraft"
+	"github.com/kmdkuk/mcing/pkg/agent"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -47,7 +48,9 @@ func subMain() error {
 		return err
 	}
 
-	minecraftMgr := minecraft.NewManager(config.interval, mgr, mcMgrLog)
+	af := agent.NewAgentFactory()
+
+	minecraftMgr := minecraft.NewManager(af, config.interval, mgr, mcMgrLog)
 	defer minecraftMgr.StopAll()
 
 	if err = (controller.NewMinecraftReconciler(

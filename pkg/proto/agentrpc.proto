@@ -4,6 +4,15 @@ package mcing;
 option go_package = "github.com/kmdkuk/mcing/pkg/proto";
 
 /**
+ * Agent provides services for MCing.
+*/
+service Agent {
+    rpc Reload(ReloadRequest) returns (ReloadResponse);
+    rpc SyncWhitelist(SyncWhitelistRequest) returns (SyncWhitelistResponse);
+    rpc SyncOps(SyncOpsRequest) returns (SyncOpsResponse);
+}
+
+/**
  * ReloadRequest is the request message to execute `/reload` via rcon.
 */
 message ReloadRequest {}
@@ -14,8 +23,28 @@ message ReloadRequest {}
 message ReloadResponse {}
 
 /**
- * Agent provides services for MCing.
+ * SyncWhitelistRequest is the request message to exec /whitelist via rcon
 */
-service Agent {
-    rpc Reload(ReloadRequest) returns (ReloadResponse);
+message SyncWhitelistRequest {
+    bool enabled = 1;
+    repeated string users = 2;
+}
+
+/**
+ * SyncWhitelistResponse is the response message of SyncWhitelist
+*/
+message SyncWhitelistResponse {
+}
+
+/**
+ * SyncWhitelistRequest is the request message to exec /whitelist via rcon
+*/
+message SyncOpsRequest {
+    repeated string users = 1;
+}
+
+/**
+ * SyncOpsResponse is the response message of SyncOps
+*/
+message SyncOpsResponse {
 }

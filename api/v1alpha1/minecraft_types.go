@@ -245,6 +245,10 @@ func (m *Minecraft) PrefixedName() string {
 	return "mcing-" + m.Name
 }
 
+func (m *Minecraft) PodName() string {
+	return m.PrefixedName() + "-0"
+}
+
 func (m *Minecraft) HeadlessServiceName() string {
 	return m.PrefixedName() + "-headless"
 }
