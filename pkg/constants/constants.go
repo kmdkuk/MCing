@@ -52,3 +52,8 @@ const (
 const (
 	EulaEnvName = "EULA"
 )
+
+// server.properties
+const (
+	Whitelist = "white-list"
+)

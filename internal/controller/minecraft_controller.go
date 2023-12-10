@@ -460,7 +460,10 @@ func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv
 		userProps = cm.Data
 	}
 
-	props := config.GenServerProps(userProps)
+	props, err := config.GenServerProps(userProps)
+	if err != nil {
+		return nil, err
+	}
 
 	var otherProps map[string]string
 	if mc.Spec.OtherConfigMapName != nil {

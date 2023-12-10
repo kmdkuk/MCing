@@ -106,8 +106,6 @@ to quickly create a Cobra application.`,
 		}
 		defer zapLogger.Sync()
 
-		agent := server.New()
-
 		lis, err := net.Listen("tcp", config.address)
 		if err != nil {
 			return err
@@ -130,7 +128,7 @@ to quickly create a Cobra application.`,
 				// Add any other interceptor you want.
 			),
 		)
-		proto.RegisterAgentServer(grpcServer, server.NewAgentService(agent))
+		proto.RegisterAgentServer(grpcServer, server.NewAgentService())
 
 		well.Go(func(ctx context.Context) error {
 			return grpcServer.Serve(lis)
