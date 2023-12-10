@@ -309,9 +309,11 @@ However, these files are updated from the command in actual operation. Therefore
 <li><a href="crd_minecraft.html#minecraftlist">MinecraftList</a></li>
 <li><a href="crd_minecraft.html#minecraftspec">MinecraftSpec</a></li>
 <li><a href="crd_minecraft.html#objectmeta">ObjectMeta</a></li>
+<li><a href="crd_minecraft.html#ops">Ops</a></li>
 <li><a href="crd_minecraft.html#persistentvolumeclaim">PersistentVolumeClaim</a></li>
 <li><a href="crd_minecraft.html#podtemplatespec">PodTemplateSpec</a></li>
 <li><a href="crd_minecraft.html#servicetemplate">ServiceTemplate</a></li>
+<li><a href="crd_minecraft.html#whitelist">Whitelist</a></li>
 </ul>
 <h4 id="minecraft"><a class="header" href="#minecraft">Minecraft</a></h4>
 <p>Minecraft is the Schema for the minecrafts API</p>
@@ -336,6 +338,8 @@ However, these files are updated from the command in actual operation. Therefore
 <tr><td>podTemplate</td><td>PodTemplate is a <code>Pod</code> template for Minecraft server container.</td><td><a href="crd_minecraft.html#podtemplatespec">PodTemplateSpec</a></td><td>true</td></tr>
 <tr><td>volumeClaimTemplates</td><td>PersistentVolumeClaimSpec is a specification of <code>PersistentVolumeClaim</code> for persisting data in minecraft. A claim named &quot;minecraft-data&quot; must be included in the list.</td><td>[]<a href="crd_minecraft.html#persistentvolumeclaim">PersistentVolumeClaim</a></td><td>true</td></tr>
 <tr><td>serviceTemplate</td><td>ServiceTemplate is a <code>Service</code> template.</td><td>*<a href="crd_minecraft.html#servicetemplate">ServiceTemplate</a></td><td>false</td></tr>
+<tr><td>ops</td><td>operators on server. exec /op or /deop</td><td><a href="crd_minecraft.html#ops">Ops</a></td><td>false</td></tr>
+<tr><td>whitelist</td><td>whitelist</td><td><a href="crd_minecraft.html#whitelist">Whitelist</a></td><td>false</td></tr>
 <tr><td>serverPropertiesConfigMapName</td><td>ServerPropertiesConfigMapName is a <code>ConfigMap</code> name of <code>server.properties</code>.</td><td>*string</td><td>false</td></tr>
 <tr><td>otherConfigMapName</td><td>OtherConfigMapName is a <code>ConfigMap</code> name of other configurations file(eg. banned-ips.json, ops.json etc)</td><td>*string</td><td>false</td></tr>
 </tbody></table>
@@ -347,6 +351,12 @@ However, these files are updated from the command in actual operation. Therefore
 <tr><td>name</td><td>Name is the name of the object.</td><td>string</td><td>false</td></tr>
 <tr><td>labels</td><td>Labels is a map of string keys and values.</td><td>map[string]string</td><td>false</td></tr>
 <tr><td>annotations</td><td>Annotations is a map of string keys and values.</td><td>map[string]string</td><td>false</td></tr>
+</tbody></table>
+</div>
+<p><a href="crd_minecraft.html#custom-resources">Back to Custom Resources</a></p>
+<h4 id="ops"><a class="header" href="#ops">Ops</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
+<tr><td>users</td><td>user name exec /op or /deop</td><td>[]string</td><td>false</td></tr>
 </tbody></table>
 </div>
 <p><a href="crd_minecraft.html#custom-resources">Back to Custom Resources</a></p>
@@ -371,6 +381,13 @@ However, these files are updated from the command in actual operation. Therefore
 <div class="table-wrapper"><table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
 <tr><td>metadata</td><td>Standard object's metadata. Only <code>annotations</code> and <code>labels</code> are valid.</td><td><a href="crd_minecraft.html#objectmeta">ObjectMeta</a></td><td>false</td></tr>
 <tr><td>spec</td><td>Spec is the ServiceSpec</td><td>*corev1.ServiceSpec</td><td>false</td></tr>
+</tbody></table>
+</div>
+<p><a href="crd_minecraft.html#custom-resources">Back to Custom Resources</a></p>
+<h4 id="whitelist"><a class="header" href="#whitelist">Whitelist</a></h4>
+<div class="table-wrapper"><table><thead><tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr></thead><tbody>
+<tr><td>enabled</td><td>exec /whitelist on</td><td>bool</td><td>true</td></tr>
+<tr><td>users</td><td>user name exec /whitelist add or /whitelist remove</td><td>[]string</td><td>false</td></tr>
 </tbody></table>
 </div>
 <p><a href="crd_minecraft.html#custom-resources">Back to Custom Resources</a></p>
