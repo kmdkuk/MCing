@@ -196,9 +196,18 @@ build-image-agent: build-agent ## Build docker image with the manager.
 	$(CONTAINER_TOOL) build --target agent -t ${AGENT_IMG} .
 
 .PHONY: tag
-tag:
+tag: build tag-controller tag-init tag-agent
+
+.PHONY: tag-controller
+tag-controller: build-controller
 	$(CONTAINER_TOOL) tag ${CONTROLLER_IMG} $(IMAGE_PREFIX)mcing-controller:$(IMAGE_TAG)
+
+.PHONY: tag-init
+tag-init: build-init
 	$(CONTAINER_TOOL) tag ${INIT_IMG} $(IMAGE_PREFIX)mcing-init:$(IMAGE_TAG)
+
+.PHONY: tag-agent
+tag-agent: build-agent
 	$(CONTAINER_TOOL) tag ${AGENT_IMG} $(IMAGE_PREFIX)mcing-agent:$(IMAGE_TAG)
 
 .PHONY: docker-push
