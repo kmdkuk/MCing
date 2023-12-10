@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"encoding/json"
+	"os"
 	"path"
 	"strconv"
 
@@ -54,6 +56,46 @@ func (s agentService) SyncWhitelist(ctx context.Context, req *proto.SyncWhitelis
 	}
 	log.Info("finish sync whitelist", zap.Strings("addUsers", addUsers), zap.Strings("removeUsers", removeUsers))
 	return &proto.SyncWhitelistResponse{}, nil
+}
+
+type opsJson struct {
+	Uuid                string `json:"uuid"`
+	Name                string `json:"name"`
+	Level               int    `json:"level"`
+	BypassesPlayerLimit bool   `json:"bypassesPlayerLimit"`
+}
+
+func (s agentService) SyncOps(ctx context.Context, req *proto.SyncOpsRequest) (*proto.SyncOpsResponse, error) {
+	log := ctxzap.Extract(ctx).With(zap.String("func", "syncOps"))
+	log.Info("start sync ops")
+	raw, err := os.ReadFile(path.Join(constants.DataPath, constants.OpsName))
+	if err != nil {
+		return &proto.SyncOpsResponse{}, err
+	}
+	var ops []opsJson
+	json.Unmarshal(raw, &ops)
+	users := make([]string, 0)
+	for _, v := range ops {
+		users = append(users, v.Name)
+	}
+
+	addUsers := differenceSet(users, req.Users)
+	if len(addUsers) > 0 {
+		err := rcon.Op(s.conn, addUsers)
+		if err != nil {
+			return &proto.SyncOpsResponse{}, err
+		}
+	}
+	// remove: Not present in req.Users, but present in users.
+	removeUsers := differenceSet(req.Users, users)
+	if len(removeUsers) > 0 {
+		err := rcon.Deop(s.conn, removeUsers)
+		if err != nil {
+			return &proto.SyncOpsResponse{}, err
+		}
+	}
+	log.Info("finish sync Ops", zap.Strings("addUsers", addUsers), zap.Strings("removeUsers", removeUsers))
+	return &proto.SyncOpsResponse{}, nil
 }
 
 func differenceSet(a, b []string) []string {

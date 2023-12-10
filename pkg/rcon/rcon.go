@@ -80,3 +80,30 @@ func Whitelistlist(remoteConsole *rcon.RemoteConsole) ([]string, error) {
 	}
 	return strings.Split(strings.ReplaceAll(usertxt, " ", ""), ","), nil
 }
+
+func Op(remoteConsole *rcon.RemoteConsole, users []string) error {
+	var errUsers []string
+	for _, user := range users {
+		out, err := exec(remoteConsole, "op", user)
+		if err != nil {
+			return err
+		}
+		if out == "That player does not exist" {
+			errUsers = append(errUsers, user)
+		}
+	}
+	if len(errUsers) > 0 {
+		return fmt.Errorf("failed to add some users as operator users: %s", strings.Join(errUsers, ","))
+	}
+	return nil
+}
+
+func Deop(remoteConsole *rcon.RemoteConsole, users []string) error {
+	for _, user := range users {
+		_, err := exec(remoteConsole, "deop", user)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
