@@ -7,7 +7,6 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/kmdkuk/mcing/pkg/config"
 	"github.com/kmdkuk/mcing/pkg/constants"
 	"github.com/kmdkuk/mcing/pkg/proto"
@@ -16,7 +15,7 @@ import (
 )
 
 func (s agentService) SyncWhitelist(ctx context.Context, req *proto.SyncWhitelistRequest) (*proto.SyncWhitelistResponse, error) {
-	log := ctxzap.Extract(ctx).With(zap.String("func", "syncWhitelist"))
+	log := s.logger.With(zap.String("func", "syncWhitelist"))
 	log.Info("start sync white list")
 	// parse /data/server.peroperties using config.ParseServerProps
 	props, err := config.ParseServerProps(path.Join(constants.DataPath, constants.ServerPropsName))
@@ -66,7 +65,7 @@ type opsJson struct {
 }
 
 func (s agentService) SyncOps(ctx context.Context, req *proto.SyncOpsRequest) (*proto.SyncOpsResponse, error) {
-	log := ctxzap.Extract(ctx).With(zap.String("func", "syncOps"))
+	log := s.logger.With(zap.String("func", "syncOps"))
 	log.Info("start sync ops")
 	raw, err := os.ReadFile(path.Join(constants.DataPath, constants.OpsName))
 	if err != nil {

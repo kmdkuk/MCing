@@ -158,7 +158,7 @@ to quickly create a Cobra application.`,
 		}
 		defer conn.Close()
 
-		proto.RegisterAgentServer(grpcServer, server.NewAgentService(conn))
+		proto.RegisterAgentServer(grpcServer, server.NewAgentService(zapLogger, conn))
 
 		well.Go(func(ctx context.Context) error {
 			return grpcServer.Serve(lis)
