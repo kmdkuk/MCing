@@ -133,16 +133,17 @@ to quickly create a Cobra application.`,
 				// Add any other interceptor you want.
 			),
 		)
-		props, err := config.ParseServerProps(path.Join(constants.DataPath, constants.ServerPropsName))
-		if err != nil {
-			return err
-		}
-		hostPort := "localhost:" + props[constants.RconPortProps]
-		password := props[constants.RconPasswordProps]
-
 		retryCount := 0
 		var conn *james4krcon.RemoteConsole
 		for {
+			props, err := config.ParseServerProps(path.Join(constants.DataPath, constants.ServerPropsName))
+			if err != nil {
+				return err
+			}
+
+			hostPort := "localhost:" + props[constants.RconPortProps]
+			password := props[constants.RconPasswordProps]
+
 			conn, err = rcon.NewConn(hostPort, password)
 			if err == nil {
 				break
@@ -151,7 +152,8 @@ to quickly create a Cobra application.`,
 				return err
 			}
 			retryCount++
-			wait := 5 * retryCount
+			wait := 1 * retryCount
+			zapLogger.Error(fmt.Sprintf("connection error, retry after %d seconds", wait), zap.Error(err))
 			time.Sleep(time.Duration(wait) * time.Second)
 		}
 		defer conn.Close()

@@ -55,11 +55,28 @@ func WhitelistSwitch(remoteConsole *rcon.RemoteConsole, enabled bool) error {
 	return err
 }
 
+func Whitelist(remoteConsole *rcon.RemoteConsole, action string, users []string) error {
+	if action != "add" && action != "remove" {
+		return fmt.Errorf("action must be add or remove. action: %s", action)
+	}
+	for _, user := range users {
+		_, err := exec(remoteConsole, "whitelist", action, user)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func Whitelistlist(remoteConsole *rcon.RemoteConsole) ([]string, error) {
 	// There are 2 whitelisted players: hoge, fuga
 	liststr, err := exec(remoteConsole, "whitelist", "list")
 	if err != nil {
 		return nil, err
 	}
-	return strings.Split(liststr, ","), nil
+	_, usertxt, ok := strings.Cut(liststr, ":")
+	if !ok {
+		return []string{}, nil
+	}
+	return strings.Split(strings.ReplaceAll(usertxt, " ", ""), ","), nil
 }
