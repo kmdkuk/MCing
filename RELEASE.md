@@ -24,15 +24,7 @@ Follow [semantic versioning 2.0.0][semver] to choose a new version number.
     $ git push origin release/v$VERSION
     ```
 
-6. Merge the new pull request.
-7. Add a new tag and push it as follows:
-
-    ```console
-    $ git checkout main
-    $ git pull
-    $ git tag -a -m "Release v$VERSION" v$VERSION
-    $ git push origin v$VERSION
-    ```
+6. Merge the new pull request. Push tag automatically.
 
 ## (Option) Edit GitHub release page
 
