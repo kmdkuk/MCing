@@ -23,6 +23,13 @@ kind: Minecraft
 metadata:
   name: minecraft-sample
 spec:
+  # whitelist:
+  #   enabled: true
+  #   users:
+  #     - <invite player name>
+  # ops:
+  #   users:
+  #     - <operator player name>
   podTemplate:
     spec:
       containers:
