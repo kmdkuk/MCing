@@ -65,7 +65,7 @@ func TestParseServerProps(t *testing.T) {
 }
 
 func testSuccess(t *testing.T) {
-	actual, err := ParseServerProps("testdata/parse-test.server.properties")
+	actual, err := ParseServerPropsFromPath("testdata/parse-test.server.properties")
 	expect := map[string]string{
 		"null":          "",
 		"test":          "test",

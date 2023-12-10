@@ -18,7 +18,7 @@ func (s agentService) SyncWhitelist(ctx context.Context, req *proto.SyncWhitelis
 	log := s.logger.With(zap.String("func", "syncWhitelist"))
 	log.Info("start sync white list")
 	// parse /data/server.peroperties using config.ParseServerProps
-	props, err := config.ParseServerProps(path.Join(constants.DataPath, constants.ServerPropsName))
+	props, err := config.ParseServerPropsFromPath(path.Join(constants.DataPath, constants.ServerPropsName))
 	if err != nil {
 		return &proto.SyncWhitelistResponse{}, err
 	}

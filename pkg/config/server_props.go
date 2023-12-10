@@ -3,6 +3,7 @@ package config
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"strconv"
@@ -105,15 +106,19 @@ func mergeProps(props1, props2 map[string]string) map[string]string {
 	return props
 }
 
-func ParseServerProps(path string) (map[string]string, error) {
+func ParseServerPropsFromPath(path string) (map[string]string, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 
+	return ParseServerProps(f), nil
+}
+
+func ParseServerProps(r io.Reader) map[string]string {
 	props := make(map[string]string)
-	scanner := bufio.NewScanner(f)
+	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		l := scanner.Text()
 		if strings.HasPrefix(l, "#") {
@@ -122,5 +127,5 @@ func ParseServerProps(path string) (map[string]string, error) {
 		split := strings.SplitN(l, "=", 2)
 		props[split[0]] = split[1]
 	}
-	return props, nil
+	return props
 }

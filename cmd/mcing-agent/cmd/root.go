@@ -136,7 +136,7 @@ to quickly create a Cobra application.`,
 		retryCount := 0
 		var conn *james4krcon.RemoteConsole
 		for {
-			props, err := config.ParseServerProps(path.Join(constants.DataPath, constants.ServerPropsName))
+			props, err := config.ParseServerPropsFromPath(path.Join(constants.DataPath, constants.ServerPropsName))
 			if err != nil {
 				return err
 			}

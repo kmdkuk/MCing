@@ -19,7 +19,7 @@ start: $(KIND) $(KUBECTL)
 	$(KIND) create cluster --name=mcing --config=$(KIND_CONFIG) --image=kindest/node:v$(KUBERNETES_VERSION) --wait 1m
 	$(MAKE) load
 	$(MAKE) cert-manager
-	$(KUBECTL) -A wait --for=condition=available --timeout=180s --all deployments
+	$(KUBECTL) -n kube-system wait --for=condition=available --timeout=180s --all deployments
 
 .PHONY: test
 test: $(KUSTOMIZE)
