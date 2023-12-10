@@ -10,6 +10,7 @@ import (
 	"github.com/kmdkuk/mcing/pkg/constants"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 )
 
 //go:embed testdata/add-ops-whitelist.yaml
@@ -95,6 +96,18 @@ func testOpsWhitelist() {
 			bf := bytes.NewBuffer(stdout)
 			props := config.ParseServerProps(bf)
 			g.Expect(props[constants.WhitelistProps]).Should(Equal("false"))
+		})
+	})
+
+	It("should delete ops-whitelist instance", func() {
+		kubectlSafeWithInput([]byte(noOpsWhitelistYAML), "delete", "-f", "-")
+		Eventually(func(g Gomega) {
+			stdout, _, err := kubectl("get", "pod", "-o", "json")
+			g.Expect(err).ShouldNot(HaveOccurred())
+			pods := &corev1.PodList{}
+			err = json.Unmarshal(stdout, pods)
+			g.Expect(err).ShouldNot(HaveOccurred())
+			g.Expect(pods).Should(HaveLen(0))
 		})
 	})
 }
