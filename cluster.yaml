@@ -7,5 +7,5 @@ apiVersion: ctlptl.dev/v1alpha1
 kind: Cluster
 name: kind-mcing-dev
 product: kind
-kubernetesVersion: v1.28.0 # renovate: kindest/node
+kubernetesVersion: v1.28.6 # renovate: kindest/node
 registry: mcing-registry
