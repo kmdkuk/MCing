@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/cybozu-go/well v1.11.2
-	github.com/go-logr/logr v1.4.1
+	github.com/go-logr/logr v1.4.2
 	github.com/google/go-cmp v0.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	github.com/james4k/rcon v0.0.0-20210222224819-34a67ca2b2d6
