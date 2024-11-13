@@ -1,8 +1,8 @@
 # Tool versions
-CTRL_TOOLS_VERSION=0.13.0
+CONTROLLER_TOOLS_VERSION = 0.16.5
 CTRL_RUNTIME_VERSION := $(shell awk '/sigs.k8s.io\/controller-runtime/ {print substr($$2, 2)}' go.mod)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION=1.28.3
+ENVTEST_K8S_VERSION = 1.28.3
 KUSTOMIZE_VERSION = 5.2.1
 CRD_TO_MARKDOWN_VERSION = 0.0.3
 MDBOOK_VERSION = 0.4.35
@@ -20,7 +20,7 @@ PROTOC_BIN := $(PWD)/bin/protoc
 PROTOC_GEN_GO := $(PWD)/bin/protoc-gen-go
 PROTOC_GEN_GO_GRPC := $(PWD)/bin/protoc-gen-go-grpc
 PROTOC_GEN_DOC := $(PWD)/bin/protoc-gen-doc
-PROTOC_VERSION := 25.1
+PROTOC_VERSION := 28.3
 PROTOC_GEN_GO_VERSION := $(shell awk '/google.golang.org\/protobuf/ {print substr($$2, 2)}' go.mod)
 PROTOC_GEN_GO_GRPC_VERSON=1.2
 PROTOC_GEN_DOC_VERSION=1.5.1
@@ -272,10 +272,6 @@ CRD_TO_MARKDOWN ?= $(LOCALBIN)/crd-to-markdown
 MDBOOK ?= $(LOCALBIN)/mdbook
 STATICCHECK ?= $(LOCALBIN)/staticcheck
 
-## Tool Versions
-KUSTOMIZE_VERSION ?= v5.2.1
-CONTROLLER_TOOLS_VERSION ?= v0.13.0
-
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
 $(KUSTOMIZE): $(LOCALBIN)
@@ -289,7 +285,7 @@ $(KUSTOMIZE): $(LOCALBIN)
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary. If wrong version is installed, it will be overwritten.
 $(CONTROLLER_GEN): $(LOCALBIN)
 	test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
-	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@v$(CONTROLLER_TOOLS_VERSION)
 
 .PHONY: envtest
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
