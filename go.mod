@@ -1,6 +1,8 @@
 module github.com/kmdkuk/mcing
 
-go 1.21
+go 1.23
+
+toolchain go1.23.3
 
 require (
 	github.com/cybozu-go/well v1.11.2
