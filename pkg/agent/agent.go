@@ -43,15 +43,11 @@ type defaultAgentFactory struct {
 var _ AgentFactory = defaultAgentFactory{}
 
 func (f defaultAgentFactory) New(ctx context.Context, podIP string) (AgentConn, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
 	addr := net.JoinHostPort(podIP, strconv.Itoa(int(constants.AgentPort)))
 	kp := keepalive.ClientParameters{
 		Time: 1 * time.Minute,
 	}
-	conn, err := grpc.DialContext(ctx, addr,
-		grpc.WithBlock(),
+	conn, err := grpc.NewClient(addr,
 		grpc.WithKeepaliveParams(kp),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
