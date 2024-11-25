@@ -9,7 +9,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/james4k/rcon v0.0.0-20210222224819-34a67ca2b2d6
 	github.com/onsi/ginkgo/v2 v2.22.0
-	github.com/onsi/gomega v1.35.1
+	github.com/onsi/gomega v1.36.0
 	github.com/spf13/cobra v1.8.1
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.68.0
