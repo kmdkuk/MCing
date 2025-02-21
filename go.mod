@@ -5,7 +5,7 @@ go 1.23.3
 require (
 	github.com/cybozu-go/well v1.11.2
 	github.com/go-logr/logr v1.4.2
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
 	github.com/james4k/rcon v0.0.0-20210222224819-34a67ca2b2d6
 	github.com/onsi/ginkgo/v2 v2.22.1
