@@ -2,11 +2,11 @@
 CONTROLLER_TOOLS_VERSION = 0.17.3
 CTRL_RUNTIME_VERSION := $(shell awk '/sigs.k8s.io\/controller-runtime/ {print substr($$2, 2)}' go.mod)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.33.0
+ENVTEST_K8S_VERSION = 1.32.0
 KUSTOMIZE_VERSION = 5.6.0
 CRD_TO_MARKDOWN_VERSION = 0.0.3
 MDBOOK_VERSION = 0.4.35
-KUBERNETES_VERSION = 1.33.0
+KUBERNETES_VERSION = 1.32.2
 
 # Image URL to use all building/pushing image targets
 IMAGE_PREFIX :=
