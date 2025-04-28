@@ -17,6 +17,9 @@ var config struct {
 	metricsAddr          string
 	probeAddr            string
 	enableLeaderElection bool
+	webhookCertPath      string
+	webhookCertName      string
+	webhookCertKey       string
 	zapOpts              zap.Options
 	initImageName        string
 	agentImageName       string
@@ -48,6 +51,9 @@ func init() {
 	fs.BoolVar(&config.enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	fs.StringVar(&config.webhookCertPath, "webhook-cert-path", "/tmp/k8s-webhook-server/serving-certs", "The directory that contains the webhook certificate.")
+	fs.StringVar(&config.webhookCertName, "webhook-cert-name", "tls.crt", "The name of the webhook certificate file.")
+	fs.StringVar(&config.webhookCertKey, "webhook-cert-key", "tls.key", "The name of the webhook key file.")
 	fs.StringVar(&config.initImageName, "init-image-name", "ghcr.io/kmdkuk/mcing-init:"+strings.TrimPrefix(version.Version, "v"), "mcing-init image name")
 	fs.StringVar(&config.agentImageName, "agent-image-name", "ghcr.io/kmdkuk/mcing-agent:"+strings.TrimPrefix(version.Version, "v"), "mcing-agent image name")
 	fs.DurationVar(&config.interval, "check-interval", 1*time.Minute, "Interval of minecraft maintenance")

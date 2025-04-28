@@ -34,6 +34,8 @@ var minecraftlog = logf.Log.WithName("minecraft-resource")
 func (r *Minecraft) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(&Minecraft{}).
+		WithValidator(&Minecraft{}).
 		Complete()
 }
 
@@ -59,9 +61,10 @@ var _ admission.CustomValidator = &Minecraft{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Minecraft) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	minecraftlog.Info("validate create", "name", r.Name)
-	errs := r.Spec.validateCreate()
+	m := obj.(*Minecraft)
+	errs := m.Spec.validateCreate()
 	if len(errs) != 0 {
-		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, r.Name, errs)
+		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, m.Name, errs)
 	}
 
 	// TODO(user): fill in your validation logic upon object creation.
@@ -72,16 +75,19 @@ func (r *Minecraft) ValidateCreate(ctx context.Context, obj runtime.Object) (adm
 func (r *Minecraft) ValidateUpdate(ctx context.Context, old runtime.Object, new runtime.Object) (admission.Warnings, error) {
 	minecraftlog.Info("validate update", "name", r.Name)
 
-	errs := r.Spec.validateUpdate(old.(*Minecraft).Spec)
+	oldM := old.(*Minecraft)
+	newM := new.(*Minecraft)
+	errs := newM.Spec.validateUpdate(oldM.Spec)
 	if len(errs) != 0 {
-		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, r.Name, errs)
+		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, newM.Name, errs)
 	}
 	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *Minecraft) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	minecraftlog.Info("validate delete", "name", r.Name)
+	m := obj.(*Minecraft)
+	minecraftlog.Info("validate delete", "name", m.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil
