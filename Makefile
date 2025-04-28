@@ -1,12 +1,12 @@
 # Tool versions
-CONTROLLER_TOOLS_VERSION = 0.16.5
+CONTROLLER_TOOLS_VERSION = 0.17.3
 CTRL_RUNTIME_VERSION := $(shell awk '/sigs.k8s.io\/controller-runtime/ {print substr($$2, 2)}' go.mod)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.28.3
-KUSTOMIZE_VERSION = 5.2.1
+ENVTEST_K8S_VERSION = 1.33.0
+KUSTOMIZE_VERSION = 5.6.0
 CRD_TO_MARKDOWN_VERSION = 0.0.3
 MDBOOK_VERSION = 0.4.35
-KUBERNETES_VERSION = 1.28.4
+KUBERNETES_VERSION = 1.33.0
 
 # Image URL to use all building/pushing image targets
 IMAGE_PREFIX :=
@@ -20,9 +20,9 @@ PROTOC_BIN := $(PWD)/bin/protoc
 PROTOC_GEN_GO := $(PWD)/bin/protoc-gen-go
 PROTOC_GEN_GO_GRPC := $(PWD)/bin/protoc-gen-go-grpc
 PROTOC_GEN_DOC := $(PWD)/bin/protoc-gen-doc
-PROTOC_VERSION := 28.3
+PROTOC_VERSION := 30.2
 PROTOC_GEN_GO_VERSION := $(shell awk '/google.golang.org\/protobuf/ {print substr($$2, 2)}' go.mod)
-PROTOC_GEN_GO_GRPC_VERSON=1.2
+PROTOC_GEN_GO_GRPC_VERSON=1.5.1
 PROTOC_GEN_DOC_VERSION=1.5.1
 
 
