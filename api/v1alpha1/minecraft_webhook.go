@@ -17,12 +17,13 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"context"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -33,6 +34,8 @@ var minecraftlog = logf.Log.WithName("minecraft-resource")
 func (r *Minecraft) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(&Minecraft{}).
+		WithValidator(&Minecraft{}).
 		Complete()
 }
 
@@ -40,26 +43,28 @@ func (r *Minecraft) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 //+kubebuilder:webhook:path=/mutate-mcing-kmdkuk-com-v1alpha1-minecraft,mutating=true,failurePolicy=fail,sideEffects=None,groups=mcing.kmdkuk.com,resources=minecrafts,verbs=create;update,versions=v1alpha1,name=mminecraft.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Defaulter = &Minecraft{}
+var _ admission.CustomDefaulter = &Minecraft{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *Minecraft) Default() {
+func (r *Minecraft) Default(ctx context.Context, obj runtime.Object) error {
 	minecraftlog.Info("default", "name", r.Name)
 
 	// TODO(user): fill in your defaulting logic.
+	return nil
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-mcing-kmdkuk-com-v1alpha1-minecraft,mutating=false,failurePolicy=fail,sideEffects=None,groups=mcing.kmdkuk.com,resources=minecrafts,verbs=create;update,versions=v1alpha1,name=vminecraft.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Validator = &Minecraft{}
+var _ admission.CustomValidator = &Minecraft{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Minecraft) ValidateCreate() (admission.Warnings, error) {
+func (r *Minecraft) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	minecraftlog.Info("validate create", "name", r.Name)
-	errs := r.Spec.validateCreate()
+	m := obj.(*Minecraft)
+	errs := m.Spec.validateCreate()
 	if len(errs) != 0 {
-		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, r.Name, errs)
+		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, m.Name, errs)
 	}
 
 	// TODO(user): fill in your validation logic upon object creation.
@@ -67,19 +72,22 @@ func (r *Minecraft) ValidateCreate() (admission.Warnings, error) {
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Minecraft) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+func (r *Minecraft) ValidateUpdate(ctx context.Context, old runtime.Object, new runtime.Object) (admission.Warnings, error) {
 	minecraftlog.Info("validate update", "name", r.Name)
 
-	errs := r.Spec.validateUpdate(old.(*Minecraft).Spec)
+	oldM := old.(*Minecraft)
+	newM := new.(*Minecraft)
+	errs := newM.Spec.validateUpdate(oldM.Spec)
 	if len(errs) != 0 {
-		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, r.Name, errs)
+		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, newM.Name, errs)
 	}
 	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Minecraft) ValidateDelete() (admission.Warnings, error) {
-	minecraftlog.Info("validate delete", "name", r.Name)
+func (r *Minecraft) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+	m := obj.(*Minecraft)
+	minecraftlog.Info("validate delete", "name", m.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil
