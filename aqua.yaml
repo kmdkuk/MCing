@@ -5,10 +5,10 @@ registries:
 - type: standard
   ref: v4.354.0 # renovate: depName=aquaproj/aqua-registry
 packages:
-- name: kubernetes/kubectl@v1.28.15
+- name: kubernetes/kubectl@v1.33.0
 - name: kubernetes-sigs/kubebuilder@v4.5.2
 - name: kubernetes-sigs/kustomize@kustomize/v5.6.0
-- name: kubernetes-sigs/kind@v0.25.0
+- name: kubernetes-sigs/kind@v0.27.0
 - name: tilt-dev/tilt@v0.34.2
 - name: tilt-dev/ctlptl@v0.8.40
 - name: mikefarah/yq@v4.45.1
