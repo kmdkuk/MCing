@@ -27,9 +27,9 @@ import (
 	"log"
 	"net"
 	"path"
+	"sync"
 	"time"
 
-	"github.com/cybozu-go/well"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	james4krcon "github.com/james4k/rcon"
 	"github.com/kmdkuk/mcing/pkg/config"
@@ -160,22 +160,35 @@ to quickly create a Cobra application.`,
 
 		proto.RegisterAgentServer(grpcServer, server.NewAgentService(zapLogger, conn))
 
-		well.Go(func(ctx context.Context) error {
-			return grpcServer.Serve(lis)
-		})
-		well.Go(func(ctx context.Context) error {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := grpcServer.Serve(lis)
+			if err != nil {
+				zapLogger.Error("failed to serve", zap.Error(err))
+			}
+		}()
+
+		wg.Add(1)
+		go func(ctx context.Context) {
+			defer wg.Done()
 			<-ctx.Done()
 			grpcServer.GracefulStop()
-			return nil
-		})
+		}(ctx)
 
-		well.Go(func(ctx context.Context) error {
-			return watcher.Watch(ctx, conn, 10*time.Second)
-		})
+		wg.Add(1)
+		go func(ctx context.Context) {
+			defer wg.Done()
+			err := watcher.Watch(ctx, conn, 10*time.Second)
+			if err != nil {
+				zapLogger.Error("failed to watch", zap.Error(err))
+			}
+		}(ctx)
 
-		if err := well.Wait(); err != nil && !well.IsSignaled(err) {
-			return err
-		}
+		wg.Wait()
 		return nil
 	},
 }
