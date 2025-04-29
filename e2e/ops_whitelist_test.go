@@ -69,7 +69,7 @@ func testOpsWhitelist() {
 			stdout, _, err = kubectl("exec", stsName+"-0", "--", "cat", filepath.Join(constants.DataPath, constants.WhiteListName))
 			g.Expect(err).ShouldNot(HaveOccurred())
 			var whitelist []userJson
-			err = json.Unmarshal(stdout, &ops)
+			err = json.Unmarshal(stdout, &whitelist)
 			g.Expect(err).ShouldNot(HaveOccurred())
 			g.Expect(whitelist).Should(HaveLen(1))
 			g.Expect(whitelist[0].Name).Should(Equal("kmdkuk"))
