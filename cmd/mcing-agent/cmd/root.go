@@ -169,6 +169,7 @@ to quickly create a Cobra application.`,
 			err := grpcServer.Serve(lis)
 			if err != nil {
 				zapLogger.Error("failed to serve", zap.Error(err))
+				cancel()
 			}
 		}()
 
