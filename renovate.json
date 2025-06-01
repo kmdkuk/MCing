@@ -5,7 +5,7 @@
   "automerge": true,
   "extends": [
     "config:base",
-    "github>aquaproj/aqua-renovate-config#2.8.0"
+    "github>aquaproj/aqua-renovate-config#2.8.1"
   ],
   "postUpdateOptions": [
     "gomodTidy"
