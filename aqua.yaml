@@ -11,4 +11,4 @@ packages:
 - name: kubernetes-sigs/kind@v0.29.0
 - name: tilt-dev/tilt@v0.35.0
 - name: tilt-dev/ctlptl@v0.8.42
-- name: mikefarah/yq@v4.45.4
+- name: mikefarah/yq@v4.49.2
