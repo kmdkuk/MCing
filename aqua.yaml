@@ -3,7 +3,7 @@
 # https://aquaproj.github.io/
 registries:
 - type: standard
-  ref: v4.381.0 # renovate: depName=aquaproj/aqua-registry
+  ref: v4.445.0 # renovate: depName=aquaproj/aqua-registry
 packages:
 - name: kubernetes/kubectl@v1.32.6
 - name: kubernetes-sigs/kubebuilder@v4.6.0
