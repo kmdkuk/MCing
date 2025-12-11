@@ -9,7 +9,7 @@ jobs:
     name: Build book
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - run: make book
     - uses: actions/upload-artifact@v4
       with:
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: build
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         ref: gh-pages
     - run: rm -rf *
