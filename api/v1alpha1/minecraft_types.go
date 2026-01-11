@@ -1,19 +1,18 @@
 package v1alpha1
 
 import (
+	"fmt"
+
+	"github.com/kmdkuk/mcing/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // MinecraftSpec defines the desired state of Minecraft
-// +kubebuilder:validation:XValidation:rule="self.volumeClaimTemplates.exists(v, v.metadata.name == 'minecraft-data')",message="required volume claim template 'minecraft-data' is missing"
-// +kubebuilder:validation:XValidation:rule="self.podTemplate.spec.containers.exists(c, c.name == 'minecraft')",message="required container 'minecraft' is missing"
-// +kubebuilder:validation:XValidation:rule="!self.podTemplate.spec.containers.exists(c, c.name == 'minecraft') || self.podTemplate.spec.containers.filter(c, c.name == 'minecraft')[0].env.exists(e, e.name == 'EULA')",message="EULA is required. The server will not start unless EULA=true."
-// +kubebuilder:validation:XValidation:rule="!self.podTemplate.spec.containers.exists(c, c.name == 'minecraft') || !self.podTemplate.spec.containers.filter(c, c.name == 'minecraft')[0].ports.exists(p, p.containerPort == 25565 || p.containerPort == 25575)",message="ports 25565 and 25575 are reserved"
-// +kubebuilder:validation:XValidation:rule="!self.podTemplate.spec.containers.exists(c, c.name == 'minecraft') || !self.podTemplate.spec.containers.filter(c, c.name == 'minecraft')[0].ports.exists(p, p.name == 'minecraft' || p.name == 'rcon')",message="port names 'minecraft' and 'rcon' are reserved"
 type MinecraftSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -24,6 +23,7 @@ type MinecraftSpec struct {
 	// PersistentVolumeClaimSpec is a specification of `PersistentVolumeClaim` for persisting data in minecraft.
 	// A claim named "minecraft-data" must be included in the list.
 	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=10
 	VolumeClaimTemplates []PersistentVolumeClaim `json:"volumeClaimTemplates"`
 
 	// ServiceTemplate is a `Service` template.
@@ -153,6 +153,72 @@ type ObjectMeta struct {
 	// Annotations is a map of string keys and values.
 	// +optional
 	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+func (s MinecraftSpec) validateCreate() field.ErrorList {
+	var allErrs field.ErrorList
+
+	p := field.NewPath("spec")
+
+	pp := p.Child("volumeClaimTemplates")
+	ok := false
+	for i := range s.VolumeClaimTemplates {
+		vc := &s.VolumeClaimTemplates[i]
+		if vc.Name == constants.DataVolumeName {
+			ok = true
+		}
+	}
+	if !ok {
+		allErrs = append(allErrs, field.Required(pp, fmt.Sprintf("required volume claim template %s is missing", constants.DataVolumeName)))
+	}
+
+	p = p.Child("podTemplate", "spec")
+
+	pp = p.Child("containers")
+	minecraftIndex := -1
+	for i := range s.PodTemplate.Spec.Containers {
+		c := &s.PodTemplate.Spec.Containers[i]
+		if c.Name == constants.MinecraftContainerName {
+			minecraftIndex = i
+		}
+	}
+
+	if minecraftIndex == -1 {
+		allErrs = append(allErrs, field.Required(pp, fmt.Sprintf("required container %s is missing", constants.MinecraftContainerName)))
+	} else {
+		pp := p.Child("containers").Index(minecraftIndex).Child("ports")
+		for i := range s.PodTemplate.Spec.Containers[minecraftIndex].Ports {
+			port := &s.PodTemplate.Spec.Containers[minecraftIndex].Ports[i]
+			switch port.ContainerPort {
+			case constants.ServerPort, constants.RconPort:
+				allErrs = append(allErrs, field.Invalid(pp.Index(i), port.ContainerPort, "reserved port"))
+			}
+			switch port.Name {
+			case constants.ServerPortName, constants.RconPortName:
+				allErrs = append(allErrs, field.Invalid(pp.Index(i), port.Name, "reserved port name"))
+			}
+		}
+
+		pp = p.Child("containers").Index(minecraftIndex).Child("env")
+		hasEula := false
+		for i := range s.PodTemplate.Spec.Containers[minecraftIndex].Env {
+			env := &s.PodTemplate.Spec.Containers[minecraftIndex].Env[i]
+			switch env.Name {
+			case constants.EulaEnvName:
+				hasEula = true
+			}
+		}
+		if !hasEula {
+			allErrs = append(allErrs, field.Required(pp, "EULA is required. The server will not start unless EULA=true."))
+		}
+	}
+	return allErrs
+}
+
+func (s MinecraftSpec) validateUpdate(old MinecraftSpec) field.ErrorList {
+	var allErrs field.ErrorList
+
+	return append(allErrs, s.validateCreate()...)
 }
 
 // MinecraftStatus defines the observed state of Minecraft
