@@ -30,3 +30,5 @@ mcing-init
 mcing-agent
 install.yaml
 minecraft-sample.yaml
+
+.kubeconfig
