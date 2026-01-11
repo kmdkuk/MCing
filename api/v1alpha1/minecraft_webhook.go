@@ -19,9 +19,7 @@ package v1alpha1
 import (
 	"context"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -61,26 +59,12 @@ var _ admission.CustomValidator = &Minecraft{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Minecraft) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	minecraftlog.Info("validate create", "name", r.Name)
-	m := obj.(*Minecraft)
-	errs := m.Spec.validateCreate()
-	if len(errs) != 0 {
-		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, m.Name, errs)
-	}
-
-	// TODO(user): fill in your validation logic upon object creation.
 	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Minecraft) ValidateUpdate(ctx context.Context, old runtime.Object, new runtime.Object) (admission.Warnings, error) {
 	minecraftlog.Info("validate update", "name", r.Name)
-
-	oldM := old.(*Minecraft)
-	newM := new.(*Minecraft)
-	errs := newM.Spec.validateUpdate(oldM.Spec)
-	if len(errs) != 0 {
-		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, newM.Name, errs)
-	}
 	return nil, nil
 }
 

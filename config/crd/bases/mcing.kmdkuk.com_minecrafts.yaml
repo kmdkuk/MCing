@@ -9106,6 +9106,14 @@ spec:
               rule: '!self.podTemplate.spec.containers.exists(c, c.name == ''minecraft'')
                 || self.podTemplate.spec.containers.filter(c, c.name == ''minecraft'')[0].env.exists(e,
                 e.name == ''EULA'')'
+            - message: ports 25565 and 25575 are reserved
+              rule: '!self.podTemplate.spec.containers.exists(c, c.name == ''minecraft'')
+                || !self.podTemplate.spec.containers.filter(c, c.name == ''minecraft'')[0].ports.exists(p,
+                p.containerPort == 25565 || p.containerPort == 25575)'
+            - message: port names 'minecraft' and 'rcon' are reserved
+              rule: '!self.podTemplate.spec.containers.exists(c, c.name == ''minecraft'')
+                || !self.podTemplate.spec.containers.filter(c, c.name == ''minecraft'')[0].ports.exists(p,
+                p.name == ''minecraft'' || p.name == ''rcon'')'
           status:
             description: MinecraftStatus defines the observed state of Minecraft
             type: object
