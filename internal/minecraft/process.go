@@ -70,7 +70,11 @@ func (p *managerProcess) do(ctx context.Context) error {
 		return err
 	}
 
-	err = p.syncWhitelist(ctx, mc, agent)
+	return p.sync(ctx, mc, agent)
+}
+
+func (p *managerProcess) sync(ctx context.Context, mc *mcingv1alpha1.Minecraft, agent agent.AgentConn) error {
+	err := p.syncWhitelist(ctx, mc, agent)
 	if err != nil {
 		return err
 	}
