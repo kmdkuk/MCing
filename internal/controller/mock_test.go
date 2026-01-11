@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"sync"
 
 	"github.com/kmdkuk/mcing/internal/minecraft"
@@ -27,4 +28,7 @@ func (m *mockManager) Stop(key types.NamespacedName) {
 	delete(m.minecrafts, key.String())
 }
 
-func (m *mockManager) StopAll() {}
+func (m *mockManager) Start(ctx context.Context) error {
+	<-ctx.Done()
+	return nil
+}

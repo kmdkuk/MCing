@@ -534,6 +534,9 @@ func mergeMap(m1, m2 map[string]string) map[string]string {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *MinecraftReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if err := mgr.Add(r.minecraftManager); err != nil {
+		return err
+	}
 	configMapHandler := handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, a client.Object) []reconcile.Request {
 		mcs := &mcingv1alpha1.MinecraftList{}
 		if err := r.List(ctx, mcs, client.InNamespace(a.GetNamespace())); err != nil {

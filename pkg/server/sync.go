@@ -32,7 +32,7 @@ func (s agentService) SyncWhitelist(ctx context.Context, req *proto.SyncWhitelis
 	if !req.Enabled {
 		return &proto.SyncWhitelistResponse{}, nil
 	}
-	users, err := rcon.Whitelistlist(s.conn)
+	users, err := rcon.ListWhitelist(s.conn)
 	if err != nil {
 		return &proto.SyncWhitelistResponse{}, err
 	}
