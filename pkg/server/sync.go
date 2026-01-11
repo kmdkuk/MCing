@@ -72,7 +72,9 @@ func (s agentService) SyncOps(ctx context.Context, req *proto.SyncOpsRequest) (*
 		return &proto.SyncOpsResponse{}, err
 	}
 	var ops []opsJson
-	json.Unmarshal(raw, &ops)
+	if err := json.Unmarshal(raw, &ops); err != nil {
+		return &proto.SyncOpsResponse{}, err
+	}
 	users := make([]string, 0)
 	for _, v := range ops {
 		users = append(users, v.Name)

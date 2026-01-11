@@ -60,43 +60,40 @@ func (p *managerProcess) do(ctx context.Context) error {
 	}
 	p.log.Info("get Minecraft", ".spec.whitelist", mc.Spec.Whitelist, ".spec.ops", mc.Spec.Ops)
 
-	err := p.syncWhitelist(ctx, mc)
+	agent, err := p.newAgent(ctx, mc)
 	if err != nil {
 		return err
 	}
-	err = p.syncOps(ctx, mc)
+
+	err = p.syncWhitelist(ctx, mc, agent)
+	if err != nil {
+		return err
+	}
+	err = p.syncOps(ctx, mc, agent)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *managerProcess) syncWhitelist(ctx context.Context, mc *mcingv1alpha1.Minecraft) error {
+func (p *managerProcess) syncWhitelist(ctx context.Context, mc *mcingv1alpha1.Minecraft, agent agent.AgentConn) error {
 	in := &proto.SyncWhitelistRequest{
 		Enabled: mc.Spec.Whitelist.Enabled,
 		Users:   mc.Spec.Whitelist.Users,
 	}
 	p.log.Info("syncWhitelist", "in", in)
-	agent, err := p.newAgent(ctx, mc)
-	if err != nil {
-		return err
-	}
-	_, err = agent.SyncWhitelist(ctx, in)
+	_, err := agent.SyncWhitelist(ctx, in)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *managerProcess) syncOps(ctx context.Context, mc *mcingv1alpha1.Minecraft) error {
+func (p *managerProcess) syncOps(ctx context.Context, mc *mcingv1alpha1.Minecraft, agent agent.AgentConn) error {
 	in := &proto.SyncOpsRequest{
 		Users: mc.Spec.Ops.Users,
 	}
-	agent, err := p.newAgent(ctx, mc)
-	if err != nil {
-		return err
-	}
-	_, err = agent.SyncOps(ctx, in)
+	_, err := agent.SyncOps(ctx, in)
 	if err != nil {
 		return err
 	}

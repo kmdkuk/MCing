@@ -113,10 +113,10 @@ func ParseServerPropsFromPath(path string) (map[string]string, error) {
 	}
 	defer f.Close()
 
-	return ParseServerProps(f), nil
+	return ParseServerProps(f)
 }
 
-func ParseServerProps(r io.Reader) map[string]string {
+func ParseServerProps(r io.Reader) (map[string]string, error) {
 	props := make(map[string]string)
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
@@ -124,8 +124,17 @@ func ParseServerProps(r io.Reader) map[string]string {
 		if strings.HasPrefix(l, "#") {
 			continue
 		}
+		if l == "" {
+			continue
+		}
 		split := strings.SplitN(l, "=", 2)
+		if len(split) != 2 {
+			continue
+		}
 		props[split[0]] = split[1]
 	}
-	return props
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return props, nil
 }

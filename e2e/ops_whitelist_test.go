@@ -39,7 +39,8 @@ func testOpsWhitelist() {
 			g.Expect(err).ShouldNot(HaveOccurred())
 
 			bf := bytes.NewBuffer(stdout)
-			props := config.ParseServerProps(bf)
+			props, err := config.ParseServerProps(bf)
+			g.Expect(err).ShouldNot(HaveOccurred())
 			g.Expect(props[constants.WhitelistProps]).Should(Equal("false"))
 		})
 	})
@@ -63,7 +64,8 @@ func testOpsWhitelist() {
 			g.Expect(err).ShouldNot(HaveOccurred())
 
 			bf := bytes.NewBuffer(stdout)
-			props := config.ParseServerProps(bf)
+			props, err := config.ParseServerProps(bf)
+			g.Expect(err).ShouldNot(HaveOccurred())
 			g.Expect(props[constants.WhitelistProps]).Should(Equal("true"))
 
 			stdout, _, err = kubectl("exec", stsName+"-0", "--", "cat", filepath.Join(constants.DataPath, constants.WhiteListName))
@@ -94,7 +96,8 @@ func testOpsWhitelist() {
 			g.Expect(err).ShouldNot(HaveOccurred())
 
 			bf := bytes.NewBuffer(stdout)
-			props := config.ParseServerProps(bf)
+			props, err := config.ParseServerProps(bf)
+			g.Expect(err).ShouldNot(HaveOccurred())
 			g.Expect(props[constants.WhitelistProps]).Should(Equal("false"))
 		})
 	})
