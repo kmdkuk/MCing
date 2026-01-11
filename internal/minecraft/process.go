@@ -3,6 +3,7 @@ package minecraft
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -46,7 +47,11 @@ func (p *managerProcess) Start(ctx context.Context, interval time.Duration) {
 		p.log.Info("start operation")
 		err := p.do(ctx)
 		if err != nil {
-			p.log.Error(err, "failed to operation")
+			if strings.Contains(err.Error(), "has no IP") {
+				p.log.Info("waiting for pod IP", "error", err)
+			} else {
+				p.log.Error(err, "failed to operation")
+			}
 			continue
 		}
 		p.log.Info("finish operation")
@@ -111,7 +116,7 @@ func (p *managerProcess) newAgent(ctx context.Context, mc *mcingv1alpha1.Minecra
 		return nil, err
 	}
 	if pod.Status.PodIP == "" {
-		return nil, fmt.Errorf("pod %s/%s has not been assigned an IP address", pod.Namespace, pod.Name)
+		return nil, fmt.Errorf("pod %s/%s has no IP", pod.Namespace, pod.Name)
 	}
 	return p.agentf.New(ctx, pod.Status.PodIP)
 }
