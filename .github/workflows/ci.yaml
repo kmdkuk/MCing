@@ -50,6 +50,17 @@ jobs:
       with:
         name: logs-${{ matrix.k8s-version }}.tar.gz
         path: e2e/logs.tar.gz
+
+  e2e-status:
+    name: E2E Status
+    if: always()
+    needs: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check e2e matrix status
+        if: ${{ needs.e2e.result != 'success' }}
+        run: exit 1
+
   tilt:
     name: Run tilt ci
     runs-on: ubuntu-latest
