@@ -24,7 +24,7 @@ func TestE2e(t *testing.T) {
 	RunSpecs(t, "E2e Suite")
 }
 
-var _ = Describe("mcing", func() {
+var _ = Describe("mcing", Ordered, func() {
 	Context("bootstrap", testBootstrap)
 	Context("opsWhitelist", testOpsWhitelist)
 })
