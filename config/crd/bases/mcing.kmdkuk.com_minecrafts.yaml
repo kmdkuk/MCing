@@ -9097,6 +9097,15 @@ spec:
             - podTemplate
             - volumeClaimTemplates
             type: object
+            x-kubernetes-validations:
+            - message: required volume claim template 'minecraft-data' is missing
+              rule: self.volumeClaimTemplates.exists(v, v.metadata.name == 'minecraft-data')
+            - message: required container 'minecraft' is missing
+              rule: self.podTemplate.spec.containers.exists(c, c.name == 'minecraft')
+            - message: EULA is required. The server will not start unless EULA=true.
+              rule: '!self.podTemplate.spec.containers.exists(c, c.name == ''minecraft'')
+                || self.podTemplate.spec.containers.filter(c, c.name == ''minecraft'')[0].env.exists(e,
+                e.name == ''EULA'')'
           status:
             description: MinecraftStatus defines the observed state of Minecraft
             type: object

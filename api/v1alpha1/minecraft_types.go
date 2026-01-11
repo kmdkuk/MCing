@@ -13,6 +13,9 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // MinecraftSpec defines the desired state of Minecraft
+// +kubebuilder:validation:XValidation:rule="self.volumeClaimTemplates.exists(v, v.metadata.name == 'minecraft-data')",message="required volume claim template 'minecraft-data' is missing"
+// +kubebuilder:validation:XValidation:rule="self.podTemplate.spec.containers.exists(c, c.name == 'minecraft')",message="required container 'minecraft' is missing"
+// +kubebuilder:validation:XValidation:rule="!self.podTemplate.spec.containers.exists(c, c.name == 'minecraft') || self.podTemplate.spec.containers.filter(c, c.name == 'minecraft')[0].env.exists(e, e.name == 'EULA')",message="EULA is required. The server will not start unless EULA=true."
 type MinecraftSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
