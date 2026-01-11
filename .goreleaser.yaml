@@ -6,7 +6,7 @@
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
-version: 1
+version: 2
 project_name: mcing
 builds:
   - id: mcing-controller
@@ -20,7 +20,7 @@ builds:
       - amd64
     ldflags:
       - -X github.com/kmdkuk/mcing/pkg/version.Revision={{ .ShortCommit }}
-      - -X github.com/kmdkuk/mcing/pkg/version.BuildDate={{ .Date }}
+      - -X github.com/kmdkuk/mcing/pkg/version.BuildDate={{ .CommitDate }}
       - -X github.com/kmdkuk/mcing/pkg/version.Version={{ .Version }}
   - id: mcing-init
     env:
@@ -33,7 +33,7 @@ builds:
       - amd64
     ldflags:
       - -X github.com/kmdkuk/mcing/pkg/version.Revision={{ .ShortCommit }}
-      - -X github.com/kmdkuk/mcing/pkg/version.BuildDate={{ .Date }}
+      - -X github.com/kmdkuk/mcing/pkg/version.BuildDate={{ .CommitDate }}
       - -X github.com/kmdkuk/mcing/pkg/version.Version={{ .Version }}
   - id: mcing-agent
     env:
@@ -46,7 +46,7 @@ builds:
       - amd64
     ldflags:
       - -X github.com/kmdkuk/mcing/pkg/version.Revision={{ .ShortCommit }}
-      - -X github.com/kmdkuk/mcing/pkg/version.BuildDate={{ .Date }}
+      - -X github.com/kmdkuk/mcing/pkg/version.BuildDate={{ .CommitDate }}
       - -X github.com/kmdkuk/mcing/pkg/version.Version={{ .Version }}
 
 dockers:
@@ -59,7 +59,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--target=controller"
-      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.created={{.CommitDate}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
   - image_templates:
@@ -71,7 +71,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--target=init"
-      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.created={{.CommitDate}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
   - image_templates:
@@ -83,7 +83,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--target=agent"
-      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.created={{.CommitDate}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
 
