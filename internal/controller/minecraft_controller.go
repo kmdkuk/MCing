@@ -3,14 +3,13 @@ package controller
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/go-logr/logr"
-	"github.com/google/go-cmp/cmp"
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
 	"github.com/kmdkuk/mcing/internal/minecraft"
 	"github.com/kmdkuk/mcing/pkg/config"
 	"github.com/kmdkuk/mcing/pkg/constants"
+	"github.com/kmdkuk/mcing/pkg/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,11 +26,6 @@ import (
 )
 
 const defaultTerminationGracePeriodSeconds = 30
-
-// debug and test variables
-var (
-	debugController = os.Getenv("DEBUG_CONTROLLER") == "1"
-)
 
 // MinecraftReconciler reconciles a Minecraft object
 type MinecraftReconciler struct {
@@ -124,13 +118,9 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 	sts.Namespace = mc.Namespace
 	sts.Name = mc.PrefixedName()
 
-	var orig, updated *appsv1.StatefulSetSpec
 	result, err := ctrl.CreateOrUpdate(ctx, r.Client, sts, func() error {
-		if debugController {
-			orig = sts.Spec.DeepCopy()
-		}
 		labels := labelSet(mc, constants.AppComponentServer)
-		sts.Labels = mergeMap(sts.Labels, labels)
+		sts.Labels = utils.MergeMap(sts.Labels, labels)
 
 		sts.Spec.Replicas = ptr.To[int32](1)
 		sts.Spec.Selector = &metav1.LabelSelector{
@@ -148,9 +138,9 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 			sts.Spec.VolumeClaimTemplates[i] = pvc
 		}
 
-		sts.Spec.Template.Annotations = mergeMap(sts.Spec.Template.Annotations, mc.Spec.PodTemplate.Annotations)
-		sts.Spec.Template.Labels = mergeMap(sts.Spec.Template.Labels, mc.Spec.PodTemplate.Labels)
-		sts.Spec.Template.Labels = mergeMap(sts.Spec.Template.Labels, labels)
+		sts.Spec.Template.Annotations = utils.MergeMap(sts.Spec.Template.Annotations, mc.Spec.PodTemplate.Annotations)
+		sts.Spec.Template.Labels = utils.MergeMap(sts.Spec.Template.Labels, mc.Spec.PodTemplate.Labels)
+		sts.Spec.Template.Labels = utils.MergeMap(sts.Spec.Template.Labels, labels)
 
 		podSpec := mc.Spec.PodTemplate.Spec.DeepCopy()
 		podSpec.DeprecatedServiceAccount = sts.Spec.Template.Spec.DeprecatedServiceAccount
@@ -195,9 +185,6 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 
 		podSpec.DeepCopyInto(&sts.Spec.Template.Spec)
 
-		if debugController {
-			updated = sts.Spec.DeepCopy()
-		}
 		return ctrl.SetControllerReference(mc, sts, r.scheme)
 	})
 	if err != nil {
@@ -206,9 +193,6 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 	}
 	if result != controllerutil.OperationResultNone {
 		logger.Info("reconciled stateful set", "operation", string(result))
-	}
-	if result == controllerutil.OperationResultUpdated && debugController {
-		fmt.Println(cmp.Diff(orig, updated))
 	}
 	return nil
 }
@@ -296,12 +280,7 @@ func (r *MinecraftReconciler) makeAgentContainer() corev1.Container {
 }
 
 func (r *MinecraftReconciler) makeInitContainer(mc *mcingv1alpha1.Minecraft, current []corev1.Container) []corev1.Container {
-	var image string
-	if debugController {
-		image = constants.InitContainerImage + ":e2e"
-	} else {
-		image = r.initImageName
-	}
+	image := r.initImageName
 	c := corev1.Container{
 		Name:  constants.InitContainerName,
 		Image: image,
@@ -347,25 +326,20 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 	if headless {
 		svc.Name = mc.HeadlessServiceName()
 	}
-	var orig, updated *corev1.ServiceSpec
 	result, err := ctrl.CreateOrUpdate(ctx, r.Client, svc, func() error {
-		if debugController {
-			orig = svc.Spec.DeepCopy()
-		}
-
 		labels := labelSet(mc, constants.AppComponentServer)
 		sSpec := &corev1.ServiceSpec{}
 		tmpl := mc.Spec.ServiceTemplate
 		if !headless && tmpl != nil {
-			svc.Annotations = mergeMap(svc.Annotations, tmpl.Annotations)
-			svc.Labels = mergeMap(svc.Labels, tmpl.Labels)
-			svc.Labels = mergeMap(svc.Labels, labels)
+			svc.Annotations = utils.MergeMap(svc.Annotations, tmpl.Annotations)
+			svc.Labels = utils.MergeMap(svc.Labels, tmpl.Labels)
+			svc.Labels = utils.MergeMap(svc.Labels, labels)
 
 			if tmpl.Spec != nil {
 				tmpl.Spec.DeepCopyInto(sSpec)
 			}
 		} else {
-			svc.Labels = mergeMap(svc.Labels, labels)
+			svc.Labels = utils.MergeMap(svc.Labels, labels)
 		}
 
 		if headless {
@@ -426,10 +400,6 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 
 		sSpec.DeepCopyInto(&svc.Spec)
 
-		if debugController {
-			updated = svc.Spec.DeepCopy()
-		}
-
 		return ctrl.SetControllerReference(mc, svc, r.scheme)
 	})
 
@@ -438,9 +408,6 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 	}
 	if result != controllerutil.OperationResultNone {
 		logger.Info("reconciled service", "operation", string(result))
-	}
-	if result == controllerutil.OperationResultUpdated && debugController {
-		fmt.Println(cmp.Diff(orig, updated))
 	}
 
 	return nil
@@ -479,7 +446,7 @@ func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv
 	cm.Namespace = mc.Namespace
 	cm.Name = mc.PrefixedName()
 	result, err := ctrl.CreateOrUpdate(ctx, r.Client, cm, func() error {
-		cm.Labels = mergeMap(cm.Labels, labelSet(mc, constants.AppComponentServer))
+		cm.Labels = utils.MergeMap(cm.Labels, labelSet(mc, constants.AppComponentServer))
 		cm.Data = map[string]string{
 			constants.ServerPropsName: props,
 		}
@@ -516,20 +483,6 @@ func labelSet(mc *mcingv1alpha1.Minecraft, component string) map[string]string {
 		constants.LabelAppComponent: component,
 		constants.LabelAppCreatedBy: constants.ControllerName,
 	}
-}
-
-func mergeMap(m1, m2 map[string]string) map[string]string {
-	m := make(map[string]string)
-	for k, v := range m1 {
-		m[k] = v
-	}
-	for k, v := range m2 {
-		m[k] = v
-	}
-	if len(m) == 0 {
-		return nil
-	}
-	return m
 }
 
 // SetupWithManager sets up the controller with the Manager.
