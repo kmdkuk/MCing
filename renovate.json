@@ -4,22 +4,22 @@
   ],
   "automerge": true,
   "extends": [
-    "config:base",
+    "config:recommended",
     "github>aquaproj/aqua-renovate-config#2.9.0"
   ],
   "postUpdateOptions": [
     "gomodTidy"
   ],
   "packageRules": [
-     {
+    {
       "description": "Separate minor and patch updates for Kubernetes packages",
       "matchDatasources": [
         "go"
       ],
-      "matchPackagePatterns": [
-        "^k8s\\.io\\/.*"
-      ],
-      "separateMinorPatch": true
+      "separateMinorPatch": true,
+      "matchPackageNames": [
+        "/^k8s\\.io\\/.*/"
+      ]
     },
     {
       "automerge": false,
@@ -28,15 +28,15 @@
       "matchDatasources": [
         "go"
       ],
-      "matchPackagePatterns": [
-        "^k8s\\.io\\/.*"
-      ],
       "matchUpdateTypes": [
         "major",
         "minor"
+      ],
+      "matchPackageNames": [
+        "/^k8s\\.io\\/.*/"
       ]
     },
-     {
+    {
       "description": "Disable major updates for k8s.io/client-go",
       "enabled": false,
       "matchDatasources": [
@@ -56,11 +56,11 @@
       "matchDatasources": [
         "go"
       ],
-      "matchPackagePatterns": [
-        "^sigs\\.k8s\\.io\\/.*"
+      "matchPackageNames": [
+        "/^sigs\\.k8s\\.io\\/.*/"
       ]
     },
-     {
+    {
       "description": "Separate minor and patch updates for kubectl",
       "matchPackageNames": [
         "kubernetes/kubectl"
@@ -78,7 +78,7 @@
         "minor"
       ]
     },
-     {
+    {
       "automerge": false,
       "description": "Disable automerge for controller-tools",
       "matchPackageNames": [
@@ -104,32 +104,35 @@
       ]
     }
   ],
-  "regexManagers": [
-     {
+  "customManagers": [
+    {
+      "customType": "regex",
       "datasourceTemplate": "docker",
       "depNameTemplate": "kindest/node",
-      "fileMatch": [
-        "^\\.github\\/workflows\\/.+\\.ya?ml$"
+      "managerFilePatterns": [
+        "/^\\.github\\/workflows\\/.+\\.ya?ml$/"
       ],
       "matchStrings": [
         "- (?<currentValue>.+?) # renovate: kindest\\/node"
       ]
     },
     {
+      "customType": "regex",
       "datasourceTemplate": "docker",
       "depNameTemplate": "kindest/node",
-      "fileMatch": [
-        "^e2e\\/Makefile$"
+      "managerFilePatterns": [
+        "/^e2e\\/Makefile$/"
       ],
       "matchStrings": [
         "KUBERNETES_VERSION := (?<currentValue>.*?)# renovate: kindest\\/node"
       ]
     },
     {
+      "customType": "regex",
       "datasourceTemplate": "docker",
       "depNameTemplate": "kindest/node",
-      "fileMatch": [
-        "^cluster.yaml$"
+      "managerFilePatterns": [
+        "/^cluster.yaml$/"
       ],
       "matchStrings": [
         "kubernetesVersion: (?<currentValue>.*?) # renovate: kindest\\/node"
