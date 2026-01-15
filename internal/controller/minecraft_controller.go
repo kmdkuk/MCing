@@ -3,8 +3,10 @@ package controller
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/go-logr/logr"
+	"github.com/google/go-cmp/cmp"
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
 	"github.com/kmdkuk/mcing/internal/minecraft"
 	"github.com/kmdkuk/mcing/pkg/config"
@@ -26,6 +28,11 @@ import (
 )
 
 const defaultTerminationGracePeriodSeconds = 30
+
+// debug and test variables
+var (
+	debugController = os.Getenv("DEBUG_CONTROLLER") == "1"
+)
 
 // MinecraftReconciler reconciles a Minecraft object
 type MinecraftReconciler struct {
@@ -118,7 +125,11 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 	sts.Namespace = mc.Namespace
 	sts.Name = mc.PrefixedName()
 
+	var orig, updated *appsv1.StatefulSetSpec
 	result, err := ctrl.CreateOrUpdate(ctx, r.Client, sts, func() error {
+		if debugController {
+			orig = sts.Spec.DeepCopy()
+		}
 		labels := labelSet(mc, constants.AppComponentServer)
 		sts.Labels = utils.MergeMap(sts.Labels, labels)
 
@@ -185,6 +196,9 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 
 		podSpec.DeepCopyInto(&sts.Spec.Template.Spec)
 
+		if debugController {
+			updated = sts.Spec.DeepCopy()
+		}
 		return ctrl.SetControllerReference(mc, sts, r.scheme)
 	})
 	if err != nil {
@@ -193,6 +207,9 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 	}
 	if result != controllerutil.OperationResultNone {
 		logger.Info("reconciled stateful set", "operation", string(result))
+	}
+	if result == controllerutil.OperationResultUpdated && debugController {
+		fmt.Println(cmp.Diff(orig, updated))
 	}
 	return nil
 }
@@ -280,7 +297,12 @@ func (r *MinecraftReconciler) makeAgentContainer() corev1.Container {
 }
 
 func (r *MinecraftReconciler) makeInitContainer(mc *mcingv1alpha1.Minecraft, current []corev1.Container) []corev1.Container {
-	image := r.initImageName
+	var image string
+	if debugController {
+		image = constants.InitContainerImage + ":e2e"
+	} else {
+		image = r.initImageName
+	}
 	c := corev1.Container{
 		Name:  constants.InitContainerName,
 		Image: image,
@@ -326,7 +348,12 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 	if headless {
 		svc.Name = mc.HeadlessServiceName()
 	}
+	var orig, updated *corev1.ServiceSpec
 	result, err := ctrl.CreateOrUpdate(ctx, r.Client, svc, func() error {
+		if debugController {
+			orig = svc.Spec.DeepCopy()
+		}
+
 		labels := labelSet(mc, constants.AppComponentServer)
 		sSpec := &corev1.ServiceSpec{}
 		tmpl := mc.Spec.ServiceTemplate
@@ -400,6 +427,10 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 
 		sSpec.DeepCopyInto(&svc.Spec)
 
+		if debugController {
+			updated = svc.Spec.DeepCopy()
+		}
+
 		return ctrl.SetControllerReference(mc, svc, r.scheme)
 	})
 
@@ -408,6 +439,9 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 	}
 	if result != controllerutil.OperationResultNone {
 		logger.Info("reconciled service", "operation", string(result))
+	}
+	if result == controllerutil.OperationResultUpdated && debugController {
+		fmt.Println(cmp.Diff(orig, updated))
 	}
 
 	return nil
