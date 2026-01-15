@@ -9,7 +9,7 @@ import (
 
 func subMain() error {
 	serverPropsPath := filepath.Join(constants.ConfigPath, constants.ServerPropsName)
-	if err := os.Remove(constants.ServerPropsPath); err != nil {
+	if err := os.Remove(constants.ServerPropsPath); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	if err := copyFile(serverPropsPath, constants.ServerPropsPath); err != nil {
