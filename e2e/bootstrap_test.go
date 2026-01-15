@@ -55,7 +55,7 @@ func testBootstrap() {
 			// Define a minimal CR for the dry-run check.
 			stdout, stderr, err := kustomizeBuild("../config/samples")
 			Expect(err).ShouldNot(HaveOccurred(), "stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
-			
+
 			// Use --dry-run=server to check if the request passes through the webhook
 			// without actually persisting the resource.
 			_, stderr, err = kubectlWithInput(stdout, "create", "-f", "-", "--dry-run=server")
