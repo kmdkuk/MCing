@@ -27,12 +27,14 @@ func (s agentService) SyncWhitelist(ctx context.Context, req *proto.SyncWhitelis
 		return &proto.SyncWhitelistResponse{}, err
 	}
 	if enabled != req.Enabled {
-		rcon.WhitelistSwitch(s.conn, req.Enabled)
+		if err := rcon.WhitelistSwitch(s.conn, req.Enabled); err != nil {
+			return &proto.SyncWhitelistResponse{}, err
+		}
 	}
 	if !req.Enabled {
 		return &proto.SyncWhitelistResponse{}, nil
 	}
-	users, err := rcon.Whitelistlist(s.conn)
+	users, err := rcon.ListWhitelist(s.conn)
 	if err != nil {
 		return &proto.SyncWhitelistResponse{}, err
 	}
@@ -40,8 +42,7 @@ func (s agentService) SyncWhitelist(ctx context.Context, req *proto.SyncWhitelis
 	// add: Not present in users, but present in req.Users.
 	addUsers := differenceSet(users, req.Users)
 	if len(addUsers) > 0 {
-		err := rcon.Whitelist(s.conn, "add", addUsers)
-		if err != nil {
+		if err := rcon.Whitelist(s.conn, "add", addUsers); err != nil {
 			return &proto.SyncWhitelistResponse{}, err
 		}
 	}
@@ -72,7 +73,9 @@ func (s agentService) SyncOps(ctx context.Context, req *proto.SyncOpsRequest) (*
 		return &proto.SyncOpsResponse{}, err
 	}
 	var ops []opsJson
-	json.Unmarshal(raw, &ops)
+	if err := json.Unmarshal(raw, &ops); err != nil {
+		return &proto.SyncOpsResponse{}, err
+	}
 	users := make([]string, 0)
 	for _, v := range ops {
 		users = append(users, v.Name)

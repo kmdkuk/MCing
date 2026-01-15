@@ -21,11 +21,11 @@ func testEquality(t *testing.T) {
 	}
 	expect, err := GenServerProps(userProps)
 	if err != nil {
-		t.Error("error occured", err)
+		t.Error("error occurred", err)
 	}
 	actual, err := GenServerProps(userProps)
 	if err != nil {
-		t.Error("error occured", err)
+		t.Error("error occurred", err)
 	}
 	if !cmp.Equal(expect, actual) {
 		t.Error("The same output is not being produced for the same input.", cmp.Diff(expect, actual))
@@ -39,7 +39,7 @@ func testOverwritten(t *testing.T) {
 	notInclude := "server-port=25575"
 	actual, err := GenServerProps(userProps)
 	if err != nil {
-		t.Error("error occured", err)
+		t.Error("error occurred", err)
 	}
 	if strings.Contains(actual, notInclude) {
 		t.Error("Properties that should not have been updated have been overwritten.")
@@ -52,7 +52,7 @@ var defaultProps string
 func testNil(t *testing.T) {
 	actual, err := GenServerProps(nil)
 	if err != nil {
-		t.Error("error occured", err)
+		t.Error("error occurred", err)
 	}
 
 	if !cmp.Equal(defaultProps, actual) {
@@ -73,7 +73,7 @@ func testSuccess(t *testing.T) {
 		"contain-equal": "contain=equal",
 	}
 	if err != nil {
-		t.Error("error occured", err)
+		t.Error("error occurred", err)
 	}
 	if !cmp.Equal(actual, expect) {
 		t.Error("The output is different when nil is given.", cmp.Diff(actual, expect))

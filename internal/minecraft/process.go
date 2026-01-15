@@ -3,6 +3,7 @@ package minecraft
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -46,7 +47,11 @@ func (p *managerProcess) Start(ctx context.Context, interval time.Duration) {
 		p.log.Info("start operation")
 		err := p.do(ctx)
 		if err != nil {
-			p.log.Error(err, "failed to operation")
+			if strings.Contains(err.Error(), "has no IP") {
+				p.log.Info("waiting for pod IP", "error", err)
+			} else {
+				p.log.Error(err, "failed to operation")
+			}
 			continue
 		}
 		p.log.Info("finish operation")
@@ -60,43 +65,44 @@ func (p *managerProcess) do(ctx context.Context) error {
 	}
 	p.log.Info("get Minecraft", ".spec.whitelist", mc.Spec.Whitelist, ".spec.ops", mc.Spec.Ops)
 
-	err := p.syncWhitelist(ctx, mc)
+	agent, err := p.newAgent(ctx, mc)
 	if err != nil {
 		return err
 	}
-	err = p.syncOps(ctx, mc)
+
+	return p.sync(ctx, mc, agent)
+}
+
+func (p *managerProcess) sync(ctx context.Context, mc *mcingv1alpha1.Minecraft, agent agent.AgentConn) error {
+	err := p.syncWhitelist(ctx, mc, agent)
+	if err != nil {
+		return err
+	}
+	err = p.syncOps(ctx, mc, agent)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *managerProcess) syncWhitelist(ctx context.Context, mc *mcingv1alpha1.Minecraft) error {
+func (p *managerProcess) syncWhitelist(ctx context.Context, mc *mcingv1alpha1.Minecraft, agent agent.AgentConn) error {
 	in := &proto.SyncWhitelistRequest{
 		Enabled: mc.Spec.Whitelist.Enabled,
 		Users:   mc.Spec.Whitelist.Users,
 	}
 	p.log.Info("syncWhitelist", "in", in)
-	agent, err := p.newAgent(ctx, mc)
-	if err != nil {
-		return err
-	}
-	_, err = agent.SyncWhitelist(ctx, in)
+	_, err := agent.SyncWhitelist(ctx, in)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *managerProcess) syncOps(ctx context.Context, mc *mcingv1alpha1.Minecraft) error {
+func (p *managerProcess) syncOps(ctx context.Context, mc *mcingv1alpha1.Minecraft, agent agent.AgentConn) error {
 	in := &proto.SyncOpsRequest{
 		Users: mc.Spec.Ops.Users,
 	}
-	agent, err := p.newAgent(ctx, mc)
-	if err != nil {
-		return err
-	}
-	_, err = agent.SyncOps(ctx, in)
+	_, err := agent.SyncOps(ctx, in)
 	if err != nil {
 		return err
 	}
@@ -114,7 +120,7 @@ func (p *managerProcess) newAgent(ctx context.Context, mc *mcingv1alpha1.Minecra
 		return nil, err
 	}
 	if pod.Status.PodIP == "" {
-		return nil, fmt.Errorf("pod %s/%s has not been assigned an IP address", pod.Namespace, pod.Name)
+		return nil, fmt.Errorf("pod %s/%s has no IP", pod.Namespace, pod.Name)
 	}
 	return p.agentf.New(ctx, pod.Status.PodIP)
 }

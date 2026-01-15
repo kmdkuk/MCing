@@ -68,7 +68,7 @@ func Whitelist(remoteConsole *rcon.RemoteConsole, action string, users []string)
 	return nil
 }
 
-func Whitelistlist(remoteConsole *rcon.RemoteConsole) ([]string, error) {
+func ListWhitelist(remoteConsole *rcon.RemoteConsole) ([]string, error) {
 	// There are 2 whitelisted players: hoge, fuga
 	liststr, err := exec(remoteConsole, "whitelist", "list")
 	if err != nil {
@@ -78,7 +78,15 @@ func Whitelistlist(remoteConsole *rcon.RemoteConsole) ([]string, error) {
 	if !ok {
 		return []string{}, nil
 	}
-	return strings.Split(strings.ReplaceAll(usertxt, " ", ""), ","), nil
+	usertxt = strings.TrimSpace(usertxt)
+	if usertxt == "" {
+		return []string{}, nil
+	}
+	users := strings.Split(usertxt, ",")
+	for i := range users {
+		users[i] = strings.TrimSpace(users[i])
+	}
+	return users, nil
 }
 
 func Op(remoteConsole *rcon.RemoteConsole, users []string) error {

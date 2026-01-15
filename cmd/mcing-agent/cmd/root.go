@@ -104,12 +104,14 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		zapLogger, err := zap.NewProduction(zap.AddStacktrace(zapcore.DPanicLevel))
 		if err != nil {
 			return err
 		}
-		defer zapLogger.Sync()
+		defer func() {
+			err = zapLogger.Sync()
+		}()
 
 		lis, err := net.Listen("tcp", flags.address)
 		if err != nil {
@@ -156,7 +158,9 @@ to quickly create a Cobra application.`,
 			zapLogger.Error(fmt.Sprintf("connection error, retry after %d seconds", wait), zap.Error(err))
 			time.Sleep(time.Duration(wait) * time.Second)
 		}
-		defer conn.Close()
+		defer func() {
+			err = conn.Close()
+		}()
 
 		proto.RegisterAgentServer(grpcServer, server.NewAgentService(zapLogger, conn))
 

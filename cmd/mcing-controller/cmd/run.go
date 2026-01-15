@@ -102,7 +102,6 @@ func subMain() error {
 	af := agent.NewAgentFactory()
 
 	minecraftMgr := minecraft.NewManager(af, config.interval, mgr, mcMgrLog)
-	defer minecraftMgr.StopAll()
 
 	if err = (controller.NewMinecraftReconciler(
 		mgr.GetClient(),

@@ -13,9 +13,9 @@ import (
 )
 
 type MinecraftManager interface {
-	Update(types.NamespacedName)
+	Update(types.NamespacedName) error
 	Stop(types.NamespacedName)
-	StopAll()
+	Start(context.Context) error
 }
 
 func NewManager(af agent.AgentFactory, interval time.Duration, m manager.Manager, log logr.Logger) MinecraftManager {
@@ -40,8 +40,14 @@ type minecraftManager struct {
 	wg sync.WaitGroup
 }
 
-func (m *minecraftManager) Update(name types.NamespacedName) {
-	m.update(name)
+func (m *minecraftManager) Start(ctx context.Context) error {
+	<-ctx.Done()
+	m.stopAll()
+	return nil
+}
+
+func (m *minecraftManager) Update(name types.NamespacedName) error {
+	return m.update(name)
 }
 
 func (m *minecraftManager) update(name types.NamespacedName) error {
@@ -79,7 +85,7 @@ func (m *minecraftManager) Stop(name types.NamespacedName) {
 	}
 }
 
-func (m *minecraftManager) StopAll() {
+func (m *minecraftManager) stopAll() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

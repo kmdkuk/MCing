@@ -8,6 +8,8 @@ import (
 )
 
 func (s agentService) Reload(ctx context.Context, req *proto.ReloadRequest) (*proto.ReloadResponse, error) {
-	rcon.Reload(s.conn)
+	if err := rcon.Reload(s.conn); err != nil {
+		return nil, err
+	}
 	return &proto.ReloadResponse{}, nil
 }

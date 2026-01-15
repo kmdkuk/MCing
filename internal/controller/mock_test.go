@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"sync"
 
 	"github.com/kmdkuk/mcing/internal/minecraft"
@@ -14,10 +15,11 @@ type mockManager struct {
 
 var _ minecraft.MinecraftManager = &mockManager{}
 
-func (m *mockManager) Update(key types.NamespacedName) {
+func (m *mockManager) Update(key types.NamespacedName) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.minecrafts[key.String()] = struct{}{}
+	return nil
 }
 
 func (m *mockManager) Stop(key types.NamespacedName) {
@@ -27,4 +29,7 @@ func (m *mockManager) Stop(key types.NamespacedName) {
 	delete(m.minecrafts, key.String())
 }
 
-func (m *mockManager) StopAll() {}
+func (m *mockManager) Start(ctx context.Context) error {
+	<-ctx.Done()
+	return nil
+}

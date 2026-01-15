@@ -62,7 +62,9 @@ func Watch(ctx context.Context, conn *james4krcon.RemoteConsole, interval time.D
 		}
 
 		if reload {
-			rcon.Reload(conn)
+			if err := rcon.Reload(conn); err != nil {
+				return err
+			}
 		}
 	}
 }

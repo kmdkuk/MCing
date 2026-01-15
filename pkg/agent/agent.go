@@ -10,6 +10,7 @@ import (
 	"github.com/kmdkuk/mcing/pkg/constants"
 	agent "github.com/kmdkuk/mcing/pkg/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
@@ -47,8 +48,18 @@ func (f defaultAgentFactory) New(ctx context.Context, podIP string) (AgentConn, 
 	kp := keepalive.ClientParameters{
 		Time: 1 * time.Minute,
 	}
+	cp := grpc.ConnectParams{
+		Backoff: backoff.Config{
+			BaseDelay:  1.0 * time.Second,
+			Multiplier: 1.6,
+			Jitter:     0.2,
+			MaxDelay:   30 * time.Second,
+		},
+		MinConnectTimeout: 20 * time.Second,
+	}
 	conn, err := grpc.NewClient(addr,
 		grpc.WithKeepaliveParams(kp),
+		grpc.WithConnectParams(cp),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {

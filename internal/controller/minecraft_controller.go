@@ -11,6 +11,7 @@ import (
 	"github.com/kmdkuk/mcing/internal/minecraft"
 	"github.com/kmdkuk/mcing/pkg/config"
 	"github.com/kmdkuk/mcing/pkg/constants"
+	"github.com/kmdkuk/mcing/pkg/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -79,7 +80,7 @@ func (r *MinecraftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	if mc.ObjectMeta.DeletionTimestamp != nil {
+	if mc.DeletionTimestamp != nil {
 		if !controllerutil.ContainsFinalizer(mc, constants.Finalizer) {
 			return ctrl.Result{}, nil
 		}
@@ -112,8 +113,11 @@ func (r *MinecraftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	r.minecraftManager.Update(client.ObjectKeyFromObject(mc))
-	log.Info("finish reconcilation")
+	if err := r.minecraftManager.Update(client.ObjectKeyFromObject(mc)); err != nil {
+		log.Error(err, "failed to update MinecraftManager")
+		return ctrl.Result{}, err
+	}
+	log.Info("finish reconciliation")
 	return ctrl.Result{}, nil
 }
 
@@ -130,7 +134,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 			orig = sts.Spec.DeepCopy()
 		}
 		labels := labelSet(mc, constants.AppComponentServer)
-		sts.Labels = mergeMap(sts.Labels, labels)
+		sts.Labels = utils.MergeMap(sts.Labels, labels)
 
 		sts.Spec.Replicas = ptr.To[int32](1)
 		sts.Spec.Selector = &metav1.LabelSelector{
@@ -148,9 +152,9 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 			sts.Spec.VolumeClaimTemplates[i] = pvc
 		}
 
-		sts.Spec.Template.Annotations = mergeMap(sts.Spec.Template.Annotations, mc.Spec.PodTemplate.Annotations)
-		sts.Spec.Template.Labels = mergeMap(sts.Spec.Template.Labels, mc.Spec.PodTemplate.Labels)
-		sts.Spec.Template.Labels = mergeMap(sts.Spec.Template.Labels, labels)
+		sts.Spec.Template.Annotations = utils.MergeMap(sts.Spec.Template.Annotations, mc.Spec.PodTemplate.Annotations)
+		sts.Spec.Template.Labels = utils.MergeMap(sts.Spec.Template.Labels, mc.Spec.PodTemplate.Labels)
+		sts.Spec.Template.Labels = utils.MergeMap(sts.Spec.Template.Labels, labels)
 
 		podSpec := mc.Spec.PodTemplate.Spec.DeepCopy()
 		podSpec.DeprecatedServiceAccount = sts.Spec.Template.Spec.DeprecatedServiceAccount
@@ -213,7 +217,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 	return nil
 }
 
-func makeMinecraftContainer(mc *mcingv1alpha1.Minecraft, desired, current []corev1.Container) (corev1.Container, error) {
+func makeMinecraftContainer(_ *mcingv1alpha1.Minecraft, desired, _ []corev1.Container) (corev1.Container, error) {
 	var source *corev1.Container
 	for i := range desired {
 		c := &desired[i]
@@ -295,7 +299,7 @@ func (r *MinecraftReconciler) makeAgentContainer() corev1.Container {
 	return c
 }
 
-func (r *MinecraftReconciler) makeInitContainer(mc *mcingv1alpha1.Minecraft, current []corev1.Container) []corev1.Container {
+func (r *MinecraftReconciler) makeInitContainer(mc *mcingv1alpha1.Minecraft, _ []corev1.Container) []corev1.Container {
 	var image string
 	if debugController {
 		image = constants.InitContainerImage + ":e2e"
@@ -357,15 +361,15 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 		sSpec := &corev1.ServiceSpec{}
 		tmpl := mc.Spec.ServiceTemplate
 		if !headless && tmpl != nil {
-			svc.Annotations = mergeMap(svc.Annotations, tmpl.Annotations)
-			svc.Labels = mergeMap(svc.Labels, tmpl.Labels)
-			svc.Labels = mergeMap(svc.Labels, labels)
+			svc.Annotations = utils.MergeMap(svc.Annotations, tmpl.Annotations)
+			svc.Labels = utils.MergeMap(svc.Labels, tmpl.Labels)
+			svc.Labels = utils.MergeMap(svc.Labels, labels)
 
 			if tmpl.Spec != nil {
 				tmpl.Spec.DeepCopyInto(sSpec)
 			}
 		} else {
-			svc.Labels = mergeMap(svc.Labels, labels)
+			svc.Labels = utils.MergeMap(svc.Labels, labels)
 		}
 
 		if headless {
@@ -479,7 +483,7 @@ func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv
 	cm.Namespace = mc.Namespace
 	cm.Name = mc.PrefixedName()
 	result, err := ctrl.CreateOrUpdate(ctx, r.Client, cm, func() error {
-		cm.Labels = mergeMap(cm.Labels, labelSet(mc, constants.AppComponentServer))
+		cm.Labels = utils.MergeMap(cm.Labels, labelSet(mc, constants.AppComponentServer))
 		cm.Data = map[string]string{
 			constants.ServerPropsName: props,
 		}
@@ -518,22 +522,11 @@ func labelSet(mc *mcingv1alpha1.Minecraft, component string) map[string]string {
 	}
 }
 
-func mergeMap(m1, m2 map[string]string) map[string]string {
-	m := make(map[string]string)
-	for k, v := range m1 {
-		m[k] = v
-	}
-	for k, v := range m2 {
-		m[k] = v
-	}
-	if len(m) == 0 {
-		return nil
-	}
-	return m
-}
-
 // SetupWithManager sets up the controller with the Manager.
 func (r *MinecraftReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if err := mgr.Add(r.minecraftManager); err != nil {
+		return err
+	}
 	configMapHandler := handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, a client.Object) []reconcile.Request {
 		mcs := &mcingv1alpha1.MinecraftList{}
 		if err := r.List(ctx, mcs, client.InNamespace(a.GetNamespace())); err != nil {
