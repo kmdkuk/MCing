@@ -2,7 +2,9 @@ package e2e
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
+	"time"
 
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
@@ -45,5 +47,26 @@ func testBootstrap() {
 
 		By("confirming all controller pods are ready")
 		waitDeployment(controllerNS, "mcing-controller-manager", 1)
+
+		// Wait until the webhook is ready by trying to create a dummy resource (dry-run).
+		// This ensures that not only the Pod is running, but also the Service endpoints are propagated
+		// and the CA bundle is properly injected by cert-manager.
+		Eventually(func() error {
+			// Define a minimal CR for the dry-run check.
+			stdout, stderr, err := kustomizeBuild("../config/samples")
+			Expect(err).ShouldNot(HaveOccurred(), "stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
+			
+			// Use --dry-run=server to check if the request passes through the webhook
+			// without actually persisting the resource.
+			_, stderr, err = kubectlWithInput(stdout, "create", "-f", "-", "--dry-run=server")
+
+			// If the command succeeds, the webhook is reachable and working.
+			if err == nil {
+				return nil
+			}
+
+			// Return an error to retry if the connection is refused, or if CA/TLS errors occur.
+			return fmt.Errorf("webhook not ready: %s", string(stderr))
+		}, 10*time.Minute, 5*time.Second).Should(Succeed())
 	})
 }
