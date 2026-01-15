@@ -27,7 +27,9 @@ func (s agentService) SyncWhitelist(ctx context.Context, req *proto.SyncWhitelis
 		return &proto.SyncWhitelistResponse{}, err
 	}
 	if enabled != req.Enabled {
-		rcon.WhitelistSwitch(s.conn, req.Enabled)
+		if err := rcon.WhitelistSwitch(s.conn, req.Enabled); err != nil {
+			return &proto.SyncWhitelistResponse{}, err
+		}
 	}
 	if !req.Enabled {
 		return &proto.SyncWhitelistResponse{}, nil
@@ -40,8 +42,7 @@ func (s agentService) SyncWhitelist(ctx context.Context, req *proto.SyncWhitelis
 	// add: Not present in users, but present in req.Users.
 	addUsers := differenceSet(users, req.Users)
 	if len(addUsers) > 0 {
-		err := rcon.Whitelist(s.conn, "add", addUsers)
-		if err != nil {
+		if err := rcon.Whitelist(s.conn, "add", addUsers); err != nil {
 			return &proto.SyncWhitelistResponse{}, err
 		}
 	}

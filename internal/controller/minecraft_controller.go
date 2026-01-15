@@ -80,7 +80,7 @@ func (r *MinecraftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	if mc.ObjectMeta.DeletionTimestamp != nil {
+	if mc.DeletionTimestamp != nil {
 		if !controllerutil.ContainsFinalizer(mc, constants.Finalizer) {
 			return ctrl.Result{}, nil
 		}
@@ -113,8 +113,11 @@ func (r *MinecraftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	r.minecraftManager.Update(client.ObjectKeyFromObject(mc))
-	log.Info("finish reconcilation")
+	if err := r.minecraftManager.Update(client.ObjectKeyFromObject(mc)); err != nil {
+		log.Error(err, "failed to update MinecraftManager")
+		return ctrl.Result{}, err
+	}
+	log.Info("finish reconciliation")
 	return ctrl.Result{}, nil
 }
 
@@ -214,7 +217,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 	return nil
 }
 
-func makeMinecraftContainer(mc *mcingv1alpha1.Minecraft, desired, current []corev1.Container) (corev1.Container, error) {
+func makeMinecraftContainer(_ *mcingv1alpha1.Minecraft, desired, _ []corev1.Container) (corev1.Container, error) {
 	var source *corev1.Container
 	for i := range desired {
 		c := &desired[i]
@@ -296,7 +299,7 @@ func (r *MinecraftReconciler) makeAgentContainer() corev1.Container {
 	return c
 }
 
-func (r *MinecraftReconciler) makeInitContainer(mc *mcingv1alpha1.Minecraft, current []corev1.Container) []corev1.Container {
+func (r *MinecraftReconciler) makeInitContainer(mc *mcingv1alpha1.Minecraft, _ []corev1.Container) []corev1.Container {
 	var image string
 	if debugController {
 		image = constants.InitContainerImage + ":e2e"

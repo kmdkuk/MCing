@@ -13,7 +13,7 @@ import (
 )
 
 type MinecraftManager interface {
-	Update(types.NamespacedName)
+	Update(types.NamespacedName) error
 	Stop(types.NamespacedName)
 	Start(context.Context) error
 }
@@ -46,8 +46,8 @@ func (m *minecraftManager) Start(ctx context.Context) error {
 	return nil
 }
 
-func (m *minecraftManager) Update(name types.NamespacedName) {
-	m.update(name)
+func (m *minecraftManager) Update(name types.NamespacedName) error {
+	return m.update(name)
 }
 
 func (m *minecraftManager) update(name types.NamespacedName) error {

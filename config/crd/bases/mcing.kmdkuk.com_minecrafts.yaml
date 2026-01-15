@@ -9077,7 +9077,7 @@ spec:
                   - metadata
                   - spec
                   type: object
-                maxItems: 10
+                maxItems: 1
                 minItems: 1
                 type: array
               whitelist:

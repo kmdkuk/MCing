@@ -23,7 +23,7 @@ type MinecraftSpec struct {
 	// PersistentVolumeClaimSpec is a specification of `PersistentVolumeClaim` for persisting data in minecraft.
 	// A claim named "minecraft-data" must be included in the list.
 	// +kubebuilder:validation:MinItems=1
-	// +kubebuilder:validation:MaxItems=10
+	// +kubebuilder:validation:MaxItems=1
 	VolumeClaimTemplates []PersistentVolumeClaim `json:"volumeClaimTemplates"`
 
 	// ServiceTemplate is a `Service` template.
@@ -215,7 +215,7 @@ func (s MinecraftSpec) validateCreate() field.ErrorList {
 	return allErrs
 }
 
-func (s MinecraftSpec) validateUpdate(old MinecraftSpec) field.ErrorList {
+func (s MinecraftSpec) validateUpdate(_ MinecraftSpec) field.ErrorList {
 	var allErrs field.ErrorList
 
 	return append(allErrs, s.validateCreate()...)

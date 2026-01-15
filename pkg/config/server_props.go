@@ -106,12 +106,14 @@ func mergeProps(props1, props2 map[string]string) map[string]string {
 	return props
 }
 
-func ParseServerPropsFromPath(path string) (map[string]string, error) {
+func ParseServerPropsFromPath(path string) (_ map[string]string, err error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() {
+		err = f.Close()
+	}()
 
 	return ParseServerProps(f)
 }

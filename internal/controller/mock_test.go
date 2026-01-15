@@ -15,10 +15,11 @@ type mockManager struct {
 
 var _ minecraft.MinecraftManager = &mockManager{}
 
-func (m *mockManager) Update(key types.NamespacedName) {
+func (m *mockManager) Update(key types.NamespacedName) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.minecrafts[key.String()] = struct{}{}
+	return nil
 }
 
 func (m *mockManager) Stop(key types.NamespacedName) {

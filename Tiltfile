@@ -54,7 +54,7 @@ k8s_yaml(kustomize('./config/dev'))
 # Deploy sample minecraft resource
 local_resource(
     'Sample YAML',
-    # Retry up to 5 times with a 5-second interval.
+    # Retry up to 5 times with a 5-second interval. wait for mcing-controller-manager.
     'for i in {1..5}; do kustomize build ./config/samples | kubectl apply -f - && break || sleep 5; done',
     deps=["./config/samples"],
     resource_deps=["mcing-controller-manager"]
