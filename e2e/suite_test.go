@@ -19,7 +19,7 @@ var (
 
 func TestE2e(t *testing.T) {
 	RegisterFailHandler(Fail)
-	SetDefaultEventuallyTimeout(10 * time.Minute)
+	SetDefaultEventuallyTimeout(3 * time.Minute)
 	SetDefaultEventuallyPollingInterval(100 * time.Millisecond)
 	RunSpecs(t, "E2e Suite")
 }

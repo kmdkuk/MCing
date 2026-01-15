@@ -24,7 +24,7 @@ start: $(KIND) $(KUBECTL)
 .PHONY: test
 test: $(KUSTOMIZE)
 	KINDTEST=1 BIN_DIR=$(BIN_DIR) \
-	go test . -v -timeout=30m -ginkgo.v -ginkgo.fail-fast $(GINKGO_OPT)
+	go test . -v -timeout=15m -ginkgo.v -ginkgo.fail-fast $(GINKGO_OPT)
 
 .PHONY: bootstrap
 bootstrap:
