@@ -2,13 +2,23 @@
 # aqua - Declarative CLI Version Manager
 # https://aquaproj.github.io/
 registries:
-- type: standard
-  ref: v4.458.0 # renovate: depName=aquaproj/aqua-registry
+  - type: standard
+    ref: v4.458.0 # renovate: depName=aquaproj/aqua-registry
+
 packages:
-- name: kubernetes/kubectl@v1.34.3
-- name: kubernetes-sigs/kubebuilder@v4.10.1
-- name: kubernetes-sigs/kustomize@kustomize/v5.8.0
-- name: kubernetes-sigs/kind@v0.31.0
-- name: tilt-dev/tilt@v0.36.0
-- name: tilt-dev/ctlptl@v0.9.0
-- name: mikefarah/yq@v4.50.1
+  - name: kubernetes/kubectl@v1.34.3
+  - name: kubernetes-sigs/kubebuilder@v4.10.1
+  - name: kubernetes-sigs/kustomize@kustomize/v5.8.0
+  - name: kubernetes-sigs/kind@v0.31.0
+  - name: tilt-dev/tilt@v0.36.0
+  - name: tilt-dev/ctlptl@v0.9.0
+  - name: mikefarah/yq@v4.50.1
+  - name: kubernetes-sigs/controller-tools/controller-gen@v0.20.0
+  - name: kubernetes-sigs/controller-runtime/setup-envtest@v0.22.4
+  - name: rust-lang/mdBook@v0.4.35
+  - name: protocolbuffers/protobuf/protoc@v33.4
+  - name: protocolbuffers/protobuf-go/protoc-gen-go@v1.36.11
+  - name: grpc/grpc-go/protoc-gen-go-grpc@cmd/protoc-gen-go-grpc/v1.6.0
+  - name: pseudomuto/protoc-gen-doc@v1.5.1
+  - name: golangci/golangci-lint@v2.8.0
+  - name: clamoriniere/crd-to-markdown@v0.0.3

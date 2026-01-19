@@ -3,53 +3,68 @@ on:
   pull_request:
   push:
     branches:
-    - 'main'
+      - "main"
 jobs:
   build:
     name: Build binaries
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-go@v6
-      with:
-        go-version-file: go.mod
-    - run: make build
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: aquaproj/aqua-installer@v4.0.4
+        with:
+          aqua_version: v2.56.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: make build
   test:
     name: Small tests
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-go@v6
-      with:
-        go-version-file: go.mod
-    - run: make test
-    - run: make check-generate
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: aquaproj/aqua-installer@v4.0.4
+        with:
+          aqua_version: v2.56.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: make test
+      - run: make check-generate
   e2e:
     name: End-to-End Tests
     strategy:
       matrix:
-        k8s-version: 
-        - "1.34.3" # renovate: kindest/node
-        - "1.33.7" # renovate: kindest/node
-        - "1.32.11" # renovate: kindest/node
+        k8s-version:
+          - "1.34.3" # renovate: kindest/node
+          - "1.33.7" # renovate: kindest/node
+          - "1.32.11" # renovate: kindest/node
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-go@v6
-      with:
-        go-version-file: go.mod
-    - run: make start KUBERNETES_VERSION=${{ matrix.k8s-version }}
-      working-directory: e2e
-    - run: make test
-      working-directory: e2e
-    - run: make logs
-      working-directory: e2e
-      if: always()
-    - uses: actions/upload-artifact@v6
-      if: always()
-      with:
-        name: logs-${{ matrix.k8s-version }}.tar.gz
-        path: e2e/logs.tar.gz
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: aquaproj/aqua-installer@v4.0.4
+        with:
+          aqua_version: v2.56.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: make start KUBERNETES_VERSION=${{ matrix.k8s-version }}
+        working-directory: e2e
+      - run: make test
+        working-directory: e2e
+      - run: make logs
+        working-directory: e2e
+        if: always()
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: logs-${{ matrix.k8s-version }}.tar.gz
+          path: e2e/logs.tar.gz
 
   e2e-status:
     name: E2E Status
