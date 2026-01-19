@@ -2,7 +2,7 @@ name: Release
 on:
   push:
     tags:
-    - 'v*'
+      - "v*"
 jobs:
   release:
     runs-on: ubuntu-24.04
@@ -24,6 +24,11 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - uses: aquaproj/aqua-installer@v4.0.4
+        with:
+          aqua_version: v2.56.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Set previous release tag for GoReleaser
         run: |
           export TAG=$(curl -s "https://api.github.com/repos/kmdkuk/MCing/releases/latest" | jq -r .tag_name)

@@ -1,6 +1,7 @@
 # Usage
 
 ## Starting simple server
+
 1. Apply Minecraft Custom Resouce
 
     ```console
@@ -75,9 +76,11 @@
 
 2. Access the server
 
-    MCing does not yet have the ability to customize the Service, so you can use port-forward and other methods to check access to the server.
+    You can customize the Service (e.g. change type to LoadBalancer) using `ServiceTemplate` in the Minecraft Custom Resource to access the server.
+    Alternatively, you can use port-forward to verify access quickly.
+
     ```console
-    $ kubectl port-forward svc/minecraft-sample 25565:25565
+    kubectl port-forward svc/minecraft-sample 25565:25565
     ```
 
 ## Configuration by ConfigMap
@@ -104,5 +107,8 @@ data:
 ```
 
 It can be applied by specifying a name, such as `otherConfigMapName: other-props`.
-However, these files are updated from the command in actual operation. Therefore, they will be applied if the target files are not present at startup.
-(TODO: I'm trying to figure out how to successfully merge the JSON specified in ConfigMap with the JSON that actually exists).
+
+> [!WARNING]
+> Currently, these files are **overwritten** by the ConfigMap content on every Pod startup.
+> This means any in-game changes (e.g. `/ban`, `/op`) that are not reflected in the ConfigMap will be lost when the Pod restarts.
+> This behavior is a known issue.
