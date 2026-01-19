@@ -252,8 +252,9 @@ mcing-server-props       3      2m47s
 </li>
 <li>
 <p>Access the server</p>
-<p>MCing does not yet have the ability to customize the Service, so you can use port-forward and other methods to check access to the server.</p>
-<pre><code class="language-console">$ kubectl port-forward svc/minecraft-sample 25565:25565
+<p>You can customize the Service (e.g. change type to LoadBalancer) using <code>ServiceTemplate</code> in the Minecraft Custom Resource to access the server.
+Alternatively, you can use port-forward to verify access quickly.</p>
+<pre><code class="language-console">kubectl port-forward svc/minecraft-sample 25565:25565
 </code></pre>
 </li>
 </ol>
@@ -275,9 +276,13 @@ data:
   ops.json: |
     []
 </code></pre>
-<p>It can be applied by specifying a name, such as <code>otherConfigMapName: other-props</code>.
-However, these files are updated from the command in actual operation. Therefore, they will be applied if the target files are not present at startup.
-(TODO: I'm trying to figure out how to successfully merge the JSON specified in ConfigMap with the JSON that actually exists).</p>
+<p>It can be applied by specifying a name, such as <code>otherConfigMapName: other-props</code>.</p>
+<blockquote>
+<p>[!WARNING]
+Currently, these files are <strong>overwritten</strong> by the ConfigMap content on every Pod startup.
+This means any in-game changes (e.g. <code>/ban</code>, <code>/op</code>) that are not reflected in the ConfigMap will be lost when the Pod restarts.
+This behavior is a known issue.</p>
+</blockquote>
 
                     </main>
 
