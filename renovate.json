@@ -1,4 +1,7 @@
 {
+  "vulnerabilityAlerts": {
+    "labels": ["dependencies/security"]
+  },
   "labels": ["dependencies"],
   "automerge": true,
   "extends": [

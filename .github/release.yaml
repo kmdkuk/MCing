@@ -3,7 +3,16 @@ changelog:
     labels:
       - ignore-for-release
       - ci
+      - duplicate
+      - invalid
+      - question
+      - wontfix
+      - help wanted
   categories:
+    - title: Security
+      labels:
+        - area/security
+        - dependencies/security
     - title: Features
       labels:
         - enhancement
@@ -16,9 +25,6 @@ changelog:
     - title: Removed
       labels:
         - remove
-    - title: Security
-      labels:
-        - security
     - title: Dependencies
       labels:
         - dependencies
