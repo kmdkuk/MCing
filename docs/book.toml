@@ -1,6 +1,6 @@
 [book]
 language = "en"
-multilingual = false
+
 src = "."
 title = "MCing Documentation"
 
