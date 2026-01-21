@@ -15,7 +15,7 @@ jobs:
           go-version-file: go.mod
       - uses: aquaproj/aqua-installer@v4.0.4
         with:
-          aqua_version: v2.56.4
+          aqua_version: v2.56.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: make build
@@ -29,7 +29,7 @@ jobs:
           go-version-file: go.mod
       - uses: aquaproj/aqua-installer@v4.0.4
         with:
-          aqua_version: v2.56.4
+          aqua_version: v2.56.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: make test
@@ -50,7 +50,7 @@ jobs:
           go-version-file: go.mod
       - uses: aquaproj/aqua-installer@v4.0.4
         with:
-          aqua_version: v2.56.4
+          aqua_version: v2.56.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: make start KUBERNETES_VERSION=${{ matrix.k8s-version }}
@@ -86,7 +86,7 @@ jobs:
           go-version-file: go.mod
       - uses: aquaproj/aqua-installer@v4.0.4
         with:
-          aqua_version: v2.56.4
+          aqua_version: v2.56.5
           aqua_opts: ""
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -105,7 +105,7 @@ jobs:
           go-version-file: go.mod
       - uses: aquaproj/aqua-installer@v4.0.4
         with:
-          aqua_version: v2.56.4
+          aqua_version: v2.56.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: GoReleaser
