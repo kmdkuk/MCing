@@ -4,7 +4,8 @@ FROM gcr.io/distroless/static:nonroot AS controller
 LABEL org.opencontainers.image.source="https://github.com/kmdkuk/MCing"
 WORKDIR /
 COPY LICENSE /
-COPY mcing-controller /
+ARG TARGETPLATFORM
+COPY $TARGETPLATFORM/mcing-controller /
 USER 65532:65532
 
 ENTRYPOINT ["/mcing-controller"]
@@ -13,7 +14,8 @@ FROM gcr.io/distroless/static:nonroot AS init
 LABEL org.opencontainers.image.source="https://github.com/kmdkuk/MCing"
 WORKDIR /
 COPY LICENSE /
-COPY mcing-init /
+ARG TARGETPLATFORM
+COPY $TARGETPLATFORM/mcing-init /
 USER 1000:1000
 
 ENTRYPOINT ["/mcing-init"]
@@ -22,7 +24,8 @@ FROM gcr.io/distroless/static:nonroot AS agent
 LABEL org.opencontainers.image.source="https://github.com/kmdkuk/MCing"
 WORKDIR /
 COPY LICENSE /
-COPY mcing-agent /
+ARG TARGETPLATFORM
+COPY $TARGETPLATFORM/mcing-agent /
 USER 1000:1000
 
 ENTRYPOINT ["/mcing-agent"]

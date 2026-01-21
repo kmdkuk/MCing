@@ -156,12 +156,17 @@ release-build: ## Build release artifacts
 	kustomize build . > install.yaml
 	kustomize build config/samples > minecraft-sample.yaml
 
+.PHONY: init-buildx
+init-buildx:
+	- docker buildx create --name project-v3-builder --driver docker-container --use
+	docker buildx inspect --bootstrap
+
 .PHONY: release
-release: ## Run goreleaser release
+release: init-buildx ## Run goreleaser release
 	goreleaser release --clean
 
 .PHONY: dry-run-release
-dry-run-release: ## Run goreleaser release in dry-run mode
+dry-run-release: init-buildx ## Run goreleaser release in dry-run mode
 	goreleaser release --snapshot --clean --skip=publish
 
 .PHONY: build-image
