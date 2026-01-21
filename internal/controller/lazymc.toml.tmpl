@@ -1,0 +1,22 @@
+[public]
+address = "0.0.0.0:{{ .PublicPort }}"
+
+[server]
+address = "127.0.0.1:{{ .ServerPort }}"
+directory = "/data"
+command = "/start"
+freeze_process = false
+
+[time]
+sleep_after = {{ .SleepAfter }}
+
+[rcon]
+enabled = {{ .RconEnabled }}
+port = {{ .RconPort }}
+password = replace
+
+[join]
+methods = ["hold", "kick"]
+
+[config]
+version = "0.2.11"

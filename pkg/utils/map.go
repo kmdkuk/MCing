@@ -1,4 +1,4 @@
-package utils //nolint:revive // utils is a common package name
+package utils
 
 import "maps"
 

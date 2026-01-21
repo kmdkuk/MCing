@@ -19,12 +19,17 @@ var binDir = os.Getenv("BIN_DIR")
 func TestE2e(t *testing.T) {
 	RegisterFailHandler(Fail)
 	SetDefaultEventuallyTimeout(3 * time.Minute)
-	SetDefaultEventuallyPollingInterval(100 * time.Millisecond)
+	SetDefaultEventuallyPollingInterval(1 * time.Second)
 	RunSpecs(t, "E2e Suite")
 }
 
-var _ = Describe("mcing", Ordered, func() {
-	Context("bootstrap", testBootstrap)
+var _ = SynchronizedBeforeSuite(func() []byte {
+	setupCluster()
+	return nil
+}, func(_ []byte) {})
+
+var _ = Describe("mcing", func() {
 	Context("opsWhitelist", testOpsWhitelist)
 	Context("rcon", testRcon)
+	Context("autopause", testAutoPause)
 })

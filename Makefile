@@ -178,8 +178,12 @@ build-image-controller: build-controller ## Build docker image with the manager.
 	$(CONTAINER_TOOL) build --build-arg TARGETPLATFORM=. --target controller -t ${CONTROLLER_IMG} .
 
 .PHONY: build-image-init
+# GITHUB_TOKEN という環境変数が空でなければフラグをセット
+ifneq ($(GITHUB_TOKEN),)
+    SECRET_FLAG := --secret id=github_token,env=GITHUB_TOKEN
+endif
 build-image-init: build-init ## Build docker image with the manager.
-	$(CONTAINER_TOOL) build --build-arg TARGETPLATFORM=. --target init -t ${INIT_IMG} .
+	$(CONTAINER_TOOL) build --build-arg TARGETPLATFORM=. ${SECRET_FLAG} --target init -t ${INIT_IMG} .
 
 .PHONY: build-image-agent
 build-image-agent: build-agent ## Build docker image with the manager.

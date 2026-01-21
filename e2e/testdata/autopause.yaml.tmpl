@@ -1,11 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: datapack-autopause-props
+data:
+  server-port: "12345"
+---
 apiVersion: mcing.kmdkuk.com/v1alpha1
 kind: Minecraft
 metadata:
-  name: {{ .Name }}
+  name: autopause
 spec:
-{{- if .RconPasswordSecretName }}
-  rconPasswordSecretName: {{ .RconPasswordSecretName }}
-{{- end }}
+  serverPropertiesConfigMapName: datapack-autopause-props
+  autoPause:
+    enabled: true
+    timeoutSeconds: 30
   podTemplate:
     spec:
       containers:
@@ -14,7 +22,7 @@ spec:
     - metadata:
         name: minecraft-data
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: 1Gi

@@ -1,0 +1,190 @@
+# lazymc configuration
+#
+# You must configure your server directory and start command, see:
+# - server.directory
+# - server.command
+#
+# All defaults are commented out, change it if you desire.
+# You can probably leave the rest as-is.
+#
+# You may generate a new configuration with: lazymc config generate
+# Or find the latest at: https://git.io/J1Fvq
+
+[public]
+# Public address. IP and port users connect to.
+# Shows sleeping status, starts server on connect, and proxies to server.
+#address = "0.0.0.0:25565"
+
+# Server version & protocol hint.
+# Sent to clients until actual server version is known.
+# See: https://git.io/J1Fvx
+#version = "1.20.3"
+#protocol = 765
+
+[server]
+# Server address. Internal IP and port of server started by lazymc to proxy to.
+# Port must be different from public port.
+#address = "127.0.0.1:25566"
+
+# Server directory, defaults to current directory.
+directory = "."
+
+# Command to start the server.
+# Warning: if using a bash script read: https://git.io/JMIKH
+command = "java -Xmx1G -Xms1G -jar server.jar --nogui"
+
+# Freeze the server process instead of restarting it when no players online, making it resume faster.
+# Only works on Unix (Linux or MacOS), ignored on Windows
+#freeze_process = true
+
+# Immediately wake server when starting lazymc.
+#wake_on_start = false
+
+# Immediately wake server after crash.
+#wake_on_crash = false
+
+# Probe required server details when starting lazymc, wakes server on start.
+# Improves client compatibility. Automatically enabled if required by other config properties.
+#probe_on_start = false
+
+# Set to true if this server runs Forge.
+#forge = false
+
+# Server start/stop timeout in seconds. Force kill server process if it takes too long.
+#start_timeout = 300
+#stop_timeout = 150
+
+# To wake server, user must be in server whitelist if enabled on server.
+#wake_whitelist = true
+
+# Block banned IPs as listed in banned-ips.json in server directory.
+#block_banned_ips = true
+
+# Drop connections from banned IPs.
+# Banned IPs won't be able to ping or request server status.
+# On connect, clients show a 'Disconnected' message rather than the ban reason.
+#drop_banned_ips = false
+
+# Add HAProxy v2 header to proxied connections.
+# See: https://git.io/J1bYb
+#send_proxy_v2 = false
+
+[time]
+# Sleep after number of seconds.
+#sleep_after = 60
+
+# Minimum time in seconds to stay online when server is started.
+#minimum_online_time = 60
+
+[motd]
+# MOTD, shown in server browser.
+#sleeping = "☠ Server is sleeping\n§2☻ Join to start it up"
+#starting = "§2☻ Server is starting...\n§7⌛ Please wait..."
+#stopping = "☠ Server going to sleep...\n⌛ Please wait..."
+
+# Use MOTD from Minecraft server once known.
+#from_server = false
+
+[join]
+# Methods to use to occupy a client on join while the server is starting.
+# Read about all methods and configure them below.
+# Methods are used in order, if none is set, the client disconnects without a message.
+#methods = [
+#    "hold",
+#    "kick",
+#]
+
+[join.kick]
+# Kick occupation method.
+# Instantly kicks a client with a message.
+
+# Message shown when client is kicked while server is starting/stopping.
+#starting = "Server is starting... §c♥§r\n\nThis may take some time.\n\nPlease try to reconnect in a minute."
+#stopping = "Server is going to sleep... §7☠§r\n\nPlease try to reconnect in a minute to wake it again."
+
+[join.hold]
+# Hold occupation method.
+# Holds back a joining client while the server is started until it is ready.
+# 'Connecting the server...' is shown on the client while it's held back.
+# If the server starts fast enough, the client won't notice it was sleeping at all.
+# This works for a limited time of 30 seconds, after which the Minecraft client times out.
+
+# Hold client for number of seconds on connect while server starts.
+# Keep below Minecraft timeout of 30 seconds.
+#timeout = 25
+
+[join.forward]
+# Forward occupation method.
+# Instantly forwards (proxies) the client to a different address.
+# You may need to configure target server for it, such as allowing proxies.
+# Consumes client, not allowing other join methods afterwards.
+
+# IP and port to forward to.
+# The target server will receive original client handshake and login request as received by lazymc.
+#address = "127.0.0.1:25565"
+
+# Add HAProxy v2 header to forwarded connections.
+# See: https://git.io/J1bYb
+#send_proxy_v2 = false
+
+[join.lobby]
+# Lobby occupation method.
+# The client joins a fake lobby server with an empty world, floating in space.
+# A message is overlayed on screen to notify the server is starting.
+# The client will be teleported to the real server once it is ready.
+# This may keep the client occupied forever if no timeout is set.
+# Consumes client, not allowing other join methods afterwards.
+# See: https://git.io/JMIi4
+
+# !!! WARNING !!!
+# This is highly experimental, incomplete and unstable.
+# This may break the game and crash clients.
+# Don't enable this unless you know what you're doing.
+#
+# - Server must be in offline mode
+# - Server must use Minecraft version 1.16.3 to 1.17.1 (tested with 1.17.1)
+# - Server must use vanilla Minecraft
+#   - May work with Forge, enable in config, depends on used mods, test before use
+#   - Does not work with other mods, such as FTB
+
+# Maximum time in seconds in the lobby while the server starts.
+#timeout = 600
+
+# Message banner in lobby shown to client.
+#message = "§2Server is starting\n§7⌛ Please wait..."
+
+# Sound effect to play when server is ready.
+#ready_sound = "block.note_block.chime"
+
+[lockout]
+# Enable to prevent everybody from connecting through lazymc. Instantly kicks player.
+#enabled = false
+
+# Kick players with following message.
+#message = "Server is closed §7☠§r\n\nPlease try to reconnect in a minute."
+
+[rcon]
+# Enable sleeping server through RCON.
+# Must be enabled on Windows.
+#enabled = false # default: false, true on Windows
+
+# Server RCON port. Must differ from public and server port.
+#port = 25575
+
+# Server RCON password.
+# Or whether to randomize password each start (recommended).
+#password = ""
+#randomize_password = true
+
+# Add HAProxy v2 header to RCON connections.
+# See: https://git.io/J1bYb
+#send_proxy_v2 = false
+
+[advanced]
+# Automatically update values in Minecraft server.properties file as required.
+#rewrite_server_properties = true
+
+[config]
+# lazymc version this configuration is for.
+# Don't change unless you know what you're doing.
+version = "0.2.11"

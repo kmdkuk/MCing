@@ -1,0 +1,39 @@
+      - name: minecraft
+        image: itzg/minecraft-server:java21-alpine
+        env:
+          - name: TYPE
+            value: "PAPER"
+          - name: EULA
+            value: "true"
+
+          # --- Lightweight world generation (Superflat, no structures) ---
+          - name: LEVEL_TYPE
+            value: "FLAT"
+          - name: GENERATE_STRUCTURES
+            value: "false"
+
+          # --- Disable spawn and processing ---
+          - name: SPAWN_ANIMALS
+            value: "false"
+          - name: SPAWN_MONSTERS
+            value: "false"
+          - name: SPAWN_NPCS
+            value: "false"
+          - name: ENABLE_COMMAND_BLOCK
+            value: "false"
+
+          # --- Minimize rendering and calculation load ---
+          - name: VIEW_DISTANCE
+            value: "3"
+          - name: SIMULATION_DISTANCE
+            value: "3"
+          - name: MAX_PLAYERS
+            value: "1"
+
+          # --- JVM and GC optimization (SerialGC) ---
+          - name: USE_AIKAR_FLAGS
+            value: "false"
+
+          # --- Other ---
+          - name: ENABLE_STATUS_IMAGE
+            value: "false"

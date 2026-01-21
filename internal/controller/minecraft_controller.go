@@ -2,8 +2,11 @@ package controller
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
@@ -38,6 +41,12 @@ const (
 	readinessPeriodSeconds               = 10
 	readinessFailureThreshold            = 12
 	rconPasswordLength                   = 24
+	// Autopause probe constants.
+	autopauseLivenessInitialDelay      = 30
+	autopauseLivenessPeriodSeconds     = 60
+	autopauseReadinessInitialDelay     = 10
+	autopauseReadinessPeriodSeconds    = 10
+	autopauseReadinessFailureThreshold = 12
 )
 
 // MinecraftReconciler reconciles a Minecraft object.
@@ -78,6 +87,20 @@ func NewMinecraftReconciler(
 //+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
+
+//go:embed lazymc.toml.tmpl
+var lazymcTomlTmpl string
+
+// LazymcConfig holds configuration for lazymc template rendering.
+type LazymcConfig struct {
+	PublicPort   int32
+	ServerPort   int32
+	Command      string
+	SleepAfter   int32
+	RconEnabled  bool
+	RconPort     int32
+	RconPassword string
+}
 
 // Reconcile implements Reconciler interface.
 // See https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
@@ -141,7 +164,7 @@ func (r *MinecraftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	return ctrl.Result{}, nil
 }
 
-//nolint:gocognit // debug logic increases complexity
+//nolint:gocognit,funlen // debug logic increases complexity
 func (r *MinecraftReconciler) reconcileStatefulSet(
 	ctx context.Context,
 	mc *mcingv1alpha1.Minecraft,
@@ -213,15 +236,29 @@ func (r *MinecraftReconciler) reconcileStatefulSet(
 			},
 		)
 
+		if mc.Spec.AutoPause.Enabled {
+			podSpec.Volumes = append(podSpec.Volumes, corev1.Volume{
+				Name: constants.LazymcVolumeName,
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
+				},
+			})
+		}
+
 		containers := make([]corev1.Container, 0)
-		minecraftContainer, err := r.makeMinecraftContainer(mc, podSpec.Containers, sts.Spec.Template.Spec.Containers)
+		minecraftContainer, err := makeMinecraftContainer(
+			mc,
+			podSpec.Containers,
+			sts.Spec.Template.Spec.Containers,
+			constants.ServerPort,
+		)
 		if err != nil {
 			return err
 		}
 		containers = append(containers, minecraftContainer)
 		containers = append(containers, r.makeAgentContainer(mc))
 		podSpec.Containers = containers
-		podSpec.InitContainers = r.makeInitContainer(mc, sts.Spec.Template.Spec.InitContainers)
+		podSpec.InitContainers = r.makeInitContainer(mc)
 
 		podSpec.DeepCopyInto(&sts.Spec.Template.Spec)
 
@@ -243,9 +280,11 @@ func (r *MinecraftReconciler) reconcileStatefulSet(
 	return nil
 }
 
-func (r *MinecraftReconciler) makeMinecraftContainer(
+//nolint:funlen // container setup requires many fields
+func makeMinecraftContainer(
 	mc *mcingv1alpha1.Minecraft,
 	desired, _ []corev1.Container,
+	publicPort int32,
 ) (corev1.Container, error) {
 	var source *corev1.Container
 	for i := range desired {
@@ -258,8 +297,6 @@ func (r *MinecraftReconciler) makeMinecraftContainer(
 	if source == nil {
 		return corev1.Container{}, errors.New("minecraft container not found")
 	}
-
-	rconSecretName := mc.RconSecretName()
 
 	c := source.DeepCopy()
 	c.Stdin = true
@@ -287,6 +324,7 @@ func (r *MinecraftReconciler) makeMinecraftContainer(
 		PeriodSeconds:       readinessPeriodSeconds,
 		FailureThreshold:    readinessFailureThreshold,
 	}
+	rconSecretName := mc.RconSecretName()
 	c.Env = append(c.Env, corev1.EnvVar{
 		Name: constants.RconPasswordEnvName,
 		ValueFrom: &corev1.EnvVarSource{
@@ -322,6 +360,46 @@ func (r *MinecraftReconciler) makeMinecraftContainer(
 			ReadOnly:  true,
 		},
 	)
+	c.Lifecycle = &corev1.Lifecycle{
+		PreStop: &corev1.LifecycleHandler{
+			Exec: &corev1.ExecAction{
+				// '|| true' is to prevent the container from being killed if rcon-cli fails
+				Command: []string{"/bin/sh", "-c", "rcon-cli stop || true"},
+			},
+		},
+	}
+
+	if mc.Spec.AutoPause.Enabled {
+		// Override probes to check the public port (lazymc)
+		// Use tcpSocket because lazymc accepts connections even when backend is sleeping
+		c.LivenessProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				TCPSocket: &corev1.TCPSocketAction{
+					Port: intstr.FromInt32(publicPort),
+				},
+			},
+			InitialDelaySeconds: autopauseLivenessInitialDelay,
+			PeriodSeconds:       autopauseLivenessPeriodSeconds,
+		}
+		c.ReadinessProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				TCPSocket: &corev1.TCPSocketAction{
+					Port: intstr.FromInt32(publicPort),
+				},
+			},
+			InitialDelaySeconds: autopauseReadinessInitialDelay,
+			PeriodSeconds:       autopauseReadinessPeriodSeconds,
+			FailureThreshold:    autopauseReadinessFailureThreshold,
+		}
+
+		// Wrap command with lazymc via tini to handle zombies and signals
+		c.Command = []string{constants.LazymcBinPath}
+		c.Args = []string{"--config", constants.LazymcConfigPath}
+		c.VolumeMounts = append(c.VolumeMounts, corev1.VolumeMount{
+			Name:      constants.LazymcVolumeName,
+			MountPath: constants.LazymcPath,
+		})
+	}
 	return *c, nil
 }
 
@@ -368,7 +446,7 @@ func (r *MinecraftReconciler) makeAgentContainer(mc *mcingv1alpha1.Minecraft) co
 	return c
 }
 
-func (r *MinecraftReconciler) makeInitContainer(mc *mcingv1alpha1.Minecraft, _ []corev1.Container) []corev1.Container {
+func (r *MinecraftReconciler) makeInitContainer(mc *mcingv1alpha1.Minecraft) []corev1.Container {
 	image := r.initImageName
 	c := corev1.Container{
 		Name:  constants.InitContainerName,
@@ -385,8 +463,28 @@ func (r *MinecraftReconciler) makeInitContainer(mc *mcingv1alpha1.Minecraft, _ [
 		},
 	}
 
+	if mc.Spec.AutoPause.Enabled {
+		c.Args = append(c.Args, "--enable-lazymc")
+		c.VolumeMounts = append(c.VolumeMounts, corev1.VolumeMount{
+			Name:      constants.LazymcVolumeName,
+			MountPath: constants.LazymcPath,
+		})
+		c.Env = append(c.Env, corev1.EnvVar{
+			Name: constants.RconPasswordEnvName,
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: mc.RconSecretName(),
+					},
+					Key: constants.RconPasswordSecretKey,
+				},
+			},
+		})
+	}
+
 	var initContainers []corev1.Container
 	initContainers = append(initContainers, c)
+
 	for _, given := range mc.Spec.PodTemplate.Spec.InitContainers {
 		ic := given.DeepCopy()
 		initContainers = append(initContainers, *ic)
@@ -512,6 +610,25 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 	return nil
 }
 
+// buildServerCommand constructs the server command from container spec.
+func buildServerCommand(mc *mcingv1alpha1.Minecraft) string {
+	cmd := "/start"
+	if len(mc.Spec.PodTemplate.Spec.Containers) == 0 {
+		return cmd
+	}
+	for _, container := range mc.Spec.PodTemplate.Spec.Containers {
+		if container.Name != constants.MinecraftContainerName || len(container.Command) == 0 {
+			continue
+		}
+		parts := make([]string, 0, len(container.Command)+len(container.Args))
+		parts = append(parts, container.Command...)
+		parts = append(parts, container.Args...)
+		return strings.Join(parts, " ")
+	}
+	return cmd
+}
+
+//nolint:gocognit,funlen // config map reconciliation has many conditional paths
 func (r *MinecraftReconciler) reconcileConfigMap(
 	ctx context.Context,
 	mc *mcingv1alpha1.Minecraft,
@@ -536,6 +653,13 @@ func (r *MinecraftReconciler) reconcileConfigMap(
 	props, err := config.GenServerProps(userProps)
 	if err != nil {
 		return nil, err
+	}
+
+	if mc.Spec.AutoPause.Enabled {
+		// Force internal port by replacing the enforced standard port
+		target := fmt.Sprintf("server-port=%d", constants.ServerPort)
+		replacement := fmt.Sprintf("server-port=%d", constants.InternalServerPort)
+		props = strings.Replace(props, target, replacement, 1)
 	}
 
 	var otherProps map[string]string
@@ -568,6 +692,50 @@ func (r *MinecraftReconciler) reconcileConfigMap(
 		if v, ok := otherProps[constants.WhiteListName]; ok {
 			cm.Data[constants.WhiteListName] = v
 		}
+
+		// Generate lazymc.toml and start.sh from templates
+		//nolint:nestif // autopause configuration adds necessary nesting
+		if mc.Spec.AutoPause.Enabled {
+			// Determine backend command
+			cmd := buildServerCommand(mc)
+
+			rconEnabled := true
+			// TODO: rconPassword is managed using Secret or similar.
+			rconPassword := constants.RconDefaultPassword
+			rconPort := constants.RconPort
+
+			if v, ok := userProps["enable-rcon"]; ok {
+				if v == "false" {
+					rconEnabled = false
+				}
+			}
+			// TODO: customize password and manage secret
+			// if v, ok := userProps["rcon.password"]; ok {
+			// 	rconPassword = v
+			// }
+			if v, ok := userProps["rcon.port"]; ok {
+				if portVal, parseErr := strconv.Atoi(v); parseErr == nil {
+					rconPort = int32(portVal) //nolint:gosec // port values are within int32 range
+				}
+			}
+
+			lazymcConfig := LazymcConfig{
+				PublicPort:   constants.ServerPort,
+				ServerPort:   constants.InternalServerPort,
+				Command:      cmd,
+				SleepAfter:   int32(mc.Spec.AutoPause.TimeoutSeconds), //nolint:gosec // timeout is within int32 range
+				RconEnabled:  rconEnabled,
+				RconPort:     rconPort,
+				RconPassword: rconPassword,
+			}
+
+			lazymcToml, lazymcTomlErr := utils.ExecuteTemplate(lazymcTomlTmpl, lazymcConfig)
+			if lazymcTomlErr != nil {
+				return lazymcTomlErr
+			}
+			cm.Data["lazymc.toml"] = lazymcToml
+		}
+
 		return ctrl.SetControllerReference(mc, cm, r.scheme)
 	})
 	if err != nil {

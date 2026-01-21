@@ -36,11 +36,11 @@ stop: ## Delete kind cluster
 .PHONY: test
 test: ## Run e2e tests
 	KINDTEST=1 \
-	go test . -v -timeout=15m -ginkgo.v -ginkgo.fail-fast $(GINKGO_OPT)
+	go run github.com/onsi/ginkgo/v2/ginkgo -v --timeout=15m --fail-fast -p $(GINKGO_OPT) .
 
 .PHONY: bootstrap
 bootstrap: ## Run bootstrap tests
-	$(MAKE) test GINKGO_OPT="-ginkgo.focus 'bootstrap'"
+	$(MAKE) test GINKGO_OPT="--focus 'bootstrap'"
 
 .PHONY: load
 load: ## Load images into kind cluster

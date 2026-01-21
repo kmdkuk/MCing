@@ -39,6 +39,19 @@ spec:
           spec:
             description: MinecraftSpec defines the desired state of Minecraft.
             properties:
+              autoPause:
+                description: AutoPause configuration
+                properties:
+                  enabled:
+                    description: Enabled enables the auto-pause function.
+                    type: boolean
+                  timeoutSeconds:
+                    default: 300
+                    description: |-
+                      TimeoutSeconds is the time in seconds to wait before pausing the server.
+                      Default is 300 seconds.
+                    type: integer
+                type: object
               ops:
                 description: operators on server. exec /op or /deop
                 properties:
