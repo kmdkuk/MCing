@@ -156,28 +156,34 @@ release-build: ## Build release artifacts
 	kustomize build . > install.yaml
 	kustomize build config/samples > minecraft-sample.yaml
 
+.PHONY: init-buildx
+init-buildx:
+	- docker buildx create --name project-v3-builder --driver docker-container --use
+	docker buildx inspect --bootstrap
+
 .PHONY: release
-release: ## Run goreleaser release
+release: init-buildx ## Run goreleaser release
 	goreleaser release --clean
 
 .PHONY: dry-run-release
-dry-run-release: ## Run goreleaser release in dry-run mode
+dry-run-release: init-buildx ## Run goreleaser release in dry-run mode
 	goreleaser release --snapshot --clean --skip=publish
 
 .PHONY: build-image
 build-image: build build-image-controller build-image-init build-image-agent ## Build docker image with the manager.
 
 .PHONY: build-image-controller
+.PHONY: build-image-controller
 build-image-controller: build-controller ## Build docker image with the manager.
-	$(CONTAINER_TOOL) build --target controller -t ${CONTROLLER_IMG} .
+	$(CONTAINER_TOOL) build --build-arg TARGETPLATFORM=. --target controller -t ${CONTROLLER_IMG} .
 
 .PHONY: build-image-init
 build-image-init: build-init ## Build docker image with the manager.
-	$(CONTAINER_TOOL) build --target init -t ${INIT_IMG} .
+	$(CONTAINER_TOOL) build --build-arg TARGETPLATFORM=. --target init -t ${INIT_IMG} .
 
 .PHONY: build-image-agent
 build-image-agent: build-agent ## Build docker image with the manager.
-	$(CONTAINER_TOOL) build --target agent -t ${AGENT_IMG} .
+	$(CONTAINER_TOOL) build --build-arg TARGETPLATFORM=. --target agent -t ${AGENT_IMG} .
 
 .PHONY: tag
 tag: build tag-controller tag-init tag-agent ## Tag docker image with the manager.

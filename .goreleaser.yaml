@@ -49,39 +49,57 @@ builds:
       - -X github.com/kmdkuk/mcing/pkg/version.BuildDate={{ .CommitDate }}
       - -X github.com/kmdkuk/mcing/pkg/version.Version={{ .Version }}
 
-dockers:
-  - image_templates:
-    - "ghcr.io/kmdkuk/{{.ProjectName}}-controller:{{ .Version }}"
-    use: buildx
+dockers_v2:
+  - id: mcing-controller
+    images:
+      - "ghcr.io/kmdkuk/{{.ProjectName}}-controller"
+    tags:
+      - "{{ .Version }}"
+    platforms:
+      - linux/amd64
     dockerfile: Dockerfile
+    ids:
+      - mcing-controller
     extra_files:
       - LICENSE
-    build_flag_templates:
-      - "--platform=linux/amd64"
+    flags:
+      - "--provenance=false"
       - "--target=controller"
       - "--label=org.opencontainers.image.created={{.CommitDate}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
-  - image_templates:
-    - "ghcr.io/kmdkuk/{{.ProjectName}}-init:{{ .Version }}"
-    use: buildx
+  - id: mcing-init
+    images:
+      - "ghcr.io/kmdkuk/{{.ProjectName}}-init"
+    tags:
+      - "{{ .Version }}"
+    platforms:
+      - linux/amd64
     dockerfile: Dockerfile
+    ids:
+      - mcing-init
     extra_files:
       - LICENSE
-    build_flag_templates:
-      - "--platform=linux/amd64"
+    flags:
+      - "--provenance=false"
       - "--target=init"
       - "--label=org.opencontainers.image.created={{.CommitDate}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
-  - image_templates:
-    - "ghcr.io/kmdkuk/{{.ProjectName}}-agent:{{ .Version }}"
-    use: buildx
+  - id: mcing-agent
+    images:
+      - "ghcr.io/kmdkuk/{{.ProjectName}}-agent"
+    tags:
+      - "{{ .Version }}"
+    platforms:
+      - linux/amd64
     dockerfile: Dockerfile
+    ids:
+      - mcing-agent
     extra_files:
       - LICENSE
-    build_flag_templates:
-      - "--platform=linux/amd64"
+    flags:
+      - "--provenance=false"
       - "--target=agent"
       - "--label=org.opencontainers.image.created={{.CommitDate}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"

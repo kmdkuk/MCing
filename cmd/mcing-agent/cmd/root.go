@@ -150,7 +150,7 @@ to quickly create a Cobra application.`,
 			if err == nil {
 				break
 			}
-			if retryCount > 10 {
+			if retryCount > 30 {
 				return err
 			}
 			retryCount++
