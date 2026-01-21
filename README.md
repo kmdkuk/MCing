@@ -99,3 +99,5 @@ See https://kmdk.uk/MCing
 ## Docker images
 
 Docker images are available on [ghcr.io/kmdkuk/mcing](https://github.com/kmdkuk/packages/container/package/mcing).
+
+<- Ensure release workflows run on release/v* test skip -->
