@@ -1,0 +1,25 @@
+src:
+  - "*.yml"
+  - "*.yaml"
+  - "**/*.go"
+  - "go.mod"
+  - "go.sum"
+  - "Makefile"
+  - "Dockerfile"
+  - "Tiltfile"
+  - "aqua.yaml"
+  - "api/**"
+  - "cmd/**"
+  - "config/**"
+  - "e2e/**"
+  - "hack/**"
+  - "internal/**"
+  - "pkg/**"
+  - ".github/workflows/ci.yaml" # Trigger CI when the CI workflow config itself changes
+  - ".github/filters.yaml" # Trigger CI when filters config changes
+
+docs:
+  - "docs/**"
+  - ".github/workflows/mdbook.yaml"
+  - ".github/filters.yaml" # Trigger docs CI when filters config changes
+  - "aqua.yaml"
