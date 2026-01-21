@@ -1,0 +1,173 @@
+name: Create Release PR
+
+# This workflow creates a release PR to update the version and image tag.
+# It has two modes of operation:
+#
+# 1. Scheduled (Weekly):
+#    - Runs every Monday at 9:00 AM JST.
+#    - Checks merged PRs since the last tag.
+#    - IF and ONLY IF all merged PRs are related to dependencies (labeled 'dependencies' or 'dependencies/security'),
+#      it automatically creates a patch release PR.
+#    - If there are feature changes or no merges, it skips.
+#
+# 2. Manual (Workflow Dispatch):
+#    - Allows manually triggering a release PR.
+#    - Supports forcing a release check skip (force=true).
+#    - Supports specifying a custom version (version=vX.Y.Z).
+#      If version is not provided, it auto-increments the patch version.
+
+on:
+  schedule:
+    # Every Monday at 9:00 AM (JST)
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Target Version (e.g. v0.6.1). If empty, auto-increments patch version based on dependency check."
+        required: false
+        type: string
+      force:
+        description: "Force Release: Skip PR label checks and create release immediately."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-release-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate Version and Validate
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_FORCE: ${{ inputs.force }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          # --- 1. Get previous tag info ---
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+
+          if [ "$LAST_TAG" == "v0.0.0" ]; then
+            LAST_TAG_TIME=0
+          else
+            LAST_TAG_TIME=$(git log -1 --format=%ct $LAST_TAG)
+          fi
+          echo "Last tag: $LAST_TAG (Timestamp: $LAST_TAG_TIME)"
+
+          # --- 2. Determine Next Version ---
+          if [ -n "$INPUT_VERSION" ]; then
+            NEW_TAG="$INPUT_VERSION"
+            # Remove 'v' for image tag (semver convention in this project)
+            NEW_VERSION="${NEW_TAG#v}"
+            echo "Manual version specified: $NEW_TAG"
+          else
+            # Auto-calculate patch version
+            VERSION_NUM=${LAST_TAG#v}
+            IFS='.' read -r major minor patch <<< "$VERSION_NUM"
+            patch=${patch:-0}
+            NEW_PATCH=$((patch + 1))
+
+            NEW_TAG="v${major}.${minor}.${NEW_PATCH}"
+            NEW_VERSION="${major}.${minor}.${NEW_PATCH}"
+            echo "Auto-calculated next version: $NEW_TAG"
+          fi
+
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+          # --- 3. Validation Logic ---
+          # Skip validation if:
+          # - Manual version is specified
+          # - Force flag is true
+          if [ -n "$INPUT_VERSION" ] || [ "$INPUT_FORCE" == "true" ]; then
+            echo "Manual input or force flag detected. Skipping validation."
+            echo "skip=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Validation: Check labels of merged PRs since last tag
+          # Note: We fetch merged PRs without specific --base filter and filter in jq
+          # because sometimes the CLI filter can be inconsistent or restrictive.
+          NON_COMPLIANT_EXISTS=$(gh pr list \
+            --state merged \
+            --json labels,mergedAt,baseRefName \
+            --limit 100 \
+            | jq -r --argjson TAG_TIME "$LAST_TAG_TIME" '
+              map(select(.baseRefName == "main"))
+              | map(select((.mergedAt | fromdate) > $TAG_TIME))
+              | if length == 0 then
+                  "NO_PRS"
+                else
+                  map(select(
+                    (.labels | map(.name) | index("dependencies") | not) and
+                    (.labels | map(.name) | index("dependencies/security") | not)
+                  ))
+                  | if length > 0 then "TRUE" else "FALSE" end
+                end
+            ')
+
+          if [ "$NON_COMPLIANT_EXISTS" == "NO_PRS" ]; then
+            echo "No new PRs merged since last tag. Skipping."
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [ "$NON_COMPLIANT_EXISTS" == "TRUE" ]; then
+            echo "Found PRs that are NOT dependency updates. Skipping release PR creation."
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "All merged PRs are dependency updates. Proceeding."
+          echo "skip=false" >> $GITHUB_OUTPUT
+
+      - name: Create Branch, Update kustomization.yaml, and Make PR
+        if: steps.check.outputs.skip != 'true'
+        env:
+          NEW_TAG: ${{ steps.check.outputs.new_tag }}
+          NEW_VERSION: ${{ steps.check.outputs.new_version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="release/$NEW_TAG"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Reset Release Branch to current main
+          # This ensures we rebase on latest main if branch already exists
+          git checkout -B $BRANCH_NAME
+
+          # --- Update kustomization.yaml ---
+          sed -i "s/newTag: .*/newTag: ${NEW_VERSION}/" kustomization.yaml
+
+          # Show diff
+          git diff kustomization.yaml
+
+          # Commit
+          git add kustomization.yaml
+          git commit -m "chore: bump image tag to $NEW_VERSION"
+
+          # Force Push (updates existing PR if it exists, or creates new branch)
+          git push -f origin $BRANCH_NAME
+
+          # Create PR only if it doesn't exist
+          # 'gh pr create' fails if PR already exists, but we can verify first
+          PR_EXISTS=$(gh pr list --head $BRANCH_NAME --json number --jq 'length')
+          if [ "$PR_EXISTS" -gt 0 ]; then
+            echo "PR already exists for branch $BRANCH_NAME. Updated checks/commits via force push."
+          else
+            gh pr create \
+              --title "chore: Release $NEW_TAG" \
+              --body "This PR bumps the image tag to **$NEW_VERSION**." \
+              --base main \
+              --head $BRANCH_NAME
+          fi
