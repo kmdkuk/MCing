@@ -63,7 +63,7 @@ dockers_v2:
     extra_files:
       - LICENSE
     flags:
-      - "--platform=linux/amd64"
+      - "--provenance=false"
       - "--target=controller"
       - "--label=org.opencontainers.image.created={{.CommitDate}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
@@ -81,7 +81,7 @@ dockers_v2:
     extra_files:
       - LICENSE
     flags:
-      - "--platform=linux/amd64"
+      - "--provenance=false"
       - "--target=init"
       - "--label=org.opencontainers.image.created={{.CommitDate}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
@@ -99,7 +99,7 @@ dockers_v2:
     extra_files:
       - LICENSE
     flags:
-      - "--platform=linux/amd64"
+      - "--provenance=false"
       - "--target=agent"
       - "--label=org.opencontainers.image.created={{.CommitDate}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
