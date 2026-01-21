@@ -5,7 +5,21 @@ on:
     branches:
       - "main"
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: .github/filters.yaml
+
   build:
+    needs: changes
+    if: ${{ needs.changes.outputs.src == 'true' || startsWith(github.head_ref, 'release/v') }}
+
     name: Build binaries
     runs-on: ubuntu-latest
     steps:
@@ -20,6 +34,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: make build
   test:
+    needs: changes
+    if: ${{ needs.changes.outputs.src == 'true' || startsWith(github.head_ref, 'release/v') }}
+
     name: Small tests
     runs-on: ubuntu-latest
     steps:
@@ -43,6 +60,9 @@ jobs:
           - "1.33.7" # renovate: kindest/node
           - "1.32.11" # renovate: kindest/node
     runs-on: ubuntu-24.04
+    needs: changes
+    if: ${{ needs.changes.outputs.src == 'true' || startsWith(github.head_ref, 'release/v') }}
+
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -73,12 +93,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check e2e matrix status
-        if: ${{ needs.e2e.result != 'success' }}
+        if: ${{ needs.e2e.result != 'success' && needs.e2e.result != 'skipped' }}
         run: exit 1
 
   tilt:
     name: Run tilt ci
+    needs: changes
+    if: ${{ needs.changes.outputs.src == 'true' || startsWith(github.head_ref, 'release/v') }}
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -94,7 +117,10 @@ jobs:
       - run: tilt ci
   dry-run-release:
     name: Dry-run release
+    needs: changes
+    if: ${{ needs.changes.outputs.src == 'true' || startsWith(github.head_ref, 'release/v') }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
