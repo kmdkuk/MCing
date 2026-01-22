@@ -8482,6 +8482,10 @@ spec:
                 required:
                 - spec
                 type: object
+              rconPasswordSecretName:
+                description: RconPasswordSecretName is a `Secret` name for RCON password.
+                nullable: true
+                type: string
               serverPropertiesConfigMapName:
                 description: ServerPropertiesConfigMapName is a `ConfigMap` name of
                   `server.properties`.

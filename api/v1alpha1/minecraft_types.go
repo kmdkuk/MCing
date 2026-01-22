@@ -46,6 +46,11 @@ type MinecraftSpec struct {
 	// +nullable
 	// +optional
 	OtherConfigMapName *string `json:"otherConfigMapName,omitempty"`
+
+	// RconPasswordSecretName is a `Secret` name for RCON password.
+	// +nullable
+	// +optional
+	RconPasswordSecretName *string `json:"rconPasswordSecretName,omitempty"`
 }
 
 type Ops struct {
@@ -249,6 +254,13 @@ func (m *Minecraft) PodName() string {
 
 func (m *Minecraft) HeadlessServiceName() string {
 	return m.PrefixedName() + "-headless"
+}
+
+func (m *Minecraft) RconSecretName() string {
+	if m.Spec.RconPasswordSecretName != nil {
+		return *m.Spec.RconPasswordSecretName
+	}
+	return m.PrefixedName() + "-rcon-password"
 }
 
 //+kubebuilder:object:root=true

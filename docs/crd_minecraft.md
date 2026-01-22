@@ -50,6 +50,7 @@ MinecraftSpec defines the desired state of Minecraft
 | whitelist | whitelist | [Whitelist](#whitelist) | false |
 | serverPropertiesConfigMapName | ServerPropertiesConfigMapName is a `ConfigMap` name of `server.properties`. | *string | false |
 | otherConfigMapName | OtherConfigMapName is a `ConfigMap` name of other configurations file(eg. banned-ips.json, ops.json etc) | *string | false |
+| rconPasswordSecretName | RconPasswordSecretName is a `Secret` name for RCON password. | *string | false |
 
 [Back to Custom Resources](#custom-resources)
 
