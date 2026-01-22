@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -63,6 +64,7 @@ func NewMinecraftReconciler(client client.Client, log logr.Logger, scheme *runti
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile implements Reconciler interface.
 // See https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
@@ -100,6 +102,11 @@ func (r *MinecraftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	props, err := r.reconcileConfigMap(ctx, mc)
 	if err != nil {
 		log.Error(err, "failed to reconcile configmap")
+		return ctrl.Result{}, err
+	}
+
+	if err := r.reconcileRconSecret(ctx, mc); err != nil {
+		log.Error(err, "failed to reconcile rcon secret")
 		return ctrl.Result{}, err
 	}
 
@@ -188,7 +195,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 		)
 
 		containers := make([]corev1.Container, 0)
-		minecraftContainer, err := makeMinecraftContainer(mc, podSpec.Containers, sts.Spec.Template.Spec.Containers)
+		minecraftContainer, err := r.makeMinecraftContainer(mc, podSpec.Containers, sts.Spec.Template.Spec.Containers)
 		if err != nil {
 			return err
 		}
@@ -217,7 +224,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 	return nil
 }
 
-func makeMinecraftContainer(_ *mcingv1alpha1.Minecraft, desired, _ []corev1.Container) (corev1.Container, error) {
+func (r *MinecraftReconciler) makeMinecraftContainer(mc *mcingv1alpha1.Minecraft, desired, _ []corev1.Container) (corev1.Container, error) {
 	var source *corev1.Container
 	for i := range desired {
 		c := &desired[i]
@@ -229,6 +236,8 @@ func makeMinecraftContainer(_ *mcingv1alpha1.Minecraft, desired, _ []corev1.Cont
 	if source == nil {
 		return corev1.Container{}, fmt.Errorf("minecraft container not found")
 	}
+
+	rconSecretName := mc.RconSecretName()
 
 	c := source.DeepCopy()
 	c.Stdin = true
@@ -256,6 +265,17 @@ func makeMinecraftContainer(_ *mcingv1alpha1.Minecraft, desired, _ []corev1.Cont
 		PeriodSeconds:       10,
 		FailureThreshold:    12,
 	}
+	c.Env = append(c.Env, corev1.EnvVar{
+		Name: constants.RconPasswordEnvName,
+		ValueFrom: &corev1.EnvVarSource{
+			SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: rconSecretName,
+				},
+				Key: constants.RconPasswordSecretKey,
+			},
+		},
+	})
 	c.Ports = append(c.Ports,
 		corev1.ContainerPort{ContainerPort: constants.ServerPort, Name: constants.ServerPortName, Protocol: corev1.ProtocolTCP},
 		corev1.ContainerPort{ContainerPort: constants.RconPort, Name: constants.RconPortName, Protocol: corev1.ProtocolUDP},
@@ -511,6 +531,34 @@ func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv
 	}
 
 	return cm, nil
+}
+
+func (r *MinecraftReconciler) reconcileRconSecret(ctx context.Context, mc *mcingv1alpha1.Minecraft) error {
+	logger := r.log.WithName("rcon-secret")
+	if mc.Spec.RconPasswordSecretName != nil {
+		return nil
+	}
+	// default
+	secretName := mc.RconSecretName()
+	secret := &corev1.Secret{}
+	secret.Namespace = mc.Namespace
+	secret.Name = secretName
+	result, err := ctrl.CreateOrUpdate(ctx, r.Client, secret, func() error {
+		if secret.Data == nil {
+			secret.Data = make(map[string][]byte)
+		}
+		if _, ok := secret.Data[constants.RconPasswordSecretKey]; !ok {
+			secret.Data[constants.RconPasswordSecretKey] = []byte(rand.String(24))
+		}
+		return ctrl.SetControllerReference(mc, secret, r.scheme)
+	})
+	if err != nil {
+		return err
+	}
+	if result != controllerutil.OperationResultNone {
+		logger.Info("reconciled rcon secret", "operation", string(result))
+	}
+	return nil
 }
 
 func labelSet(mc *mcingv1alpha1.Minecraft, component string) map[string]string {

@@ -235,4 +235,76 @@ var _ = Describe("Minecraft controller", func() {
 			return nil
 		}).Should(Succeed())
 	})
+	Context("RCON Secret", func() {
+		It("should create default RCON secret if not specified", func() {
+			mc := makeMinecraft("default-rcon", namespace)
+			Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+			By("checking generated Secret")
+			secret := &corev1.Secret{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, types.NamespacedName{Name: mc.PrefixedName() + "-rcon-password", Namespace: namespace}, secret)
+			}).Should(Succeed())
+			Expect(secret.Data).To(HaveKey(constants.RconPasswordSecretKey))
+
+			By("checking StatefulSet env var")
+			sts := &appsv1.StatefulSet{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, types.NamespacedName{Name: mc.PrefixedName(), Namespace: namespace}, sts)
+			}).Should(Succeed())
+
+			Expect(sts.Spec.Template.Spec.Containers[0].Env).To(ContainElement(MatchFields(IgnoreExtras, Fields{
+				"Name": Equal(constants.RconPasswordEnvName),
+				"ValueFrom": PointTo(MatchFields(IgnoreExtras, Fields{
+					"SecretKeyRef": PointTo(MatchFields(IgnoreExtras, Fields{
+						"LocalObjectReference": MatchFields(IgnoreExtras, Fields{
+							"Name": Equal(secret.Name),
+						}),
+						"Key": Equal(constants.RconPasswordSecretKey),
+					})),
+				})),
+			})))
+		})
+
+		It("should use specified RCON secret", func() {
+			secretName := "my-rcon-secret"
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      secretName,
+					Namespace: namespace,
+				},
+				Data: map[string][]byte{
+					constants.RconPasswordSecretKey: []byte("password"),
+				},
+			}
+			Expect(k8sClient.Create(ctx, secret)).To(Succeed())
+
+			mc := makeMinecraft("custom-rcon", namespace)
+			mc.Spec.RconPasswordSecretName = &secretName
+			Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+			By("checking StatefulSet env var")
+			sts := &appsv1.StatefulSet{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, types.NamespacedName{Name: mc.PrefixedName(), Namespace: namespace}, sts)
+			}).Should(Succeed())
+
+			Expect(sts.Spec.Template.Spec.Containers[0].Env).To(ContainElement(MatchFields(IgnoreExtras, Fields{
+				"Name": Equal(constants.RconPasswordEnvName),
+				"ValueFrom": PointTo(MatchFields(IgnoreExtras, Fields{
+					"SecretKeyRef": PointTo(MatchFields(IgnoreExtras, Fields{
+						"LocalObjectReference": MatchFields(IgnoreExtras, Fields{
+							"Name": Equal(secretName),
+						}),
+						"Key": Equal(constants.RconPasswordSecretKey),
+					})),
+				})),
+			})))
+
+			By("ensuring default secret is not created")
+			Consistently(func() error {
+				return k8sClient.Get(ctx, types.NamespacedName{Name: mc.PrefixedName() + "-rcon-password", Namespace: namespace}, &corev1.Secret{})
+			}).ShouldNot(Succeed())
+		})
+	})
 })

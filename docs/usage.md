@@ -112,3 +112,32 @@ It can be applied by specifying a name, such as `otherConfigMapName: other-props
 > Currently, these files are **overwritten** by the ConfigMap content on every Pod startup.
 > This means any in-game changes (e.g. `/ban`, `/op`) that are not reflected in the ConfigMap will be lost when the Pod restarts.
 > This behavior is a known issue.
+
+## RCON Configuration
+
+By default, the controller automatically generates a Secret named `<instance-name>-rcon-password` containing a random password for RCON.
+The password is stored in the key `rcon-password`.
+The controller injects this password into the Minecraft container as the environment variable `RCON_PASSWORD`.
+
+If you want to use your own password, you can specify an existing Secret name in `.spec.rconPasswordSecretName`.
+
+```yaml
+apiVersion: mcing.kmdkuk.com/v1alpha1
+kind: Minecraft
+metadata:
+  name: minecraft-sample
+spec:
+  rconPasswordSecretName: my-rcon-secret
+  # ... other fields
+```
+
+The Secret must contain the key `rcon-password`.
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-rcon-secret
+stringData:
+  rcon-password: "your-super-strong-password"
+```

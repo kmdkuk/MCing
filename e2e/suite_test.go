@@ -27,4 +27,5 @@ func TestE2e(t *testing.T) {
 var _ = Describe("mcing", Ordered, func() {
 	Context("bootstrap", testBootstrap)
 	Context("opsWhitelist", testOpsWhitelist)
+	Context("rcon", testRcon)
 })

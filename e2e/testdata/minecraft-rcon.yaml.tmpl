@@ -1,0 +1,24 @@
+apiVersion: mcing.kmdkuk.com/v1alpha1
+kind: Minecraft
+metadata:
+  name: {{ .Name }}
+spec:
+{{- if .RconPasswordSecretName }}
+  rconPasswordSecretName: {{ .RconPasswordSecretName }}
+{{- end }}
+  podTemplate:
+    spec:
+      containers:
+        - name: minecraft
+          image: itzg/minecraft-server:java21
+          env:
+            - name: EULA
+              value: "true"
+  volumeClaimTemplates:
+    - metadata:
+        name: minecraft-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi

@@ -50,12 +50,13 @@ const (
 )
 
 const (
-	EulaEnvName = "EULA"
+	EulaEnvName           = "EULA"
+	RconPasswordEnvName   = "RCON_PASSWORD"
+	RconPasswordSecretKey = "rcon-password"
 )
 
 // server.properties
 const (
-	WhitelistProps    = "white-list"
-	RconPasswordProps = "rcon.password"
-	RconPortProps     = "rcon.port"
+	WhitelistProps = "white-list"
+	RconPortProps  = "rcon.port"
 )

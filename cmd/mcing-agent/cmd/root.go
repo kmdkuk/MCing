@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"path"
 	"sync"
 	"time"
@@ -144,7 +145,7 @@ to quickly create a Cobra application.`,
 			}
 
 			hostPort := "localhost:" + props[constants.RconPortProps]
-			password := props[constants.RconPasswordProps]
+			password := os.Getenv(constants.RconPasswordEnvName)
 
 			conn, err = rcon.NewConn(hostPort, password)
 			if err == nil {
