@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-9c715651.js";
+            window.path_to_searchindex_js = "searchindex-7e33a811.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-dffe8370.js"></script>
@@ -286,6 +286,27 @@ data:
 This means any in-game changes (e.g. <code>/ban</code>, <code>/op</code>) that are not reflected in the ConfigMap will be lost when the Pod restarts.
 This behavior is a known issue.</p>
 </blockquote>
+<h2 id="rcon-configuration"><a class="header" href="#rcon-configuration">RCON Configuration</a></h2>
+<p>By default, the controller automatically generates a Secret named <code>&lt;instance-name&gt;-rcon-password</code> containing a random password for RCON.
+The password is stored in the key <code>rcon-password</code>.
+The controller injects this password into the Minecraft container as the environment variable <code>RCON_PASSWORD</code>.</p>
+<p>If you want to use your own password, you can specify an existing Secret name in <code>.spec.rconPasswordSecretName</code>.</p>
+<pre><code class="language-yaml">apiVersion: mcing.kmdkuk.com/v1alpha1
+kind: Minecraft
+metadata:
+  name: minecraft-sample
+spec:
+  rconPasswordSecretName: my-rcon-secret
+  # ... other fields
+</code></pre>
+<p>The Secret must contain the key <code>rcon-password</code>.</p>
+<pre><code class="language-yaml">apiVersion: v1
+kind: Secret
+metadata:
+  name: my-rcon-secret
+stringData:
+  rcon-password: "your-super-strong-password"
+</code></pre>
 
                     </main>
 
