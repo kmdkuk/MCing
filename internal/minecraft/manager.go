@@ -6,20 +6,23 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/kmdkuk/mcing/pkg/agent"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"github.com/kmdkuk/mcing/pkg/agent"
 )
 
-type MinecraftManager interface {
+// MinecraftManager manages the lifecycle of Minecraft server.
+type MinecraftManager interface { //nolint:revive // MinecraftManager is exported identifier
 	Update(types.NamespacedName) error
 	Stop(types.NamespacedName)
 	Start(context.Context) error
 }
 
-func NewManager(af agent.AgentFactory, interval time.Duration, m manager.Manager, log logr.Logger) MinecraftManager {
-	return &minecraftManager{
+// NewManager creates a new MinecraftManager.
+func NewManager(af agent.Factory, interval time.Duration, m manager.Manager, log logr.Logger) MinecraftManager {
+	return &minecraftManager{ //nolint:exhaustruct // internal struct initialized efficiently
 		af:        af,
 		k8sclient: m.GetClient(),
 		interval:  interval,
@@ -29,7 +32,7 @@ func NewManager(af agent.AgentFactory, interval time.Duration, m manager.Manager
 }
 
 type minecraftManager struct {
-	af        agent.AgentFactory
+	af        agent.Factory
 	k8sclient client.Client
 	interval  time.Duration
 	log       logr.Logger
@@ -64,11 +67,9 @@ func (m *minecraftManager) update(name types.NamespacedName) error {
 
 	log := m.log.WithName(key)
 	p = newManagerProcess(m.af, m.k8sclient, name, log, cancel)
-	m.wg.Add(1)
-	go func() {
+	m.wg.Go(func() {
 		p.Start(ctx, m.interval)
-		m.wg.Done()
-	}()
+	})
 	m.processes[key] = p
 	return nil
 }

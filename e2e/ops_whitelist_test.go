@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"path/filepath"
 
+	. "github.com/onsi/ginkgo/v2" //nolint:revive // dot imports for tests
+	. "github.com/onsi/gomega"    //nolint:revive // dot imports for tests
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/kmdkuk/mcing/pkg/config"
 	"github.com/kmdkuk/mcing/pkg/constants"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 )
 
 //go:embed testdata/add-ops-whitelist.yaml
@@ -19,48 +20,73 @@ var addOpsWhitelistYAML string
 //go:embed testdata/no-ops-whitelist.yaml
 var noOpsWhitelistYAML string
 
+//nolint:funlen // long test case
 func testOpsWhitelist() {
 	stsName := "mcing-ops-whitelist"
-	type userJson struct {
+	type userJSON struct {
 		Name string `json:"name"`
 	}
 	It("should create no ops and whitelist", func() {
 		kubectlSafeWithInput([]byte(noOpsWhitelistYAML), "apply", "-f", "-")
 		waitStatefullSet("default", stsName, 1)
 		Eventually(func(g Gomega) {
-			stdout, _, err := kubectl("exec", stsName+"-0", "--", "cat", filepath.Join(constants.DataPath, constants.OpsName))
+			stdout, _, err := kubectl(
+				"exec",
+				stsName+"-0",
+				"--",
+				"cat",
+				filepath.Join(constants.DataPath, constants.OpsName),
+			)
 			g.Expect(err).ShouldNot(HaveOccurred())
-			var ops []userJson
+			var ops []userJSON
 			err = json.Unmarshal(stdout, &ops)
 			g.Expect(err).ShouldNot(HaveOccurred())
-			g.Expect(ops).Should(HaveLen(0))
+			g.Expect(ops).Should(BeEmpty())
 
-			stdout, _, err = kubectl("exec", stsName+"-0", "--", "cat", filepath.Join(constants.DataPath, constants.ServerPropsName))
+			stdout, _, err = kubectl(
+				"exec",
+				stsName+"-0",
+				"--",
+				"cat",
+				filepath.Join(constants.DataPath, constants.ServerPropsName),
+			)
 			g.Expect(err).ShouldNot(HaveOccurred())
 
 			bf := bytes.NewBuffer(stdout)
 			props, err := config.ParseServerProps(bf)
 			g.Expect(err).ShouldNot(HaveOccurred())
 			g.Expect(props[constants.WhitelistProps]).Should(Equal("false"))
-		})
+		}).Should(Succeed())
 	})
 
 	It("should apply 1 ops and whitelist", func() {
 		kubectlSafeWithInput([]byte(addOpsWhitelistYAML), "apply", "-f", "-")
 		waitStatefullSet("default", stsName, 1)
 		Eventually(func(g Gomega) {
-			stdout, _, err := kubectl("exec", stsName+"-0", "--", "cat", filepath.Join(constants.DataPath, constants.OpsName))
+			stdout, _, err := kubectl(
+				"exec",
+				stsName+"-0",
+				"--",
+				"cat",
+				filepath.Join(constants.DataPath, constants.OpsName),
+			)
 			g.Expect(err).ShouldNot(HaveOccurred())
-			type opsJson struct {
+			type opsJSON struct {
 				Name string `json:"name"`
 			}
-			var ops []opsJson
+			var ops []opsJSON
 			err = json.Unmarshal(stdout, &ops)
 			g.Expect(err).ShouldNot(HaveOccurred())
 			g.Expect(ops).Should(HaveLen(1))
 			g.Expect(ops[0].Name).Should(Equal("kmdkuk"))
 
-			stdout, _, err = kubectl("exec", stsName+"-0", "--", "cat", filepath.Join(constants.DataPath, constants.ServerPropsName))
+			stdout, _, err = kubectl(
+				"exec",
+				stsName+"-0",
+				"--",
+				"cat",
+				filepath.Join(constants.DataPath, constants.ServerPropsName),
+			)
 			g.Expect(err).ShouldNot(HaveOccurred())
 
 			bf := bytes.NewBuffer(stdout)
@@ -68,38 +94,56 @@ func testOpsWhitelist() {
 			g.Expect(err).ShouldNot(HaveOccurred())
 			g.Expect(props[constants.WhitelistProps]).Should(Equal("true"))
 
-			stdout, _, err = kubectl("exec", stsName+"-0", "--", "cat", filepath.Join(constants.DataPath, constants.WhiteListName))
+			stdout, _, err = kubectl(
+				"exec",
+				stsName+"-0",
+				"--",
+				"cat",
+				filepath.Join(constants.DataPath, constants.WhiteListName),
+			)
 			g.Expect(err).ShouldNot(HaveOccurred())
-			var whitelist []userJson
+			var whitelist []userJSON
 			err = json.Unmarshal(stdout, &whitelist)
 			g.Expect(err).ShouldNot(HaveOccurred())
 			g.Expect(whitelist).Should(HaveLen(1))
 			g.Expect(whitelist[0].Name).Should(Equal("kmdkuk"))
-		})
+		}).Should(Succeed())
 	})
 
 	It("should apply no ops and whitelist", func() {
 		kubectlSafeWithInput([]byte(noOpsWhitelistYAML), "apply", "-f", "-")
 		waitStatefullSet("default", stsName, 1)
 		Eventually(func(g Gomega) {
-			stdout, _, err := kubectl("exec", stsName+"-0", "--", "cat", filepath.Join(constants.DataPath, constants.OpsName))
+			stdout, _, err := kubectl(
+				"exec",
+				stsName+"-0",
+				"--",
+				"cat",
+				filepath.Join(constants.DataPath, constants.OpsName),
+			)
 			g.Expect(err).ShouldNot(HaveOccurred())
-			type opsJson struct {
+			type opsJSON struct {
 				Name string `json:"name"`
 			}
-			var ops []opsJson
+			var ops []opsJSON
 			err = json.Unmarshal(stdout, &ops)
 			g.Expect(err).ShouldNot(HaveOccurred())
-			g.Expect(ops).Should(HaveLen(0))
+			g.Expect(ops).Should(BeEmpty())
 
-			stdout, _, err = kubectl("exec", stsName+"-0", "--", "cat", filepath.Join(constants.DataPath, constants.ServerPropsName))
+			stdout, _, err = kubectl(
+				"exec",
+				stsName+"-0",
+				"--",
+				"cat",
+				filepath.Join(constants.DataPath, constants.ServerPropsName),
+			)
 			g.Expect(err).ShouldNot(HaveOccurred())
 
 			bf := bytes.NewBuffer(stdout)
 			props, err := config.ParseServerProps(bf)
 			g.Expect(err).ShouldNot(HaveOccurred())
 			g.Expect(props[constants.WhitelistProps]).Should(Equal("false"))
-		})
+		}).Should(Succeed())
 	})
 
 	It("should delete ops-whitelist instance", func() {
@@ -110,7 +154,7 @@ func testOpsWhitelist() {
 			pods := &corev1.PodList{}
 			err = json.Unmarshal(stdout, pods)
 			g.Expect(err).ShouldNot(HaveOccurred())
-			g.Expect(pods).Should(HaveLen(0))
-		})
+			g.Expect(pods.Items).Should(BeEmpty())
+		}).Should(Succeed())
 	})
 }

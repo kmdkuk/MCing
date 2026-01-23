@@ -7,6 +7,7 @@ import (
 	"github.com/james4k/rcon"
 )
 
+// NewConn creates a new RCON connection.
 func NewConn(hostPort, password string) (*rcon.RemoteConsole, error) {
 	remoteConsole, err := rcon.Dial(hostPort, password)
 	if err != nil {
@@ -19,33 +20,33 @@ func NewConn(hostPort, password string) (*rcon.RemoteConsole, error) {
 
 func exec(remoteConsole *rcon.RemoteConsole, command ...string) (string, error) {
 	preparedCmd := strings.Join(command, " ")
-	reqId, err := remoteConsole.Write(preparedCmd)
+	reqID, err := remoteConsole.Write(preparedCmd)
 	if err != nil {
 		return "", err
 	}
 
-	resp, respReqId, err := remoteConsole.Read()
+	resp, respReqID, err := remoteConsole.Read()
 	if err != nil {
 		return "", fmt.Errorf("failed to read command: %w", err)
-
 	}
 
-	if reqId != respReqId {
+	if reqID != respReqID {
 		return "", fmt.Errorf("weird. this response is for another request. message: %s", resp)
 	}
 
 	return resp, nil
 }
 
+// Reload reloads the server.
 func Reload(remoteConsole *rcon.RemoteConsole) error {
-	str, err := exec(remoteConsole, "reload")
+	_, err := exec(remoteConsole, "reload")
 	if err != nil {
 		return err
 	}
-	fmt.Println(str)
 	return nil
 }
 
+// WhitelistSwitch switches the whitelist on/off.
 func WhitelistSwitch(remoteConsole *rcon.RemoteConsole, enabled bool) error {
 	arg := "on"
 	if !enabled {
@@ -55,6 +56,7 @@ func WhitelistSwitch(remoteConsole *rcon.RemoteConsole, enabled bool) error {
 	return err
 }
 
+// Whitelist adds or removes users from the whitelist.
 func Whitelist(remoteConsole *rcon.RemoteConsole, action string, users []string) error {
 	if action != "add" && action != "remove" {
 		return fmt.Errorf("action must be add or remove. action: %s", action)
@@ -68,6 +70,7 @@ func Whitelist(remoteConsole *rcon.RemoteConsole, action string, users []string)
 	return nil
 }
 
+// ListWhitelist lists whitelisted users.
 func ListWhitelist(remoteConsole *rcon.RemoteConsole) ([]string, error) {
 	// There are 2 whitelisted players: hoge, fuga
 	liststr, err := exec(remoteConsole, "whitelist", "list")
@@ -89,6 +92,7 @@ func ListWhitelist(remoteConsole *rcon.RemoteConsole) ([]string, error) {
 	return users, nil
 }
 
+// Op adds users to the op list.
 func Op(remoteConsole *rcon.RemoteConsole, users []string) error {
 	var errUsers []string
 	for _, user := range users {
@@ -106,6 +110,7 @@ func Op(remoteConsole *rcon.RemoteConsole, users []string) error {
 	return nil
 }
 
+// Deop removes users from the op list.
 func Deop(remoteConsole *rcon.RemoteConsole, users []string) error {
 	for _, user := range users {
 		_, err := exec(remoteConsole, "deop", user)

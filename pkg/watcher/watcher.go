@@ -1,3 +1,4 @@
+//nolint:cyclop // complex logic
 package watcher
 
 import (
@@ -8,6 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	james4krcon "github.com/james4k/rcon"
+
 	"github.com/kmdkuk/mcing/pkg/log"
 	"github.com/kmdkuk/mcing/pkg/rcon"
 )
@@ -19,6 +21,9 @@ const (
 	serverPropsPath = configPath + "/" + serverPropsName
 )
 
+// Watch watches the RCON server.
+//
+//nolint:cyclop,gocognit // complex logic
 func Watch(ctx context.Context, conn *james4krcon.RemoteConsole, interval time.Duration) error {
 	tick := time.NewTicker(interval)
 	defer tick.Stop()
@@ -53,7 +58,7 @@ func Watch(ctx context.Context, conn *james4krcon.RemoteConsole, interval time.D
 			if err != nil {
 				continue
 			}
-			err = os.WriteFile(dataPath, current, 0644)
+			err = os.WriteFile(dataPath, current, 0o600)
 			if err != nil {
 				continue
 			}

@@ -4,8 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/kmdkuk/mcing/internal/minecraft"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/kmdkuk/mcing/internal/minecraft"
 )
 
 type mockManager struct {
@@ -13,7 +14,7 @@ type mockManager struct {
 	minecrafts map[string]struct{}
 }
 
-var _ minecraft.MinecraftManager = &mockManager{}
+var _ minecraft.MinecraftManager = &mockManager{} //nolint:exhaustruct // interface check
 
 func (m *mockManager) Update(key types.NamespacedName) error {
 	m.mu.Lock()

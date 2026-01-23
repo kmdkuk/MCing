@@ -56,5 +56,5 @@ func copyFile(from, to string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(to, b, 0644)
+	return os.WriteFile(to, b, 0o600)
 }

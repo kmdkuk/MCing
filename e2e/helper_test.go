@@ -2,12 +2,13 @@ package e2e
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os/exec"
 	"path/filepath"
 
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega" //nolint:revive // dot imports for tests
 	appsv1 "k8s.io/api/apps/v1"
 )
 
@@ -37,7 +38,7 @@ func kustomizeBuild(dir string) ([]byte, []byte, error) {
 
 func execAtLocal(cmd string, input []byte, args ...string) ([]byte, []byte, error) {
 	var stdout, stderr bytes.Buffer
-	command := exec.Command(cmd, args...)
+	command := exec.CommandContext(context.Background(), cmd, args...)
 	command.Stdout = &stdout
 	command.Stderr = &stderr
 
@@ -56,7 +57,7 @@ func createNamespace(ns string) {
 	EventuallyWithOffset(1, func() error {
 		stdout, stderr, err := kubectl("get", "sa", "default", "-n", ns)
 		if err != nil {
-			return fmt.Errorf("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
+			return fmt.Errorf("stdout: %s, stderr: %s, err: %w", stdout, stderr, err)
 		}
 		return nil
 	}).Should(Succeed())
@@ -66,7 +67,7 @@ func waitDeployment(namespace, name string, replicas int) {
 	EventuallyWithOffset(1, func() error {
 		stdout, stderr, err := kubectl("get", "deployment", name, "-n", namespace, "-o", "json")
 		if err != nil {
-			return fmt.Errorf("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
+			return fmt.Errorf("stdout: %s, stderr: %s, err: %w", stdout, stderr, err)
 		}
 
 		d := new(appsv1.Deployment)
@@ -83,11 +84,11 @@ func waitDeployment(namespace, name string, replicas int) {
 	}).ShouldNot(HaveOccurred())
 }
 
-func waitStatefullSet(namespace, name string, replicas int) {
+func waitStatefullSet(namespace, name string, replicas int) { //nolint:unparam // replicas is always 1 in current tests
 	EventuallyWithOffset(1, func() error {
 		stdout, stderr, err := kubectl("get", "statefulset", name, "-n", namespace, "-o", "json")
 		if err != nil {
-			return fmt.Errorf("stdout: %s, stderr: %s, err: %v", stdout, stderr, err)
+			return fmt.Errorf("stdout: %s, stderr: %s, err: %w", stdout, stderr, err)
 		}
 
 		d := new(appsv1.StatefulSet)

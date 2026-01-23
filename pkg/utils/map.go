@@ -1,13 +1,12 @@
-package utils
+package utils //nolint:revive // utils is a common package name
 
+import "maps"
+
+// MergeMap merges two maps.
 func MergeMap(m1, m2 map[string]string) map[string]string {
 	m := make(map[string]string)
-	for k, v := range m1 {
-		m[k] = v
-	}
-	for k, v := range m2 {
-		m[k] = v
-	}
+	maps.Copy(m, m1)
+	maps.Copy(m, m2)
 	if len(m) == 0 {
 		return nil
 	}

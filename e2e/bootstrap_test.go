@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
+	. "github.com/onsi/ginkgo/v2" //nolint:revive // dot imports for tests
+	. "github.com/onsi/gomega"    //nolint:revive // dot imports for tests
+
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
 func testBootstrap() {

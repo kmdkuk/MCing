@@ -2,20 +2,22 @@ package server
 
 import (
 	"github.com/james4k/rcon"
-	"github.com/kmdkuk/mcing/pkg/proto"
 	"go.uber.org/zap"
+
+	"github.com/kmdkuk/mcing/pkg/proto"
 )
 
-// NewAgentService creates a new AgentServer
+// NewAgentService creates a new AgentServer.
 func NewAgentService(logger *zap.Logger, conn *rcon.RemoteConsole) proto.AgentServer {
-	return agentService{
+	return agentService{ //nolint:exhaustruct // unimplemented embedded struct
 		logger: logger.With(zap.String("service", "mcing-agent")),
 		conn:   conn,
 	}
 }
 
 type agentService struct {
+	proto.UnimplementedAgentServer
+
 	logger *zap.Logger
 	conn   *rcon.RemoteConsole
-	proto.UnimplementedAgentServer
 }

@@ -7,10 +7,8 @@ import (
 	"testing"
 	"time"
 
-	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
-	"github.com/kmdkuk/mcing/pkg/constants"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2" //nolint:revive // dot imports for tests
+	. "github.com/onsi/gomega"    //nolint:revive // dot imports for tests
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -22,16 +20,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
+	"github.com/kmdkuk/mcing/pkg/constants"
 	//+kubebuilder:scaffold:imports
 )
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
-var k8sCfg *rest.Config
-var k8sClient client.Client
-var scheme *runtime.Scheme
-var testEnv *envtest.Environment
+//nolint:gochecknoglobals // test setup
+var (
+	k8sCfg    *rest.Config
+	k8sClient client.Client
+	scheme    *runtime.Scheme
+	testEnv   *envtest.Environment
+)
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -75,7 +79,6 @@ var _ = BeforeSuite(func() {
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
-
 })
 
 var _ = AfterSuite(func() {
@@ -126,7 +129,9 @@ func makeMinecraft(name, namespace string) *mcingv1alpha1.Minecraft {
 					Spec: corev1.PersistentVolumeClaimSpec{
 						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 						Resources: corev1.VolumeResourceRequirements{
-							Requests: corev1.ResourceList{corev1.ResourceStorage: resource.MustParse("1Gi")},
+							Requests: corev1.ResourceList{ //nolint:exhaustive // resource list
+								corev1.ResourceStorage: resource.MustParse("1Gi"),
+							},
 						},
 					},
 				},

@@ -16,7 +16,7 @@
 
 #### Minecraft
 
-Minecraft is the Schema for the minecrafts API
+Minecraft is the Schema for the minecrafts API.
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
@@ -28,7 +28,7 @@ Minecraft is the Schema for the minecrafts API
 
 #### MinecraftList
 
-MinecraftList contains a list of Minecraft
+MinecraftList contains a list of Minecraft.
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
@@ -39,7 +39,7 @@ MinecraftList contains a list of Minecraft
 
 #### MinecraftSpec
 
-MinecraftSpec defines the desired state of Minecraft
+MinecraftSpec defines the desired state of Minecraft.
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
@@ -68,7 +68,7 @@ ObjectMeta is metadata of objects. This is partially copied from metav1.ObjectMe
 
 #### Ops
 
-
+Ops represents the ops.json file.
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
@@ -100,7 +100,7 @@ PodTemplateSpec describes the data a pod should have when created from a templat
 
 #### ServiceTemplate
 
-ServiceTemplate define the desired spec and annotations of Service
+ServiceTemplate define the desired spec and annotations of Service.
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
@@ -111,7 +111,7 @@ ServiceTemplate define the desired spec and annotations of Service
 
 #### Whitelist
 
-
+Whitelist represents the whitelist.json file.
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
