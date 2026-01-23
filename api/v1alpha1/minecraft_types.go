@@ -2,17 +2,19 @@ package v1alpha1
 
 import (
 	"fmt"
+	"maps"
 
-	"github.com/kmdkuk/mcing/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	"github.com/kmdkuk/mcing/pkg/constants"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// MinecraftSpec defines the desired state of Minecraft
+// MinecraftSpec defines the desired state of Minecraft.
 type MinecraftSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -53,12 +55,14 @@ type MinecraftSpec struct {
 	RconPasswordSecretName *string `json:"rconPasswordSecretName,omitempty"`
 }
 
+// Ops represents the ops.json file.
 type Ops struct {
 	// user name exec /op or /deop
 	// +optional
 	Users []string `json:"users,omitempty"`
 }
 
+// Whitelist represents the whitelist.json file.
 type Whitelist struct {
 	// exec /whitelist on
 	Enabled bool `json:"enabled"`
@@ -80,20 +84,17 @@ type PodTemplateSpec struct {
 	Spec corev1.PodSpec `json:"spec"`
 }
 
+// ToCoreV1 converts the PodTemplateSpec to corev1.PodTemplateSpec.
 func (p *PodTemplateSpec) ToCoreV1() corev1.PodTemplateSpec {
 	podTemplateSpec := corev1.PodTemplateSpec{}
 	podTemplateSpec.Name = p.Name
 	if len(p.Labels) > 0 {
 		podTemplateSpec.Labels = make(map[string]string)
-		for k, v := range p.Labels {
-			podTemplateSpec.Labels[k] = v
-		}
+		maps.Copy(podTemplateSpec.Labels, p.Labels)
 	}
 	if len(p.Annotations) > 0 {
 		podTemplateSpec.Annotations = make(map[string]string)
-		for k, v := range p.Annotations {
-			podTemplateSpec.Annotations[k] = v
-		}
+		maps.Copy(podTemplateSpec.Annotations, p.Annotations)
 	}
 	podTemplateSpec.Spec = *p.Spec.DeepCopy()
 	return podTemplateSpec
@@ -109,20 +110,17 @@ type PersistentVolumeClaim struct {
 	Spec corev1.PersistentVolumeClaimSpec `json:"spec"`
 }
 
-func (p PersistentVolumeClaim) ToCoreV1() corev1.PersistentVolumeClaim {
+// ToCoreV1 converts the PersistentVolumeClaim to corev1.PersistentVolumeClaim.
+func (p *PersistentVolumeClaim) ToCoreV1() corev1.PersistentVolumeClaim {
 	claim := corev1.PersistentVolumeClaim{}
 	claim.Name = p.Name
 	if len(p.Labels) > 0 {
 		claim.Labels = make(map[string]string)
-		for k, v := range p.Labels {
-			claim.Labels[k] = v
-		}
+		maps.Copy(claim.Labels, p.Labels)
 	}
 	if len(p.Annotations) > 0 {
 		claim.Annotations = make(map[string]string)
-		for k, v := range p.Annotations {
-			claim.Annotations[k] = v
-		}
+		maps.Copy(claim.Annotations, p.Annotations)
 	}
 	claim.Spec = *p.Spec.DeepCopy()
 	if claim.Spec.VolumeMode == nil {
@@ -133,7 +131,7 @@ func (p PersistentVolumeClaim) ToCoreV1() corev1.PersistentVolumeClaim {
 	return claim
 }
 
-// ServiceTemplate define the desired spec and annotations of Service
+// ServiceTemplate define the desired spec and annotations of Service.
 type ServiceTemplate struct {
 	// Standard object's metadata. Only `annotations` and `labels` are valid.
 	// +optional
@@ -160,7 +158,7 @@ type ObjectMeta struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
-func (s MinecraftSpec) validateCreate() field.ErrorList {
+func (s *MinecraftSpec) validateCreate() field.ErrorList {
 	var allErrs field.ErrorList
 
 	p := field.NewPath("spec")
@@ -174,7 +172,10 @@ func (s MinecraftSpec) validateCreate() field.ErrorList {
 		}
 	}
 	if !ok {
-		allErrs = append(allErrs, field.Required(pp, fmt.Sprintf("required volume claim template %s is missing", constants.DataVolumeName)))
+		allErrs = append(
+			allErrs,
+			field.Required(pp, fmt.Sprintf("required volume claim template %s is missing", constants.DataVolumeName)),
+		)
 	}
 
 	p = p.Child("podTemplate", "spec")
@@ -189,7 +190,10 @@ func (s MinecraftSpec) validateCreate() field.ErrorList {
 	}
 
 	if minecraftIndex == -1 {
-		allErrs = append(allErrs, field.Required(pp, fmt.Sprintf("required container %s is missing", constants.MinecraftContainerName)))
+		allErrs = append(
+			allErrs,
+			field.Required(pp, fmt.Sprintf("required container %s is missing", constants.MinecraftContainerName)),
+		)
 	} else {
 		pp := p.Child("containers").Index(minecraftIndex).Child("ports")
 		for i := range s.PodTemplate.Spec.Containers[minecraftIndex].Ports {
@@ -208,25 +212,27 @@ func (s MinecraftSpec) validateCreate() field.ErrorList {
 		hasEula := false
 		for i := range s.PodTemplate.Spec.Containers[minecraftIndex].Env {
 			env := &s.PodTemplate.Spec.Containers[minecraftIndex].Env[i]
-			switch env.Name {
-			case constants.EulaEnvName:
+			if env.Name == constants.EulaEnvName {
 				hasEula = true
 			}
 		}
 		if !hasEula {
-			allErrs = append(allErrs, field.Required(pp, "EULA is required. The server will not start unless EULA=true."))
+			allErrs = append(
+				allErrs,
+				field.Required(pp, "EULA is required. The server will not start unless EULA=true."),
+			)
 		}
 	}
 	return allErrs
 }
 
-func (s MinecraftSpec) validateUpdate(_ MinecraftSpec) field.ErrorList {
+func (s *MinecraftSpec) validateUpdate(_ MinecraftSpec) field.ErrorList {
 	var allErrs field.ErrorList
 
 	return append(allErrs, s.validateCreate()...)
 }
 
-// MinecraftStatus defines the observed state of Minecraft
+// MinecraftStatus defines the observed state of Minecraft.
 type MinecraftStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
@@ -235,7 +241,7 @@ type MinecraftStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// Minecraft is the Schema for the minecrafts API
+// Minecraft is the Schema for the minecrafts API.
 type Minecraft struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -244,18 +250,22 @@ type Minecraft struct {
 	Status MinecraftStatus `json:"status,omitempty"`
 }
 
+// PrefixedName returns the prefixed name.
 func (m *Minecraft) PrefixedName() string {
 	return "mcing-" + m.Name
 }
 
+// PodName returns the pod name.
 func (m *Minecraft) PodName() string {
 	return m.PrefixedName() + "-0"
 }
 
+// HeadlessServiceName returns the headless service name.
 func (m *Minecraft) HeadlessServiceName() string {
 	return m.PrefixedName() + "-headless"
 }
 
+// RconSecretName returns the RCON secret name.
 func (m *Minecraft) RconSecretName() string {
 	if m.Spec.RconPasswordSecretName != nil {
 		return *m.Spec.RconPasswordSecretName
@@ -265,13 +275,15 @@ func (m *Minecraft) RconSecretName() string {
 
 //+kubebuilder:object:root=true
 
-// MinecraftList contains a list of Minecraft
+// MinecraftList contains a list of Minecraft.
 type MinecraftList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Minecraft `json:"items"`
+
+	Items []Minecraft `json:"items"`
 }
 
+//nolint:gochecknoinits // required by kubebuilder
 func init() {
 	SchemeBuilder.Register(&Minecraft{}, &MinecraftList{})
 }

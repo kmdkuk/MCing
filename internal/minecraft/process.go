@@ -7,23 +7,30 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
-	"github.com/kmdkuk/mcing/pkg/agent"
-	"github.com/kmdkuk/mcing/pkg/proto"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
+	"github.com/kmdkuk/mcing/pkg/agent"
+	"github.com/kmdkuk/mcing/pkg/proto"
 )
 
 type managerProcess struct {
-	agentf    agent.AgentFactory
+	agentf    agent.Factory
 	k8sclient client.Client
 	name      types.NamespacedName
 	log       logr.Logger
 	cancel    func()
 }
 
-func newManagerProcess(agentf agent.AgentFactory, c client.Client, name types.NamespacedName, log logr.Logger, cancel func()) *managerProcess {
+func newManagerProcess(
+	agentf agent.Factory,
+	c client.Client,
+	name types.NamespacedName,
+	log logr.Logger,
+	cancel func(),
+) *managerProcess {
 	return &managerProcess{
 		agentf:    agentf,
 		k8sclient: c,
@@ -73,7 +80,7 @@ func (p *managerProcess) do(ctx context.Context) error {
 	return p.sync(ctx, mc, agent)
 }
 
-func (p *managerProcess) sync(ctx context.Context, mc *mcingv1alpha1.Minecraft, agent agent.AgentConn) error {
+func (p *managerProcess) sync(ctx context.Context, mc *mcingv1alpha1.Minecraft, agent agent.Conn) error {
 	err := p.syncWhitelist(ctx, mc, agent)
 	if err != nil {
 		return err
@@ -85,7 +92,7 @@ func (p *managerProcess) sync(ctx context.Context, mc *mcingv1alpha1.Minecraft, 
 	return nil
 }
 
-func (p *managerProcess) syncWhitelist(ctx context.Context, mc *mcingv1alpha1.Minecraft, agent agent.AgentConn) error {
+func (p *managerProcess) syncWhitelist(ctx context.Context, mc *mcingv1alpha1.Minecraft, agent agent.Conn) error {
 	in := &proto.SyncWhitelistRequest{
 		Enabled: mc.Spec.Whitelist.Enabled,
 		Users:   mc.Spec.Whitelist.Users,
@@ -98,7 +105,7 @@ func (p *managerProcess) syncWhitelist(ctx context.Context, mc *mcingv1alpha1.Mi
 	return nil
 }
 
-func (p *managerProcess) syncOps(ctx context.Context, mc *mcingv1alpha1.Minecraft, agent agent.AgentConn) error {
+func (p *managerProcess) syncOps(ctx context.Context, mc *mcingv1alpha1.Minecraft, agent agent.Conn) error {
 	in := &proto.SyncOpsRequest{
 		Users: mc.Spec.Ops.Users,
 	}
@@ -113,7 +120,7 @@ func (p *managerProcess) Cancel() {
 	p.cancel()
 }
 
-func (p *managerProcess) newAgent(ctx context.Context, mc *mcingv1alpha1.Minecraft) (agent.AgentConn, error) {
+func (p *managerProcess) newAgent(ctx context.Context, mc *mcingv1alpha1.Minecraft) (agent.Conn, error) {
 	pod := &corev1.Pod{}
 	err := p.k8sclient.Get(ctx, client.ObjectKey{Namespace: mc.Namespace, Name: mc.PodName()}, pod)
 	if err != nil {

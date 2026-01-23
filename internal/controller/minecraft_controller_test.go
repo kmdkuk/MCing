@@ -2,17 +2,14 @@ package controller
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
-	"github.com/kmdkuk/mcing/pkg/constants"
-	"github.com/kmdkuk/mcing/pkg/version"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gstruct"
+	. "github.com/onsi/ginkgo/v2"      //nolint:revive // dot imports for tests
+	. "github.com/onsi/gomega"         //nolint:revive // dot imports for tests
+	. "github.com/onsi/gomega/gstruct" //nolint:revive // dot imports for tests
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,6 +19,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
+	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
+	"github.com/kmdkuk/mcing/pkg/constants"
+	"github.com/kmdkuk/mcing/pkg/version"
 )
 
 var _ = Describe("Minecraft controller", func() {
@@ -38,7 +39,7 @@ var _ = Describe("Minecraft controller", func() {
 		for i := range ms.Items {
 			m := &ms.Items[i]
 			m.Finalizers = nil
-			err := k8sClient.Update(ctx, m)
+			err = k8sClient.Update(ctx, m)
 			Expect(err).NotTo(HaveOccurred())
 		}
 		svcs := &corev1.ServiceList{}
@@ -46,7 +47,7 @@ var _ = Describe("Minecraft controller", func() {
 		Expect(err).NotTo(HaveOccurred())
 		for i := range svcs.Items {
 			svc := &svcs.Items[i]
-			err := k8sClient.Delete(ctx, svc)
+			err = k8sClient.Delete(ctx, svc)
 			Expect(err).NotTo(HaveOccurred())
 		}
 		err = k8sClient.DeleteAllOf(ctx, &mcingv1alpha1.Minecraft{}, client.InNamespace(namespace))
@@ -68,7 +69,7 @@ var _ = Describe("Minecraft controller", func() {
 
 		log := ctrl.Log.WithName("controllers")
 
-		mockMinecraftMgr := &mockManager{
+		mockMinecraftMgr := &mockManager{ //nolint:exhaustruct // internal struct
 			minecrafts: make(map[string]struct{}),
 		}
 
@@ -83,7 +84,7 @@ var _ = Describe("Minecraft controller", func() {
 		err = r.SetupWithManager(mgr)
 		Expect(err).ToNot(HaveOccurred())
 
-		mgrCtx, mgrCancel = context.WithCancel(context.Background())
+		mgrCtx, mgrCancel = context.WithCancel(context.Background()) //nolint:fatcontext // test logic
 		go func() {
 			err := mgr.Start(mgrCtx)
 			if err != nil {
@@ -148,7 +149,7 @@ var _ = Describe("Minecraft controller", func() {
 				"1": MatchFields(IgnoreExtras, Fields{
 					"Name":          Equal(constants.RconPortName),
 					"ContainerPort": Equal(constants.RconPort),
-					"Protocol":      Equal(corev1.ProtocolUDP),
+					"Protocol":      Equal(corev1.ProtocolTCP),
 				}),
 			}),
 			"VolumeMounts": MatchAllElementsWithIndex(IndexIdentity, Elements{
@@ -209,7 +210,11 @@ var _ = Describe("Minecraft controller", func() {
 		By("getting generated ConfigMap")
 		generatedCm := &corev1.ConfigMap{}
 		Eventually(func() error {
-			if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: mc.PrefixedName()}, generatedCm); err != nil {
+			if err := k8sClient.Get(
+				ctx,
+				types.NamespacedName{Namespace: mc.Namespace, Name: mc.PrefixedName()},
+				generatedCm,
+			); err != nil {
 				return err
 			}
 			return nil
@@ -225,12 +230,16 @@ var _ = Describe("Minecraft controller", func() {
 		By("getting generated ConfigMap")
 		Eventually(func() error {
 			cm := &corev1.ConfigMap{}
-			if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: mc.PrefixedName()}, cm); err != nil {
+			if err := k8sClient.Get(
+				ctx,
+				types.NamespacedName{Namespace: mc.Namespace, Name: mc.PrefixedName()},
+				cm,
+			); err != nil {
 				return err
 			}
 
 			if !cmp.Equal(generatedCm.Data[constants.ServerPropsName], cm.Data[constants.ServerPropsName]) {
-				return fmt.Errorf("The generated ConfigMap has not been updated.")
+				return errors.New("the generated ConfigMap has not been updated")
 			}
 			return nil
 		}).Should(Succeed())
@@ -243,7 +252,11 @@ var _ = Describe("Minecraft controller", func() {
 			By("checking generated Secret")
 			secret := &corev1.Secret{}
 			Eventually(func() error {
-				return k8sClient.Get(ctx, types.NamespacedName{Name: mc.PrefixedName() + "-rcon-password", Namespace: namespace}, secret)
+				return k8sClient.Get(
+					ctx,
+					types.NamespacedName{Name: mc.PrefixedName() + "-rcon-password", Namespace: namespace},
+					secret,
+				)
 			}).Should(Succeed())
 			Expect(secret.Data).To(HaveKey(constants.RconPasswordSecretKey))
 
@@ -303,7 +316,11 @@ var _ = Describe("Minecraft controller", func() {
 
 			By("ensuring default secret is not created")
 			Consistently(func() error {
-				return k8sClient.Get(ctx, types.NamespacedName{Name: mc.PrefixedName() + "-rcon-password", Namespace: namespace}, &corev1.Secret{})
+				return k8sClient.Get(
+					ctx,
+					types.NamespacedName{Name: mc.PrefixedName() + "-rcon-password", Namespace: namespace},
+					&corev1.Secret{},
+				)
 			}).ShouldNot(Succeed())
 		})
 	})

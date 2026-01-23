@@ -26,8 +26,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2" //nolint:revive // dot imports for tests
+	. "github.com/onsi/gomega"    //nolint:revive // dot imports for tests
 
 	admissionv1 "k8s.io/api/admission/v1"
 	//+kubebuilder:scaffold:imports
@@ -45,11 +45,14 @@ import (
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
-var cfg *rest.Config
-var k8sClient client.Client
-var testEnv *envtest.Environment
-var ctx context.Context
-var cancel context.CancelFunc
+//nolint:gochecknoglobals // test setup
+var (
+	cfg       *rest.Config
+	k8sClient client.Client
+	testEnv   *envtest.Environment
+	ctx       context.Context
+	cancel    context.CancelFunc
+)
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -60,7 +63,7 @@ func TestAPIs(t *testing.T) {
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
-	ctx, cancel = context.WithCancel(context.TODO())
+	ctx, cancel = context.WithCancel(context.TODO()) //nolint:fatcontext // test logic
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -125,16 +128,20 @@ var _ = BeforeSuite(func() {
 	}()
 
 	// wait for the webhook server to get ready
-	dialer := &net.Dialer{Timeout: time.Second}
+	dialer := &net.Dialer{Timeout: time.Second} //nolint:exhaustruct // standard dialer
 	addrPort := fmt.Sprintf("%s:%d", webhookInstallOptions.LocalServingHost, webhookInstallOptions.LocalServingPort)
 	Eventually(func() error {
-		conn, err := tls.DialWithDialer(dialer, "tcp", addrPort, &tls.Config{InsecureSkipVerify: true})
+		conn, err := tls.DialWithDialer(
+			dialer,
+			"tcp",
+			addrPort,
+			&tls.Config{InsecureSkipVerify: true}, //nolint:gosec,exhaustruct // intended for tests
+		)
 		if err != nil {
 			return err
 		}
 		return conn.Close()
 	}).Should(Succeed())
-
 })
 
 var _ = AfterSuite(func() {

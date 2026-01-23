@@ -18,7 +18,9 @@ package v1alpha1
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,9 +30,11 @@ import (
 )
 
 // log is for logging in this package.
-var minecraftlog = logf.Log.WithName("minecraft-resource")
+func minecraftLog() logr.Logger {
+	return logf.Log.WithName("minecraft-resource")
+}
 
-// SetupWebhookWithManager will setup the manager to manage the webhooks
+// SetupWebhookWithManager will setup the manager to manage the webhooks.
 func (r *Minecraft) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
@@ -45,9 +49,9 @@ func (r *Minecraft) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 var _ admission.CustomDefaulter = &Minecraft{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *Minecraft) Default(ctx context.Context, obj runtime.Object) error {
-	minecraftlog.Info("default", "name", r.Name)
+// Default implements webhook.Defaulter so a webhook will be registered for the type.
+func (r *Minecraft) Default(_ context.Context, _ runtime.Object) error {
+	minecraftLog().Info("default", "name", r.Name)
 
 	// TODO(user): fill in your defaulting logic.
 	return nil
@@ -58,36 +62,60 @@ func (r *Minecraft) Default(ctx context.Context, obj runtime.Object) error {
 
 var _ admission.CustomValidator = &Minecraft{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Minecraft) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	minecraftlog.Info("validate create", "name", r.Name)
-	m := obj.(*Minecraft)
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
+func (r *Minecraft) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	minecraftLog().Info("validate create", "name", r.Name)
+	m, ok := obj.(*Minecraft)
+	if !ok {
+		return admission.Warnings{}, fmt.Errorf("expected *Minecraft object but got %T", obj)
+	}
 	errs := m.Spec.validateCreate()
 	if len(errs) != 0 {
-		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, m.Name, errs)
+		return admission.Warnings{}, apierrors.NewInvalid(
+			schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"},
+			m.Name,
+			errs,
+		)
 	}
 
 	// TODO(user): fill in your validation logic upon object creation.
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Minecraft) ValidateUpdate(ctx context.Context, old runtime.Object, new runtime.Object) (admission.Warnings, error) {
-	minecraftlog.Info("validate update", "name", r.Name)
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
+func (r *Minecraft) ValidateUpdate(
+	_ context.Context,
+	oldObj runtime.Object,
+	newObj runtime.Object,
+) (admission.Warnings, error) {
+	minecraftLog().Info("validate update", "name", r.Name)
 
-	oldM := old.(*Minecraft)
-	newM := new.(*Minecraft)
+	oldM, ok := oldObj.(*Minecraft)
+	if !ok {
+		return admission.Warnings{}, fmt.Errorf("expected *Minecraft object but got %T", oldObj)
+	}
+	newM, ok := newObj.(*Minecraft)
+	if !ok {
+		return admission.Warnings{}, fmt.Errorf("expected *Minecraft object but got %T", newObj)
+	}
 	errs := newM.Spec.validateUpdate(oldM.Spec)
 	if len(errs) != 0 {
-		return admission.Warnings{}, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"}, newM.Name, errs)
+		return admission.Warnings{}, apierrors.NewInvalid(
+			schema.GroupKind{Group: GroupVersion.Group, Kind: "Minecraft"},
+			newM.Name,
+			errs,
+		)
 	}
 	return nil, nil
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Minecraft) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	m := obj.(*Minecraft)
-	minecraftlog.Info("validate delete", "name", m.Name)
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
+func (r *Minecraft) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	m, ok := obj.(*Minecraft)
+	if !ok {
+		return admission.Warnings{}, fmt.Errorf("expected *Minecraft object but got %T", obj)
+	}
+	minecraftLog().Info("validate delete", "name", m.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil

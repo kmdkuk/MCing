@@ -1,6 +1,6 @@
 package constants
 
-// Metadata
+// Metadata.
 const (
 	MetaPrefix = "mcing.kmdkuk.com/"
 	Finalizer  = MetaPrefix + "finalizer"
@@ -15,7 +15,7 @@ const (
 	ControllerName     = "mcing-controller"
 )
 
-// Container
+// Container.
 const (
 	MinecraftContainerName = "minecraft"
 	ServerPortName         = "server-port"
@@ -50,12 +50,15 @@ const (
 )
 
 const (
-	EulaEnvName           = "EULA"
-	RconPasswordEnvName   = "RCON_PASSWORD"
+	// EulaEnvName is the environment variable name for EULA.
+	EulaEnvName = "EULA"
+	// RconPasswordEnvName is the environment variable name for RCON password.
+	RconPasswordEnvName = "RCON_PASSWORD"
+	// RconPasswordSecretKey is the secret key for RCON password.
 	RconPasswordSecretKey = "rcon-password"
 )
 
-// server.properties
+// server.properties.
 const (
 	WhitelistProps = "white-list"
 	RconPortProps  = "rcon.port"

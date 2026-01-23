@@ -2,16 +2,11 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"os"
 
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
-	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
-	"github.com/kmdkuk/mcing/internal/minecraft"
-	"github.com/kmdkuk/mcing/pkg/config"
-	"github.com/kmdkuk/mcing/pkg/constants"
-	"github.com/kmdkuk/mcing/pkg/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -26,18 +21,29 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
+	"github.com/kmdkuk/mcing/internal/minecraft"
+	"github.com/kmdkuk/mcing/pkg/config"
+	"github.com/kmdkuk/mcing/pkg/constants"
+	"github.com/kmdkuk/mcing/pkg/utils"
 )
 
-const defaultTerminationGracePeriodSeconds = 30
-
-// debug and test variables
-var (
-	debugController = os.Getenv("DEBUG_CONTROLLER") == "1"
+const (
+	defaultTerminationGracePeriodSeconds = 30
+	defaultConfigMode                    = 0o644
+	livenessInitialDelaySeconds          = 120
+	livenessPeriodSeconds                = 60
+	readinessInitialDelaySeconds         = 20
+	readinessPeriodSeconds               = 10
+	readinessFailureThreshold            = 12
+	rconPasswordLength                   = 24
 )
 
-// MinecraftReconciler reconciles a Minecraft object
+// MinecraftReconciler reconciles a Minecraft object.
 type MinecraftReconciler struct {
 	client.Client
+
 	log              logr.Logger
 	scheme           *runtime.Scheme
 	initImageName    string
@@ -45,7 +51,14 @@ type MinecraftReconciler struct {
 	minecraftManager minecraft.MinecraftManager
 }
 
-func NewMinecraftReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, initImageName, agentImageName string, minecraftManager minecraft.MinecraftManager) *MinecraftReconciler {
+// NewMinecraftReconciler returns a new MinecraftReconciler.
+func NewMinecraftReconciler(
+	client client.Client,
+	log logr.Logger,
+	scheme *runtime.Scheme,
+	initImageName, agentImageName string,
+	minecraftManager minecraft.MinecraftManager,
+) *MinecraftReconciler {
 	l := log.WithName("Minecraft")
 	return &MinecraftReconciler{
 		Client:           client,
@@ -128,7 +141,12 @@ func (r *MinecraftReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	return ctrl.Result{}, nil
 }
 
-func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcingv1alpha1.Minecraft, props *corev1.ConfigMap) error {
+//nolint:gocognit // debug logic increases complexity
+func (r *MinecraftReconciler) reconcileStatefulSet(
+	ctx context.Context,
+	mc *mcingv1alpha1.Minecraft,
+	props *corev1.ConfigMap,
+) error {
 	logger := r.log.WithName("statefulset")
 
 	sts := &appsv1.StatefulSet{}
@@ -136,8 +154,9 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 	sts.Name = mc.PrefixedName()
 
 	var orig, updated *appsv1.StatefulSetSpec
+
 	result, err := ctrl.CreateOrUpdate(ctx, r.Client, sts, func() error {
-		if debugController {
+		if logger.V(1).Enabled() {
 			orig = sts.Spec.DeepCopy()
 		}
 		labels := labelSet(mc, constants.AppComponentServer)
@@ -188,7 +207,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 						LocalObjectReference: corev1.LocalObjectReference{
 							Name: props.Name,
 						},
-						DefaultMode: ptr.To[int32](0644),
+						DefaultMode: ptr.To[int32](defaultConfigMode),
 					},
 				},
 			},
@@ -200,13 +219,13 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 			return err
 		}
 		containers = append(containers, minecraftContainer)
-		containers = append(containers, r.makeAgentContainer())
+		containers = append(containers, r.makeAgentContainer(mc))
 		podSpec.Containers = containers
 		podSpec.InitContainers = r.makeInitContainer(mc, sts.Spec.Template.Spec.InitContainers)
 
 		podSpec.DeepCopyInto(&sts.Spec.Template.Spec)
 
-		if debugController {
+		if logger.V(1).Enabled() {
 			updated = sts.Spec.DeepCopy()
 		}
 		return ctrl.SetControllerReference(mc, sts, r.scheme)
@@ -217,14 +236,17 @@ func (r *MinecraftReconciler) reconcileStatefulSet(ctx context.Context, mc *mcin
 	}
 	if result != controllerutil.OperationResultNone {
 		logger.Info("reconciled stateful set", "operation", string(result))
-	}
-	if result == controllerutil.OperationResultUpdated && debugController {
-		fmt.Println(cmp.Diff(orig, updated))
+		if logger.V(1).Enabled() {
+			logger.V(1).Info("diff", "diff", cmp.Diff(orig, updated))
+		}
 	}
 	return nil
 }
 
-func (r *MinecraftReconciler) makeMinecraftContainer(mc *mcingv1alpha1.Minecraft, desired, _ []corev1.Container) (corev1.Container, error) {
+func (r *MinecraftReconciler) makeMinecraftContainer(
+	mc *mcingv1alpha1.Minecraft,
+	desired, _ []corev1.Container,
+) (corev1.Container, error) {
 	var source *corev1.Container
 	for i := range desired {
 		c := &desired[i]
@@ -234,7 +256,7 @@ func (r *MinecraftReconciler) makeMinecraftContainer(mc *mcingv1alpha1.Minecraft
 		}
 	}
 	if source == nil {
-		return corev1.Container{}, fmt.Errorf("minecraft container not found")
+		return corev1.Container{}, errors.New("minecraft container not found")
 	}
 
 	rconSecretName := mc.RconSecretName()
@@ -250,8 +272,8 @@ func (r *MinecraftReconciler) makeMinecraftContainer(mc *mcingv1alpha1.Minecraft
 				},
 			},
 		},
-		InitialDelaySeconds: 120,
-		PeriodSeconds:       60,
+		InitialDelaySeconds: livenessInitialDelaySeconds,
+		PeriodSeconds:       livenessPeriodSeconds,
 	}
 	c.ReadinessProbe = &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
@@ -261,9 +283,9 @@ func (r *MinecraftReconciler) makeMinecraftContainer(mc *mcingv1alpha1.Minecraft
 				},
 			},
 		},
-		InitialDelaySeconds: 20,
-		PeriodSeconds:       10,
-		FailureThreshold:    12,
+		InitialDelaySeconds: readinessInitialDelaySeconds,
+		PeriodSeconds:       readinessPeriodSeconds,
+		FailureThreshold:    readinessFailureThreshold,
 	}
 	c.Env = append(c.Env, corev1.EnvVar{
 		Name: constants.RconPasswordEnvName,
@@ -276,9 +298,18 @@ func (r *MinecraftReconciler) makeMinecraftContainer(mc *mcingv1alpha1.Minecraft
 			},
 		},
 	})
-	c.Ports = append(c.Ports,
-		corev1.ContainerPort{ContainerPort: constants.ServerPort, Name: constants.ServerPortName, Protocol: corev1.ProtocolTCP},
-		corev1.ContainerPort{ContainerPort: constants.RconPort, Name: constants.RconPortName, Protocol: corev1.ProtocolUDP},
+	c.Ports = append(
+		c.Ports,
+		corev1.ContainerPort{
+			ContainerPort: constants.ServerPort,
+			Name:          constants.ServerPortName,
+			Protocol:      corev1.ProtocolTCP,
+		},
+		corev1.ContainerPort{
+			ContainerPort: constants.RconPort,
+			Name:          constants.RconPortName,
+			Protocol:      corev1.ProtocolTCP,
+		},
 	)
 	c.VolumeMounts = append(c.VolumeMounts,
 		corev1.VolumeMount{
@@ -294,7 +325,7 @@ func (r *MinecraftReconciler) makeMinecraftContainer(mc *mcingv1alpha1.Minecraft
 	return *c, nil
 }
 
-func (r *MinecraftReconciler) makeAgentContainer() corev1.Container {
+func (r *MinecraftReconciler) makeAgentContainer(mc *mcingv1alpha1.Minecraft) corev1.Container {
 	c := corev1.Container{}
 	c.Name = constants.AgentContainerName
 	c.Image = r.agentImageName
@@ -316,16 +347,29 @@ func (r *MinecraftReconciler) makeAgentContainer() corev1.Container {
 			ReadOnly:  true,
 		},
 	)
+
+	rconSecretName := mc.RconSecretName()
+	if mc.Spec.RconPasswordSecretName != nil {
+		rconSecretName = *mc.Spec.RconPasswordSecretName
+	}
+
+	c.Env = append(c.Env, corev1.EnvVar{
+		Name: constants.RconPasswordEnvName,
+		ValueFrom: &corev1.EnvVarSource{
+			SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: rconSecretName,
+				},
+				Key: constants.RconPasswordSecretKey,
+			},
+		},
+	})
+
 	return c
 }
 
 func (r *MinecraftReconciler) makeInitContainer(mc *mcingv1alpha1.Minecraft, _ []corev1.Container) []corev1.Container {
-	var image string
-	if debugController {
-		image = constants.InitContainerImage + ":e2e"
-	} else {
-		image = r.initImageName
-	}
+	image := r.initImageName
 	c := corev1.Container{
 		Name:  constants.InitContainerName,
 		Image: image,
@@ -362,6 +406,7 @@ func (r *MinecraftReconciler) reconcileAllService(ctx context.Context, mc *mcing
 	return nil
 }
 
+//nolint:gocognit,funlen // debug logic increases complexity and length
 func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1alpha1.Minecraft, headless bool) error {
 	logger := r.log.WithName("service")
 
@@ -373,10 +418,9 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 	}
 	var orig, updated *corev1.ServiceSpec
 	result, err := ctrl.CreateOrUpdate(ctx, r.Client, svc, func() error {
-		if debugController {
+		if logger.V(1).Enabled() {
 			orig = svc.Spec.DeepCopy()
 		}
-
 		labels := labelSet(mc, constants.AppComponentServer)
 		sSpec := &corev1.ServiceSpec{}
 		tmpl := mc.Spec.ServiceTemplate
@@ -441,7 +485,7 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 		if headless || sSpec.Type != corev1.ServiceTypeLoadBalancer {
 			sSpec.Ports = append(sSpec.Ports, corev1.ServicePort{
 				Name:       constants.RconPortName,
-				Protocol:   corev1.ProtocolUDP,
+				Protocol:   corev1.ProtocolTCP,
 				Port:       constants.RconPort,
 				TargetPort: intstr.FromString(constants.RconPortName),
 				NodePort:   rconNodePort,
@@ -450,33 +494,38 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 
 		sSpec.DeepCopyInto(&svc.Spec)
 
-		if debugController {
+		if logger.V(1).Enabled() {
 			updated = svc.Spec.DeepCopy()
 		}
-
 		return ctrl.SetControllerReference(mc, svc, r.scheme)
 	})
-
 	if err != nil {
 		return fmt.Errorf("failed to reconcile service: %w", err)
 	}
 	if result != controllerutil.OperationResultNone {
 		logger.Info("reconciled service", "operation", string(result))
-	}
-	if result == controllerutil.OperationResultUpdated && debugController {
-		fmt.Println(cmp.Diff(orig, updated))
+		if logger.V(1).Enabled() {
+			logger.V(1).Info("diff", "diff", cmp.Diff(orig, updated))
+		}
 	}
 
 	return nil
 }
 
-func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv1alpha1.Minecraft) (*corev1.ConfigMap, error) {
+func (r *MinecraftReconciler) reconcileConfigMap(
+	ctx context.Context,
+	mc *mcingv1alpha1.Minecraft,
+) (*corev1.ConfigMap, error) {
 	logger := r.log.WithName("configmap")
 
 	var userProps map[string]string
 	if mc.Spec.ServerPropertiesConfigMapName != nil {
 		cm := &corev1.ConfigMap{}
-		err := r.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: *mc.Spec.ServerPropertiesConfigMapName}, cm)
+		err := r.Get(
+			ctx,
+			types.NamespacedName{Namespace: mc.Namespace, Name: *mc.Spec.ServerPropertiesConfigMapName},
+			cm,
+		)
 		if err != nil {
 			logger.Error(err, "failed to get specified configmap", "configmap", *mc.Spec.ServerPropertiesConfigMapName)
 			return nil, err
@@ -492,7 +541,7 @@ func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv
 	var otherProps map[string]string
 	if mc.Spec.OtherConfigMapName != nil {
 		cm := &corev1.ConfigMap{}
-		err := r.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: *mc.Spec.OtherConfigMapName}, cm)
+		err = r.Get(ctx, types.NamespacedName{Namespace: mc.Namespace, Name: *mc.Spec.OtherConfigMapName}, cm)
 		if err != nil {
 			logger.Error(err, "failed to get configmap", "configmap", *mc.Spec.OtherConfigMapName)
 		}
@@ -521,7 +570,6 @@ func (r *MinecraftReconciler) reconcileConfigMap(ctx context.Context, mc *mcingv
 		}
 		return ctrl.SetControllerReference(mc, cm, r.scheme)
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -548,7 +596,7 @@ func (r *MinecraftReconciler) reconcileRconSecret(ctx context.Context, mc *mcing
 			secret.Data = make(map[string][]byte)
 		}
 		if _, ok := secret.Data[constants.RconPasswordSecretKey]; !ok {
-			secret.Data[constants.RconPasswordSecretKey] = []byte(rand.String(24))
+			secret.Data[constants.RconPasswordSecretKey] = []byte(rand.String(rconPasswordLength))
 		}
 		return ctrl.SetControllerReference(mc, secret, r.scheme)
 	})
@@ -575,22 +623,24 @@ func (r *MinecraftReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if err := mgr.Add(r.minecraftManager); err != nil {
 		return err
 	}
-	configMapHandler := handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, a client.Object) []reconcile.Request {
-		mcs := &mcingv1alpha1.MinecraftList{}
-		if err := r.List(ctx, mcs, client.InNamespace(a.GetNamespace())); err != nil {
-			return nil
-		}
-		var reqs []reconcile.Request
-		for _, mc := range mcs.Items {
-			if mc.Spec.ServerPropertiesConfigMapName == nil {
-				continue
+	configMapHandler := handler.EnqueueRequestsFromMapFunc(
+		func(ctx context.Context, a client.Object) []reconcile.Request {
+			mcs := &mcingv1alpha1.MinecraftList{}
+			if err := r.List(ctx, mcs, client.InNamespace(a.GetNamespace())); err != nil {
+				return nil
 			}
-			if *mc.Spec.ServerPropertiesConfigMapName == a.GetName() {
-				reqs = append(reqs, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(&mc)})
+			var reqs []reconcile.Request
+			for _, mc := range mcs.Items {
+				if mc.Spec.ServerPropertiesConfigMapName == nil {
+					continue
+				}
+				if *mc.Spec.ServerPropertiesConfigMapName == a.GetName() {
+					reqs = append(reqs, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(&mc)})
+				}
 			}
-		}
-		return reqs
-	})
+			return reqs
+		},
+	)
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&mcingv1alpha1.Minecraft{}).
 		Owns(&appsv1.StatefulSet{}).

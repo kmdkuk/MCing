@@ -7,14 +7,18 @@ import (
 	"path"
 	"strconv"
 
+	"go.uber.org/zap"
+
 	"github.com/kmdkuk/mcing/pkg/config"
 	"github.com/kmdkuk/mcing/pkg/constants"
 	"github.com/kmdkuk/mcing/pkg/proto"
 	"github.com/kmdkuk/mcing/pkg/rcon"
-	"go.uber.org/zap"
 )
 
-func (s agentService) SyncWhitelist(ctx context.Context, req *proto.SyncWhitelistRequest) (*proto.SyncWhitelistResponse, error) {
+func (s agentService) SyncWhitelist(
+	_ context.Context,
+	req *proto.SyncWhitelistRequest,
+) (*proto.SyncWhitelistResponse, error) {
 	log := s.logger.With(zap.String("func", "syncWhitelist"))
 	log.Info("start sync white list")
 	// parse /data/server.peroperties using config.ParseServerProps
@@ -26,12 +30,13 @@ func (s agentService) SyncWhitelist(ctx context.Context, req *proto.SyncWhitelis
 	if err != nil {
 		return &proto.SyncWhitelistResponse{}, err
 	}
-	if enabled != req.Enabled {
-		if err := rcon.WhitelistSwitch(s.conn, req.Enabled); err != nil {
+	if enabled != req.GetEnabled() {
+		err = rcon.WhitelistSwitch(s.conn, req.GetEnabled())
+		if err != nil {
 			return &proto.SyncWhitelistResponse{}, err
 		}
 	}
-	if !req.Enabled {
+	if !req.GetEnabled() {
 		return &proto.SyncWhitelistResponse{}, nil
 	}
 	users, err := rcon.ListWhitelist(s.conn)
@@ -40,14 +45,14 @@ func (s agentService) SyncWhitelist(ctx context.Context, req *proto.SyncWhitelis
 	}
 	log.Info("current whitelist", zap.Strings("users", users))
 	// add: Not present in users, but present in req.Users.
-	addUsers := differenceSet(users, req.Users)
+	addUsers := differenceSet(users, req.GetUsers())
 	if len(addUsers) > 0 {
 		if err := rcon.Whitelist(s.conn, "add", addUsers); err != nil {
 			return &proto.SyncWhitelistResponse{}, err
 		}
 	}
 	// remove: Not present in req.Users, but present in users.
-	removeUsers := differenceSet(req.Users, users)
+	removeUsers := differenceSet(req.GetUsers(), users)
 	if len(removeUsers) > 0 {
 		err := rcon.Whitelist(s.conn, "remove", removeUsers)
 		if err != nil {
@@ -58,21 +63,21 @@ func (s agentService) SyncWhitelist(ctx context.Context, req *proto.SyncWhitelis
 	return &proto.SyncWhitelistResponse{}, nil
 }
 
-type opsJson struct {
-	Uuid                string `json:"uuid"`
+type opsJSON struct {
+	UUID                string `json:"uuid"`
 	Name                string `json:"name"`
 	Level               int    `json:"level"`
 	BypassesPlayerLimit bool   `json:"bypassesPlayerLimit"`
 }
 
-func (s agentService) SyncOps(ctx context.Context, req *proto.SyncOpsRequest) (*proto.SyncOpsResponse, error) {
+func (s agentService) SyncOps(_ context.Context, req *proto.SyncOpsRequest) (*proto.SyncOpsResponse, error) {
 	log := s.logger.With(zap.String("func", "syncOps"))
 	log.Info("start sync ops")
 	raw, err := os.ReadFile(path.Join(constants.DataPath, constants.OpsName))
 	if err != nil {
 		return &proto.SyncOpsResponse{}, err
 	}
-	var ops []opsJson
+	var ops []opsJSON
 	if err := json.Unmarshal(raw, &ops); err != nil {
 		return &proto.SyncOpsResponse{}, err
 	}
@@ -81,7 +86,7 @@ func (s agentService) SyncOps(ctx context.Context, req *proto.SyncOpsRequest) (*
 		users = append(users, v.Name)
 	}
 
-	addUsers := differenceSet(users, req.Users)
+	addUsers := differenceSet(users, req.GetUsers())
 	if len(addUsers) > 0 {
 		err := rcon.Op(s.conn, addUsers)
 		if err != nil {
@@ -89,7 +94,7 @@ func (s agentService) SyncOps(ctx context.Context, req *proto.SyncOpsRequest) (*
 		}
 	}
 	// remove: Not present in req.Users, but present in users.
-	removeUsers := differenceSet(req.Users, users)
+	removeUsers := differenceSet(req.GetUsers(), users)
 	if len(removeUsers) > 0 {
 		err := rcon.Deop(s.conn, removeUsers)
 		if err != nil {

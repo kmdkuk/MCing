@@ -17,7 +17,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Minecraft is the Schema for the minecrafts API
+        description: Minecraft is the Schema for the minecrafts API.
         properties:
           apiVersion:
             description: |-
@@ -37,7 +37,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: MinecraftSpec defines the desired state of Minecraft
+            description: MinecraftSpec defines the desired state of Minecraft.
             properties:
               ops:
                 description: operators on server. exec /op or /deop
@@ -9103,7 +9103,7 @@ spec:
             - volumeClaimTemplates
             type: object
           status:
-            description: MinecraftStatus defines the observed state of Minecraft
+            description: MinecraftStatus defines the observed state of Minecraft.
             type: object
         type: object
     served: true

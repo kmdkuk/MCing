@@ -5,7 +5,5 @@
   path: /spec/template/spec/containers/0/args/-
   value: --agent-image-name=mcing-agent:e2e
 - op: add
-  path: /spec/template/spec/containers/0/env/-
-  value: 
-    name: DEBUG_CONTROLLER
-    value: "1"
+  path: /spec/template/spec/containers/0/args/-
+  value: --init-image-name=mcing-init:e2e

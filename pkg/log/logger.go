@@ -2,7 +2,7 @@ package log
 
 import (
 	"fmt"
-	"log"
+	"log" //nolint:depguard // logger wrapper
 	"os"
 	"path/filepath"
 	"runtime"
@@ -10,15 +10,25 @@ import (
 	"github.com/kmdkuk/mcing/pkg/version"
 )
 
+// Level represents the severity of the log.
 type Level int
 
 const (
+	// DEBUG is the debug level.
 	DEBUG Level = iota
+	// WARN is the warning level.
 	WARN
+	// ERROR is the error level.
 	ERROR
+	// FATAL is the fatal level.
 	FATAL
 )
 
+const (
+	callerSkip = 4
+)
+
+// Prefix returns the prefix string for the level.
 func (level Level) Prefix() (string, error) {
 	switch level {
 	case DEBUG:
@@ -33,13 +43,15 @@ func (level Level) Prefix() (string, error) {
 	return "", fmt.Errorf("not a valid error level %d", level)
 }
 
-var logger *Logger
+var logger *Logger //nolint:gochecknoglobals // singleton
 
+// Logger is a wrapper around [log.Logger].
 type Logger struct {
 	level  Level
 	logger *log.Logger
 }
 
+//nolint:gochecknoinits // required by kubebuilder
 func init() {
 	minLevel := ERROR
 	if version.Version == "DEV" {
@@ -48,6 +60,7 @@ func init() {
 	logger = NewLogger(minLevel)
 }
 
+// NewLogger creates a new Logger.
 func NewLogger(l Level) *Logger {
 	levelPrefix, _ := l.Prefix()
 	return &Logger{
@@ -56,11 +69,13 @@ func NewLogger(l Level) *Logger {
 	}
 }
 
-func (l *Logger) Logf(level Level, format string, v ...interface{}) {
+// Logf logs a formatted message.
+func (l *Logger) Logf(level Level, format string, v ...any) {
 	l.Log(level, fmt.Sprintf(format, v...))
 }
 
-func (l *Logger) Log(level Level, v ...interface{}) {
+// Log logs a message.
+func (l *Logger) Log(level Level, v ...any) {
 	if l.IsLevelEnabled(level) {
 		levelPrefix, _ := level.Prefix()
 		l.logger.SetPrefix(levelPrefix)
@@ -71,39 +86,48 @@ func (l *Logger) Log(level Level, v ...interface{}) {
 	}
 }
 
+// IsLevelEnabled checks if the level is enabled.
 func (l *Logger) IsLevelEnabled(level Level) bool {
 	return l.level <= level
 }
 
-func Debugf(format string, v ...interface{}) {
+// Debugf logs a formatted debug message.
+func Debugf(format string, v ...any) {
 	logger.Logf(DEBUG, format, v...)
 }
 
-func Debug(v ...interface{}) {
+// Debug logs a debug message.
+func Debug(v ...any) {
 	logger.Log(DEBUG, v...)
 }
 
-func Warnf(format string, v ...interface{}) {
+// Warnf logs a formatted warn message.
+func Warnf(format string, v ...any) {
 	logger.Logf(WARN, format, v...)
 }
 
-func Warn(v ...interface{}) {
+// Warn logs a warn message.
+func Warn(v ...any) {
 	logger.Log(WARN, v...)
 }
 
-func Errorf(format string, v ...interface{}) {
+// Errorf logs a formatted error message.
+func Errorf(format string, v ...any) {
 	logger.Logf(ERROR, format, v...)
 }
 
-func Error(v ...interface{}) {
+// Error logs an error message.
+func Error(v ...any) {
 	logger.Log(ERROR, v...)
 }
 
-func Fatalf(format string, v ...interface{}) {
+// Fatalf logs a formatted fatal message and exits.
+func Fatalf(format string, v ...any) {
 	logger.Logf(FATAL, format, v...)
 }
 
-func Fatal(v ...interface{}) {
+// Fatal logs a fatal message and exits.
+func Fatal(v ...any) {
 	logger.Log(FATAL, v...)
 }
 
@@ -113,7 +137,7 @@ func format(v string) string {
 }
 
 func caller() (string, string, int) {
-	pc, file, line, _ := runtime.Caller(4)
+	pc, file, line, _ := runtime.Caller(callerSkip)
 	f := runtime.FuncForPC(pc)
 	p, _ := os.Getwd()
 	path, _ := filepath.Rel(p, file)

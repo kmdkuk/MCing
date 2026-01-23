@@ -5,17 +5,16 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2" //nolint:revive // dot imports for tests
+	. "github.com/onsi/gomega"    //nolint:revive // dot imports for tests
 )
 
 const (
 	controllerNS = "mcing-system"
 )
 
-var (
-	binDir = os.Getenv("BIN_DIR")
-)
+//nolint:gochecknoglobals // test setup
+var binDir = os.Getenv("BIN_DIR")
 
 func TestE2e(t *testing.T) {
 	RegisterFailHandler(Fail)

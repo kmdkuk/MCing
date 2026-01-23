@@ -3,9 +3,10 @@ package minecraft
 import (
 	"context"
 
+	"google.golang.org/grpc"
+
 	"github.com/kmdkuk/mcing/pkg/agent"
 	"github.com/kmdkuk/mcing/pkg/proto"
-	"google.golang.org/grpc"
 )
 
 type mockAgentConn struct {
@@ -14,21 +15,33 @@ type mockAgentConn struct {
 	syncOpsFunc       func(ctx context.Context, in *proto.SyncOpsRequest, opts ...grpc.CallOption) (*proto.SyncOpsResponse, error)
 }
 
-func (m *mockAgentConn) Reload(ctx context.Context, in *proto.ReloadRequest, opts ...grpc.CallOption) (*proto.ReloadResponse, error) {
+func (m *mockAgentConn) Reload(
+	ctx context.Context,
+	in *proto.ReloadRequest,
+	opts ...grpc.CallOption,
+) (*proto.ReloadResponse, error) {
 	if m.reloadFunc != nil {
 		return m.reloadFunc(ctx, in, opts...)
 	}
 	return &proto.ReloadResponse{}, nil
 }
 
-func (m *mockAgentConn) SyncWhitelist(ctx context.Context, in *proto.SyncWhitelistRequest, opts ...grpc.CallOption) (*proto.SyncWhitelistResponse, error) {
+func (m *mockAgentConn) SyncWhitelist(
+	ctx context.Context,
+	in *proto.SyncWhitelistRequest,
+	opts ...grpc.CallOption,
+) (*proto.SyncWhitelistResponse, error) {
 	if m.syncWhitelistFunc != nil {
 		return m.syncWhitelistFunc(ctx, in, opts...)
 	}
 	return &proto.SyncWhitelistResponse{}, nil
 }
 
-func (m *mockAgentConn) SyncOps(ctx context.Context, in *proto.SyncOpsRequest, opts ...grpc.CallOption) (*proto.SyncOpsResponse, error) {
+func (m *mockAgentConn) SyncOps(
+	ctx context.Context,
+	in *proto.SyncOpsRequest,
+	opts ...grpc.CallOption,
+) (*proto.SyncOpsResponse, error) {
 	if m.syncOpsFunc != nil {
 		return m.syncOpsFunc(ctx, in, opts...)
 	}
@@ -39,4 +52,4 @@ func (m *mockAgentConn) Close() error {
 	return nil
 }
 
-var _ agent.AgentConn = &mockAgentConn{}
+var _ agent.Conn = &mockAgentConn{} //nolint:exhaustruct // interface check

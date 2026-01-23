@@ -7,16 +7,26 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kmdkuk/mcing/pkg/constants"
-	agent "github.com/kmdkuk/mcing/pkg/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
+
+	"github.com/kmdkuk/mcing/pkg/constants"
+	agent "github.com/kmdkuk/mcing/pkg/proto"
 )
 
-// AgentConn represents a gRPC connection to a mcing-agent
-type AgentConn interface {
+const (
+	keepaliveTime     = 1 * time.Minute
+	backoffBaseDelay  = 1.0 * time.Second
+	backoffMultiplier = 1.6
+	backoffJitter     = 0.2
+	backoffMaxDelay   = 30 * time.Second
+	minConnectTimeout = 20 * time.Second
+)
+
+// Conn represents a gRPC connection to a mcing-agent.
+type Conn interface {
 	agent.AgentClient
 	io.Closer
 }
@@ -26,36 +36,37 @@ type agentConn struct {
 	*grpc.ClientConn
 }
 
-var _ AgentConn = agentConn{}
+var _ Conn = agentConn{} //nolint:exhaustruct // interface check
 
-// AgentFactory represents the interface of a factory to create AgentConn
-type AgentFactory interface {
-	New(ctx context.Context, podIP string) (AgentConn, error)
+// Factory represents the interface of a factory to create Conn.
+type Factory interface {
+	New(ctx context.Context, podIP string) (Conn, error)
 }
 
-// NewAgentFactory returns a new AgentFactory.
-func NewAgentFactory() AgentFactory {
+// NewFactory returns a new Factory.
+func NewFactory() Factory {
 	return defaultAgentFactory{}
 }
 
-type defaultAgentFactory struct {
-}
+type defaultAgentFactory struct{}
 
-var _ AgentFactory = defaultAgentFactory{}
+var _ Factory = defaultAgentFactory{}
 
-func (f defaultAgentFactory) New(ctx context.Context, podIP string) (AgentConn, error) {
+func (f defaultAgentFactory) New(_ context.Context, podIP string) (Conn, error) {
 	addr := net.JoinHostPort(podIP, strconv.Itoa(int(constants.AgentPort)))
 	kp := keepalive.ClientParameters{
-		Time: 1 * time.Minute,
+		Time:                keepaliveTime,
+		Timeout:             0,
+		PermitWithoutStream: false,
 	}
 	cp := grpc.ConnectParams{
 		Backoff: backoff.Config{
-			BaseDelay:  1.0 * time.Second,
-			Multiplier: 1.6,
-			Jitter:     0.2,
-			MaxDelay:   30 * time.Second,
+			BaseDelay:  backoffBaseDelay,
+			Multiplier: backoffMultiplier,
+			Jitter:     backoffJitter,
+			MaxDelay:   backoffMaxDelay,
 		},
-		MinConnectTimeout: 20 * time.Second,
+		MinConnectTimeout: minConnectTimeout,
 	}
 	conn, err := grpc.NewClient(addr,
 		grpc.WithKeepaliveParams(kp),

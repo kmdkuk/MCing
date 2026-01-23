@@ -8,8 +8,8 @@ import (
 	"text/template"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/ginkgo/v2" //nolint:revive // dot imports for tests
+	. "github.com/onsi/gomega"    //nolint:revive // dot imports for tests
 )
 
 //go:embed testdata/minecraft-rcon.yaml.tmpl
@@ -18,7 +18,7 @@ var minecraftRconTemplate string
 //go:embed testdata/secret-rcon.yaml.tmpl
 var secretRconTemplate string
 
-func renderTemplate(tmplStr string, data interface{}) []byte {
+func renderTemplate(tmplStr string, data any) []byte {
 	tmpl, err := template.New("manifest").Parse(tmplStr)
 	Expect(err).NotTo(HaveOccurred())
 	var buf bytes.Buffer
@@ -32,7 +32,7 @@ func testRcon() {
 		It("should work with auto-generated secret", func() {
 			name := "rcon-auto"
 			// 1. Create Minecraft CR
-			data := map[string]interface{}{
+			data := map[string]any{
 				"Name": name,
 			}
 			manifest := renderTemplate(minecraftRconTemplate, data)
@@ -42,7 +42,15 @@ func testRcon() {
 			waitStatefullSet(controllerNS, "mcing-"+name, 1)
 
 			// 3. Get generated Secret
-			out, _, err := kubectl("get", "secret", "mcing-"+name+"-rcon-password", "-n", controllerNS, "-o", "jsonpath={.data.rcon-password}")
+			out, _, err := kubectl(
+				"get",
+				"secret",
+				"mcing-"+name+"-rcon-password",
+				"-n",
+				controllerNS,
+				"-o",
+				"jsonpath={.data.rcon-password}",
+			)
 			Expect(err).NotTo(HaveOccurred())
 			passwordBytes, err := base64.StdEncoding.DecodeString(string(out))
 			Expect(err).NotTo(HaveOccurred())
@@ -52,9 +60,21 @@ func testRcon() {
 			// 4. Verify RCON connection
 			// rcon-cli needs some time to be ready after server start
 			Eventually(func() error {
-				_, stderr, err := kubectl("exec", "-n", controllerNS, "mcing-"+name+"-0", "-c", "minecraft", "--", "rcon-cli", "--password", password, "list")
+				_, stderr, err := kubectl(
+					"exec",
+					"-n",
+					controllerNS,
+					"mcing-"+name+"-0",
+					"-c",
+					"minecraft",
+					"--",
+					"rcon-cli",
+					"--password",
+					password,
+					"list",
+				)
 				if err != nil {
-					return fmt.Errorf("err: %v, stderr: %s", err, stderr)
+					return fmt.Errorf("err: %w, stderr: %s", err, stderr)
 				}
 				return nil
 			}, 3*time.Minute, 10*time.Second).Should(Succeed())
@@ -66,7 +86,7 @@ func testRcon() {
 			password := "custom-password-123"
 
 			// 1. Create Secret
-			secretData := map[string]interface{}{
+			secretData := map[string]any{
 				"Name":     secretName,
 				"Password": password,
 			}
@@ -74,7 +94,7 @@ func testRcon() {
 			kubectlSafeWithInput(secretManifest, "apply", "-n", controllerNS, "-f", "-")
 
 			// 2. Create Minecraft CR
-			mcData := map[string]interface{}{
+			mcData := map[string]any{
 				"Name":                   name,
 				"RconPasswordSecretName": secretName,
 			}
@@ -90,9 +110,21 @@ func testRcon() {
 
 			// 5. Verify RCON connection
 			Eventually(func() error {
-				_, stderr, err := kubectl("exec", "-n", controllerNS, "mcing-"+name+"-0", "-c", "minecraft", "--", "rcon-cli", "--password", password, "list")
+				_, stderr, err := kubectl(
+					"exec",
+					"-n",
+					controllerNS,
+					"mcing-"+name+"-0",
+					"-c",
+					"minecraft",
+					"--",
+					"rcon-cli",
+					"--password",
+					password,
+					"list",
+				)
 				if err != nil {
-					return fmt.Errorf("err: %v, stderr: %s", err, stderr)
+					return fmt.Errorf("err: %w, stderr: %s", err, stderr)
 				}
 				return nil
 			}, 3*time.Minute, 10*time.Second).Should(Succeed())
