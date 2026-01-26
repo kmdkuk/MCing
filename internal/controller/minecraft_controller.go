@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -393,8 +394,8 @@ func makeMinecraftContainer(
 		}
 
 		// Wrap command with lazymc via tini to handle zombies and signals
-		c.Command = []string{constants.LazymcBinPath}
-		c.Args = []string{"--config", constants.LazymcConfigPath}
+		c.Command = []string{filepath.Join(constants.LazymcPath, constants.LazymcBinName)}
+		c.Args = []string{"--config", filepath.Join(constants.LazymcPath, constants.LazymcConfigName)}
 		c.VolumeMounts = append(c.VolumeMounts, corev1.VolumeMount{
 			Name:      constants.LazymcVolumeName,
 			MountPath: constants.LazymcPath,

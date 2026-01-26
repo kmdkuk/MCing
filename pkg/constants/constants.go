@@ -43,9 +43,8 @@ const (
 	LazymcConfigVolumeName = "lazymc-config"
 	LazymcPath             = "/opt/lazymc"
 	LazymcConfigName       = "lazymc.toml"
-	LazymcConfigPath       = LazymcPath + "/" + LazymcConfigName
 	LazymcBinName          = "lazymc"
-	LazymcBinPath          = LazymcPath + "/" + LazymcBinName
+	LazymcLicenseName      = "LICENSE"
 
 	AgentContainerName = "mcing-agent"
 	AgentPort          = int32(9080)

@@ -99,8 +99,14 @@ func copyFiles(cfg Config) error {
 		{
 			needs: cfg.EnableLazyMC,
 			isBin: true,
-			from:  filepath.Join("/", constants.LazymcBinName),
-			to:    constants.LazymcBinPath,
+			from:  filepath.Join("/lazymc", constants.LazymcBinName),
+			to:    filepath.Join(constants.LazymcPath, constants.LazymcBinName),
+		},
+		{
+			needs: cfg.EnableLazyMC,
+			isBin: false,
+			from:  filepath.Join("/lazymc", constants.LazymcLicenseName),
+			to:    filepath.Join(constants.LazymcPath, constants.LazymcLicenseName),
 		},
 	}
 
@@ -126,8 +132,9 @@ func buildSaveLazymcConfig(cfg Config) (err error) {
 		return nil
 	}
 	lazymcConfigPath := filepath.Join(constants.ConfigPath, constants.LazymcConfigName)
+	to := filepath.Join(constants.LazymcPath, constants.LazymcConfigName)
 	if isFileExists(lazymcConfigPath) {
-		if err = copyFile(lazymcConfigPath, constants.LazymcConfigPath); err != nil {
+		if err = copyFile(lazymcConfigPath, to); err != nil {
 			return err
 		}
 	}
@@ -140,7 +147,7 @@ func buildSaveLazymcConfig(cfg Config) (err error) {
 	re := regexp.MustCompile("^password = .*")
 	replacement := "password = \"" + rconPassword + "\""
 
-	file, err := os.Open(constants.LazymcConfigPath)
+	file, err := os.Open(to)
 	if err != nil {
 		return err
 	}
@@ -172,7 +179,7 @@ func buildSaveLazymcConfig(cfg Config) (err error) {
 	}
 
 	output := strings.Join(lines, "\n")
-	err = os.WriteFile(constants.LazymcConfigPath, []byte(output), 0o600)
+	err = os.WriteFile(to, []byte(output), 0o600)
 	if err != nil {
 		return err
 	}

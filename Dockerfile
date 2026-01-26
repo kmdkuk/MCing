@@ -17,6 +17,7 @@ ARG LAZYMC_VERSION="v0.2.11"
 ARG BASE_URL="https://github.com/timvisee/lazymc/releases/download"
 ARG FILE_NAME="lazymc-${LAZYMC_VERSION}-linux-x64-static"
 ARG TARGET_URL="${BASE_URL}/${LAZYMC_VERSION}/${FILE_NAME}"
+ARG LICENSE_URL="https://raw.githubusercontent.com/timvisee/lazymc/refs/tags/${LAZYMC_VERSION}/LICENSE"
 RUN --mount=type=secret,id=github_token <<EOF
 if [ -f /run/secrets/github_token ]; then
     echo "Token found.";
@@ -27,8 +28,10 @@ else
 fi;
 if [ -n "$AUTH_HEADER" ] && [ "$AUTH_HEADER" != "User-Agent: Mozilla/5.0" ]; then
     curl -L -H "$AUTH_HEADER" -o /lazymc $TARGET_URL;
+    curl -L -H "$AUTH_HEADER" -o /LICENSE $LICENSE_URL;
 else
     curl -L -o /lazymc $TARGET_URL;
+    curl -L -o /LICENSE $LICENSE_URL;
 fi;
 chmod +x /lazymc
 EOF
@@ -41,7 +44,8 @@ ARG TARGETPLATFORM
 COPY $TARGETPLATFORM/mcing-init /
 USER 1000:1000
 
-COPY --from=lazymc /lazymc /
+COPY --from=lazymc /lazymc /lazymc/
+COPY --from=lazymc /LICENSE /lazymc/
 
 ENTRYPOINT ["/mcing-init"]
 
