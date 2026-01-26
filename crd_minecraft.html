@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-86ec4d30.js";
+            window.path_to_searchindex_js = "searchindex-814cbb0c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-dffe8370.js"></script>
@@ -186,6 +186,7 @@
 </ul>
 <h3 id="sub-resources"><a class="header" href="#sub-resources">Sub Resources</a></h3>
 <ul>
+<li><a href="#autopause">AutoPause</a></li>
 <li><a href="#minecraftlist">MinecraftList</a></li>
 <li><a href="#minecraftspec">MinecraftSpec</a></li>
 <li><a href="#objectmeta">ObjectMeta</a></li>
@@ -195,6 +196,20 @@
 <li><a href="#servicetemplate">ServiceTemplate</a></li>
 <li><a href="#whitelist">Whitelist</a></li>
 </ul>
+<h4 id="autopause"><a class="header" href="#autopause">AutoPause</a></h4>
+<p>AutoPause defines the auto-pause configuration for the Minecraft server.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Description</th><th>Scheme</th><th>Required</th></tr>
+</thead>
+<tbody>
+<tr><td>enabled</td><td>Enabled enables the auto-pause function.</td><td>*bool</td><td>false</td></tr>
+<tr><td>timeoutSeconds</td><td>TimeoutSeconds is the time in seconds to wait before pausing the server. Default is 300 seconds.</td><td>int</td><td>false</td></tr>
+</tbody>
+</table>
+</div>
+<p><a href="#custom-resources">Back to Custom Resources</a></p>
 <h4 id="minecraft"><a class="header" href="#minecraft">Minecraft</a></h4>
 <p>Minecraft is the Schema for the minecrafts API.</p>
 <div class="table-wrapper">
@@ -240,6 +255,7 @@
 <tr><td>serverPropertiesConfigMapName</td><td>ServerPropertiesConfigMapName is a <code>ConfigMap</code> name of <code>server.properties</code>.</td><td>*string</td><td>false</td></tr>
 <tr><td>otherConfigMapName</td><td>OtherConfigMapName is a <code>ConfigMap</code> name of other configurations file(eg. banned-ips.json, ops.json etc)</td><td>*string</td><td>false</td></tr>
 <tr><td>rconPasswordSecretName</td><td>RconPasswordSecretName is a <code>Secret</code> name for RCON password.</td><td>*string</td><td>false</td></tr>
+<tr><td>autoPause</td><td>AutoPause configuration</td><td><a href="#autopause">AutoPause</a></td><td>false</td></tr>
 </tbody>
 </table>
 </div>
