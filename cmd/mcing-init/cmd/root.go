@@ -7,18 +7,32 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Config represents the configuration for the init.
+type Config struct {
+	EnableLazyMC bool
+}
+
 // NewRootCmd represents the base command when called without any subcommands.
 func NewRootCmd() *cobra.Command {
-	return &cobra.Command{
+	var enableLazyMC bool
+	rootCmd := &cobra.Command{
 		Use:   "mcing-init",
 		Short: "mcing init",
 		Long:  "mcing init",
 
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SilenceUsage = true
-			return subMain()
+			cfg := Config{
+				EnableLazyMC: enableLazyMC,
+			}
+			return subMain(cfg)
 		},
 	}
+
+	fs := rootCmd.Flags()
+	fs.BoolVar(&enableLazyMC, "enable-lazymc", false, "Enable LazyMC")
+
+	return rootCmd
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

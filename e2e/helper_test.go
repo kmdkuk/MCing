@@ -3,14 +3,32 @@ package e2e
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"html/template"
+	"net"
 	"os/exec"
 	"path/filepath"
 
 	. "github.com/onsi/gomega" //nolint:revive // dot imports for tests
 	appsv1 "k8s.io/api/apps/v1"
 )
+
+//go:embed testdata/minecraft-container.yaml.tmpl
+var minecraftContainerTmpl string
+
+func renderTemplate(tmplStr string, data any) []byte {
+	tmpl, err := template.New("manifest").Parse(tmplStr)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	_, err = tmpl.New("minecraft-container").Parse(minecraftContainerTmpl)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, data)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	return buf.Bytes()
+}
 
 func kubectl(args ...string) ([]byte, []byte, error) {
 	return execAtLocal(filepath.Join(binDir, "kubectl"), nil, args...)
@@ -103,4 +121,44 @@ func waitStatefullSet(namespace, name string, replicas int) { //nolint:unparam /
 
 		return nil
 	}).ShouldNot(HaveOccurred())
+}
+
+//nolint:nonamedreturns // required to set err in defer
+func getFreePort() (port int, err error) {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		return -1, err
+	}
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return -1, err
+	}
+	defer func() {
+		closeErr := l.Close()
+		if closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
+	tcpAddr, ok := l.Addr().(*net.TCPAddr)
+	if !ok {
+		return -1, errors.New("failed to get TCP address")
+	}
+	port = tcpAddr.Port
+	return port, nil
+}
+
+func PortForwardCmd(ctx context.Context, namespace, name string, to int) (*exec.Cmd, int, error) {
+	localPort, err := getFreePort()
+	if err != nil {
+		return nil, -1, err
+	}
+	return exec.CommandContext( //nolint:gosec // for test code
+		ctx,
+		"kubectl",
+		"port-forward",
+		"-n",
+		namespace,
+		name,
+		fmt.Sprintf("%d:%d", localPort, to),
+	), localPort, nil
 }

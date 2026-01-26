@@ -72,7 +72,7 @@ func DefaultServerProps() map[string]string {
 	}
 }
 
-// ConstServerProps returns the constant server properties.
+// ConstServerProps returns the constant server properties. This property cannot be overridden by the user.
 func ConstServerProps() map[string]string {
 	return map[string]string{
 		"rcon.port":   strconv.Itoa(int(constants.RconPort)),

@@ -53,6 +53,24 @@ type MinecraftSpec struct {
 	// +nullable
 	// +optional
 	RconPasswordSecretName *string `json:"rconPasswordSecretName,omitempty"`
+
+	// AutoPause configuration
+	// +optional
+	AutoPause AutoPause `json:"autoPause,omitempty"`
+}
+
+// AutoPause defines the auto-pause configuration for the Minecraft server.
+type AutoPause struct {
+	// Enabled enables the auto-pause function.
+	// +optional
+	// +kubebuilder:default=true
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// TimeoutSeconds is the time in seconds to wait before pausing the server.
+	// Default is 300 seconds.
+	// +optional
+	// +kubebuilder:default=300
+	TimeoutSeconds int `json:"timeoutSeconds,omitempty"`
 }
 
 // Ops represents the ops.json file.

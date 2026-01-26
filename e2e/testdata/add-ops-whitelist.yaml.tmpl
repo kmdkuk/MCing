@@ -5,18 +5,26 @@ metadata:
 spec:
   autoPause:
     enabled: false
-{{- if .RconPasswordSecretName }}
-  rconPasswordSecretName: {{ .RconPasswordSecretName }}
-{{- end }}
+  whitelist:
+    enabled: true
+    users:
+      - kmdkuk
+  ops:
+    users:
+      - kmdkuk
   podTemplate:
     spec:
       containers:
 {{ template "minecraft-container" . }}
+  serviceTemplate:
+    spec:
+      type: NodePort
   volumeClaimTemplates:
     - metadata:
         name: minecraft-data
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: standard
         resources:
           requests:
             storage: 1Gi

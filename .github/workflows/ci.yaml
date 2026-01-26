@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "main"
+permissions:
+  contents: read
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -33,6 +35,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: make build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   test:
     needs: changes
     if: ${{ needs.changes.outputs.src == 'true' || startsWith(github.head_ref, 'release/v') }}
@@ -62,7 +66,6 @@ jobs:
     runs-on: ubuntu-24.04
     needs: changes
     if: ${{ needs.changes.outputs.src == 'true' || startsWith(github.head_ref, 'release/v') }}
-
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -75,6 +78,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: make start KUBERNETES_VERSION=${{ matrix.k8s-version }}
         working-directory: e2e
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: make test
         working-directory: e2e
       - run: make logs
@@ -115,6 +120,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: make start
       - run: tilt ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   dry-run-release:
     name: Dry-run release
     needs: changes
@@ -136,3 +143,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: GoReleaser
         run: make dry-run-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

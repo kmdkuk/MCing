@@ -20,6 +20,7 @@ const (
 	MinecraftContainerName = "minecraft"
 	ServerPortName         = "server-port"
 	ServerPort             = int32(25565)
+	InternalServerPort     = int32(25566)
 	RconPortName           = "rcon-port"
 	RconPort               = int32(25575)
 	DataVolumeName         = "minecraft-data"
@@ -36,6 +37,14 @@ const (
 	WhiteListPath          = DataPath + "/" + WhiteListName
 	ConfigVolumeName       = "config"
 	ConfigPath             = "/mcing-config"
+
+	LazymcVolumeName       = "lazymc"
+	LazymcConfigVolumeName = "lazymc-config"
+	LazymcInitPath         = "/lazymc"
+	LazymcPath             = "/opt/lazymc"
+	LazymcConfigName       = "lazymc.toml"
+	LazymcBinName          = "lazymc"
+	LazymcLicenseName      = "LICENSE"
 
 	AgentContainerName = "mcing-agent"
 	AgentPort          = int32(9080)

@@ -5,6 +5,7 @@
 
 ### Sub Resources
 
+* [AutoPause](#autopause)
 * [MinecraftList](#minecraftlist)
 * [MinecraftSpec](#minecraftspec)
 * [ObjectMeta](#objectmeta)
@@ -13,6 +14,17 @@
 * [PodTemplateSpec](#podtemplatespec)
 * [ServiceTemplate](#servicetemplate)
 * [Whitelist](#whitelist)
+
+#### AutoPause
+
+AutoPause defines the auto-pause configuration for the Minecraft server.
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| enabled | Enabled enables the auto-pause function. | *bool | false |
+| timeoutSeconds | TimeoutSeconds is the time in seconds to wait before pausing the server. Default is 300 seconds. | int | false |
+
+[Back to Custom Resources](#custom-resources)
 
 #### Minecraft
 
@@ -51,6 +63,7 @@ MinecraftSpec defines the desired state of Minecraft.
 | serverPropertiesConfigMapName | ServerPropertiesConfigMapName is a `ConfigMap` name of `server.properties`. | *string | false |
 | otherConfigMapName | OtherConfigMapName is a `ConfigMap` name of other configurations file(eg. banned-ips.json, ops.json etc) | *string | false |
 | rconPasswordSecretName | RconPasswordSecretName is a `Secret` name for RCON password. | *string | false |
+| autoPause | AutoPause configuration | [AutoPause](#autopause) | false |
 
 [Back to Custom Resources](#custom-resources)
 

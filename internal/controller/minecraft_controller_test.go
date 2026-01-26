@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -161,7 +162,22 @@ var _ = Describe("Minecraft controller", func() {
 					"Name":      Equal(constants.ConfigVolumeName),
 					"MountPath": Equal(constants.ConfigPath),
 				}),
+				"2": MatchFields(IgnoreExtras, Fields{
+					"Name":      Equal(constants.LazymcVolumeName),
+					"MountPath": Equal(constants.LazymcPath),
+				}),
 			}),
+			"Lifecycle": PointTo(MatchFields(IgnoreExtras, Fields{
+				"PreStop": PointTo(MatchFields(IgnoreExtras, Fields{
+					"Exec": PointTo(MatchFields(IgnoreExtras, Fields{
+						"Command": Equal([]string{
+							"/bin/sh",
+							"-c",
+							"rcon-cli stop || true",
+						}),
+					})),
+				})),
+			})),
 		}))
 		Expect(s.Spec.Template.Spec.Containers[1]).To(MatchFields(IgnoreExtras, Fields{
 			"Name":  Equal(constants.AgentContainerName),
@@ -323,5 +339,119 @@ var _ = Describe("Minecraft controller", func() {
 				)
 			}).ShouldNot(Succeed())
 		})
+	})
+	It("should enable auto-pause configurations", func() {
+		By("creating ConfigMap with custom port")
+		cm := &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "autopause-config",
+				Namespace: namespace,
+			},
+			Data: map[string]string{
+				"server-port": "12345", // This property setting is ignored.
+				"motd":        "AutoPause Test",
+			},
+		}
+		Expect(k8sClient.Create(ctx, cm)).To(Succeed())
+
+		By("deploying Minecraft resource with AutoPause enabled")
+		mc := makeMinecraft("autopause-test", namespace)
+		mc.Spec.ServerPropertiesConfigMapName = &cm.Name
+		mc.Spec.AutoPause = mcingv1alpha1.AutoPause{
+			TimeoutSeconds: 600,
+		}
+		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+		By("getting the created StatefulSet")
+		s := new(appsv1.StatefulSet)
+		Eventually(func() error {
+			return k8sClient.Get(ctx, types.NamespacedName{Name: mc.PrefixedName(), Namespace: namespace}, s)
+		}).Should(Succeed())
+
+		// Verify ConfigMap content for lazymc.toml
+		generatedCm := &corev1.ConfigMap{}
+		Eventually(func() error {
+			return k8sClient.Get(
+				ctx,
+				types.NamespacedName{Namespace: mc.Namespace, Name: mc.PrefixedName()},
+				generatedCm,
+			)
+		}).Should(Succeed())
+		val, ok := generatedCm.Data[constants.LazymcConfigName]
+		Expect(ok).To(BeTrue())
+		Expect(val).To(ContainSubstring(fmt.Sprintf("address = \"0.0.0.0:%d\"", constants.ServerPort)))
+		Expect(val).To(ContainSubstring(fmt.Sprintf("address = \"127.0.0.1:%d\"", constants.InternalServerPort)))
+		Expect(val).To(ContainSubstring("sleep_after = 600"))
+
+		// Verify Main Container Command
+		Expect(s.Spec.Template.Spec.Containers[0].Command).To(Equal([]string{"/opt/lazymc/lazymc"}))
+		Expect(s.Spec.Template.Spec.Containers[0].Args).To(
+			Equal([]string{"--config", "/opt/lazymc/lazymc.toml"}),
+		)
+
+		// Verify Probes use tcpSocket
+		Expect(s.Spec.Template.Spec.Containers[0].LivenessProbe.TCPSocket).NotTo(BeNil())
+		Expect(
+			s.Spec.Template.Spec.Containers[0].LivenessProbe.TCPSocket.Port.IntVal,
+		).To(Equal(constants.ServerPort))
+		Expect(s.Spec.Template.Spec.Containers[0].ReadinessProbe.TCPSocket).NotTo(BeNil())
+		Expect(
+			s.Spec.Template.Spec.Containers[0].ReadinessProbe.TCPSocket.Port.IntVal,
+		).To(Equal(constants.ServerPort))
+
+		// Verify ConfigMap override
+		generatedCm = &corev1.ConfigMap{}
+		Eventually(func() error {
+			return k8sClient.Get(
+				ctx,
+				types.NamespacedName{Namespace: mc.Namespace, Name: mc.PrefixedName()},
+				generatedCm,
+			)
+		}).Should(Succeed())
+		val, ok = generatedCm.Data[constants.ServerPropsName]
+		Expect(ok).To(BeTrue())
+		Expect(val).To(ContainSubstring(fmt.Sprintf("server-port=%d", constants.InternalServerPort)))
+		Expect(val).To(ContainSubstring("motd=AutoPause Test"))
+	})
+
+	It("should disable auto-pause configurations", func() {
+		By("deploying Minecraft resource with AutoPause disabled")
+		mc := makeMinecraft("no-autopause-test", namespace)
+		mc.Spec.AutoPause = mcingv1alpha1.AutoPause{
+			Enabled:        ptr.To(false),
+			TimeoutSeconds: 600,
+		}
+		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+		By("getting the created StatefulSet")
+		s := new(appsv1.StatefulSet)
+		Eventually(func() error {
+			return k8sClient.Get(ctx, types.NamespacedName{Name: mc.PrefixedName(), Namespace: namespace}, s)
+		}).Should(Succeed())
+
+		// Verify ConfigMap content for lazymc.toml
+		generatedCm := &corev1.ConfigMap{}
+		Eventually(func(g Gomega) {
+			err := k8sClient.Get(
+				ctx,
+				types.NamespacedName{Namespace: mc.Namespace, Name: mc.PrefixedName()},
+				generatedCm,
+			)
+			g.Expect(err).NotTo(HaveOccurred())
+			_, ok := generatedCm.Data[constants.LazymcConfigName]
+			g.Expect(ok).To(BeFalse(), fmt.Sprintf("lazymc.toml found in %s", generatedCm.Name))
+		}).Should(Succeed())
+
+		// Verify Main Container Command what dont use lazymc
+		Expect(s.Spec.Template.Spec.Containers[0].Command).To(BeEmpty())
+		Expect(s.Spec.Template.Spec.Containers[0].Args).To(BeEmpty())
+
+		// Verify Probes use mc-health
+		Expect(s.Spec.Template.Spec.Containers[0].LivenessProbe.Exec).To(PointTo(MatchFields(IgnoreExtras, Fields{
+			"Command": Equal([]string{"mc-health"}),
+		})))
+		Expect(s.Spec.Template.Spec.Containers[0].ReadinessProbe.Exec).To(PointTo(MatchFields(IgnoreExtras, Fields{
+			"Command": Equal([]string{"mc-health"}),
+		})))
 	})
 })

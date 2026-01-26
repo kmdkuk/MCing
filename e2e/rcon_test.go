@@ -1,12 +1,9 @@
 package e2e
 
 import (
-	"bytes"
 	_ "embed"
 	"encoding/base64"
 	"fmt"
-	"text/template"
-	"time"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // dot imports for tests
 	. "github.com/onsi/gomega"    //nolint:revive // dot imports for tests
@@ -18,15 +15,6 @@ var minecraftRconTemplate string
 //go:embed testdata/secret-rcon.yaml.tmpl
 var secretRconTemplate string
 
-func renderTemplate(tmplStr string, data any) []byte {
-	tmpl, err := template.New("manifest").Parse(tmplStr)
-	Expect(err).NotTo(HaveOccurred())
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, data)
-	Expect(err).NotTo(HaveOccurred())
-	return buf.Bytes()
-}
-
 func testRcon() {
 	Describe("RCON Password", func() {
 		It("should work with auto-generated secret", func() {
@@ -36,18 +24,16 @@ func testRcon() {
 				"Name": name,
 			}
 			manifest := renderTemplate(minecraftRconTemplate, data)
-			kubectlSafeWithInput(manifest, "apply", "-n", controllerNS, "-f", "-")
+			kubectlSafeWithInput(manifest, "apply", "-f", "-")
 
 			// 2. Wait for Pod Ready
-			waitStatefullSet(controllerNS, "mcing-"+name, 1)
+			waitStatefullSet("default", "mcing-"+name, 1)
 
 			// 3. Get generated Secret
 			out, _, err := kubectl(
 				"get",
 				"secret",
 				"mcing-"+name+"-rcon-password",
-				"-n",
-				controllerNS,
 				"-o",
 				"jsonpath={.data.rcon-password}",
 			)
@@ -62,8 +48,6 @@ func testRcon() {
 			Eventually(func() error {
 				_, stderr, err := kubectl(
 					"exec",
-					"-n",
-					controllerNS,
 					"mcing-"+name+"-0",
 					"-c",
 					"minecraft",
@@ -77,7 +61,10 @@ func testRcon() {
 					return fmt.Errorf("err: %w, stderr: %s", err, stderr)
 				}
 				return nil
-			}, 3*time.Minute, 10*time.Second).Should(Succeed())
+			}).Should(Succeed())
+
+			// Cleanup
+			kubectlSafeWithInput(manifest, "delete", "-f", "-")
 		})
 
 		It("should work with user-specified secret", func() {
@@ -91,7 +78,7 @@ func testRcon() {
 				"Password": password,
 			}
 			secretManifest := renderTemplate(secretRconTemplate, secretData)
-			kubectlSafeWithInput(secretManifest, "apply", "-n", controllerNS, "-f", "-")
+			kubectlSafeWithInput(secretManifest, "apply", "-f", "-")
 
 			// 2. Create Minecraft CR
 			mcData := map[string]any{
@@ -99,21 +86,19 @@ func testRcon() {
 				"RconPasswordSecretName": secretName,
 			}
 			manifest := renderTemplate(minecraftRconTemplate, mcData)
-			kubectlSafeWithInput(manifest, "apply", "-n", controllerNS, "-f", "-")
+			kubectlSafeWithInput(manifest, "apply", "-f", "-")
 
-			// 3. Wait for Pod Ready
-			waitStatefullSet(controllerNS, "mcing-"+name, 1)
+			// 2. Wait for Pod Ready
+			waitStatefullSet("default", "mcing-"+name, 1)
 
-			// 4. Ensure default secret is NOT created
-			_, _, err := kubectl("get", "secret", "mcing-"+name+"-rcon-password", "-n", controllerNS)
+			// 3. Ensure default secret is NOT created
+			_, _, err := kubectl("get", "secret", "mcing-"+name+"-rcon-password")
 			Expect(err).To(HaveOccurred()) // Should fail to find
 
 			// 5. Verify RCON connection
 			Eventually(func() error {
 				_, stderr, err := kubectl(
 					"exec",
-					"-n",
-					controllerNS,
 					"mcing-"+name+"-0",
 					"-c",
 					"minecraft",
@@ -127,7 +112,11 @@ func testRcon() {
 					return fmt.Errorf("err: %w, stderr: %s", err, stderr)
 				}
 				return nil
-			}, 3*time.Minute, 10*time.Second).Should(Succeed())
+			}).Should(Succeed())
+
+			// Cleanup
+			kubectlSafeWithInput(manifest, "delete", "-f", "-")
+			kubectlSafeWithInput(secretManifest, "delete", "-f", "-")
 		})
 	})
 }
