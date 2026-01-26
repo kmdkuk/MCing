@@ -30,7 +30,6 @@ import (
 	"github.com/kmdkuk/mcing/internal/minecraft"
 	"github.com/kmdkuk/mcing/pkg/config"
 	"github.com/kmdkuk/mcing/pkg/constants"
-	"github.com/kmdkuk/mcing/pkg/utils"
 )
 
 const (
@@ -184,7 +183,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(
 			orig = sts.Spec.DeepCopy()
 		}
 		labels := labelSet(mc, constants.AppComponentServer)
-		sts.Labels = utils.MergeMap(sts.Labels, labels)
+		sts.Labels = config.MergeMap(sts.Labels, labels)
 
 		sts.Spec.Replicas = ptr.To[int32](1)
 		sts.Spec.Selector = &metav1.LabelSelector{
@@ -202,9 +201,9 @@ func (r *MinecraftReconciler) reconcileStatefulSet(
 			sts.Spec.VolumeClaimTemplates[i] = pvc
 		}
 
-		sts.Spec.Template.Annotations = utils.MergeMap(sts.Spec.Template.Annotations, mc.Spec.PodTemplate.Annotations)
-		sts.Spec.Template.Labels = utils.MergeMap(sts.Spec.Template.Labels, mc.Spec.PodTemplate.Labels)
-		sts.Spec.Template.Labels = utils.MergeMap(sts.Spec.Template.Labels, labels)
+		sts.Spec.Template.Annotations = config.MergeMap(sts.Spec.Template.Annotations, mc.Spec.PodTemplate.Annotations)
+		sts.Spec.Template.Labels = config.MergeMap(sts.Spec.Template.Labels, mc.Spec.PodTemplate.Labels)
+		sts.Spec.Template.Labels = config.MergeMap(sts.Spec.Template.Labels, labels)
 
 		podSpec := mc.Spec.PodTemplate.Spec.DeepCopy()
 		podSpec.DeprecatedServiceAccount = sts.Spec.Template.Spec.DeprecatedServiceAccount
@@ -524,15 +523,15 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 		sSpec := &corev1.ServiceSpec{}
 		tmpl := mc.Spec.ServiceTemplate
 		if !headless && tmpl != nil {
-			svc.Annotations = utils.MergeMap(svc.Annotations, tmpl.Annotations)
-			svc.Labels = utils.MergeMap(svc.Labels, tmpl.Labels)
-			svc.Labels = utils.MergeMap(svc.Labels, labels)
+			svc.Annotations = config.MergeMap(svc.Annotations, tmpl.Annotations)
+			svc.Labels = config.MergeMap(svc.Labels, tmpl.Labels)
+			svc.Labels = config.MergeMap(svc.Labels, labels)
 
 			if tmpl.Spec != nil {
 				tmpl.Spec.DeepCopyInto(sSpec)
 			}
 		} else {
-			svc.Labels = utils.MergeMap(svc.Labels, labels)
+			svc.Labels = config.MergeMap(svc.Labels, labels)
 		}
 
 		if headless {
@@ -677,7 +676,7 @@ func (r *MinecraftReconciler) reconcileConfigMap(
 	cm.Namespace = mc.Namespace
 	cm.Name = mc.PrefixedName()
 	result, err := ctrl.CreateOrUpdate(ctx, r.Client, cm, func() error {
-		cm.Labels = utils.MergeMap(cm.Labels, labelSet(mc, constants.AppComponentServer))
+		cm.Labels = config.MergeMap(cm.Labels, labelSet(mc, constants.AppComponentServer))
 		cm.Data = map[string]string{
 			constants.ServerPropsName: props,
 		}
@@ -730,7 +729,7 @@ func (r *MinecraftReconciler) reconcileConfigMap(
 				RconPassword: rconPassword,
 			}
 
-			lazymcToml, lazymcTomlErr := utils.ExecuteTemplate(lazymcTomlTmpl, lazymcConfig)
+			lazymcToml, lazymcTomlErr := config.ExecuteTemplate(lazymcTomlTmpl, lazymcConfig)
 			if lazymcTomlErr != nil {
 				return lazymcTomlErr
 			}
