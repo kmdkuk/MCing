@@ -63,7 +63,8 @@ type MinecraftSpec struct {
 type AutoPause struct {
 	// Enabled enables the auto-pause function.
 	// +optional
-	Enabled bool `json:"enabled,omitempty"`
+	// +kubebuilder:default=true
+	Enabled *bool `json:"enabled,omitempty"`
 
 	// TimeoutSeconds is the time in seconds to wait before pausing the server.
 	// Default is 300 seconds.

@@ -99,13 +99,13 @@ func copyFiles(cfg Config) error {
 		{
 			needs: cfg.EnableLazyMC,
 			isBin: true,
-			from:  filepath.Join("/lazymc", constants.LazymcBinName),
+			from:  filepath.Join(constants.LazymcInitPath, constants.LazymcBinName),
 			to:    filepath.Join(constants.LazymcPath, constants.LazymcBinName),
 		},
 		{
 			needs: cfg.EnableLazyMC,
 			isBin: false,
-			from:  filepath.Join("/lazymc", constants.LazymcLicenseName),
+			from:  filepath.Join(constants.LazymcInitPath, constants.LazymcLicenseName),
 			to:    filepath.Join(constants.LazymcPath, constants.LazymcLicenseName),
 		},
 	}
@@ -144,7 +144,7 @@ func buildSaveLazymcConfig(cfg Config) (err error) {
 		return errors.New("required RCON_PASSWORD")
 	}
 
-	re := regexp.MustCompile("^password = .*")
+	re := regexp.MustCompile("^password = .*$")
 	replacement := "password = \"" + rconPassword + "\""
 
 	file, err := os.Open(to)

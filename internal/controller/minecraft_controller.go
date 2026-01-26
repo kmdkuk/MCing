@@ -93,13 +93,12 @@ var lazymcTomlTmpl string
 
 // LazymcConfig holds configuration for lazymc template rendering.
 type LazymcConfig struct {
-	PublicPort   int32
-	ServerPort   int32
-	Command      string
-	SleepAfter   int32
-	RconEnabled  bool
-	RconPort     int32
-	RconPassword string
+	PublicPort  int32
+	ServerPort  int32
+	Command     string
+	SleepAfter  int32
+	RconEnabled bool
+	RconPort    int32
 }
 
 // Reconcile implements Reconciler interface.
@@ -236,7 +235,7 @@ func (r *MinecraftReconciler) reconcileStatefulSet(
 			},
 		)
 
-		if mc.Spec.AutoPause.Enabled {
+		if *mc.Spec.AutoPause.Enabled {
 			podSpec.Volumes = append(podSpec.Volumes, corev1.Volume{
 				Name: constants.LazymcVolumeName,
 				VolumeSource: corev1.VolumeSource{
@@ -369,7 +368,7 @@ func makeMinecraftContainer(
 		},
 	}
 
-	if mc.Spec.AutoPause.Enabled {
+	if *mc.Spec.AutoPause.Enabled {
 		// Override probes to check the public port (lazymc)
 		// Use tcpSocket because lazymc accepts connections even when backend is sleeping
 		c.LivenessProbe = &corev1.Probe{
@@ -463,7 +462,7 @@ func (r *MinecraftReconciler) makeInitContainer(mc *mcingv1alpha1.Minecraft) []c
 		},
 	}
 
-	if mc.Spec.AutoPause.Enabled {
+	if *mc.Spec.AutoPause.Enabled {
 		c.Args = append(c.Args, "--enable-lazymc")
 		c.VolumeMounts = append(c.VolumeMounts, corev1.VolumeMount{
 			Name:      constants.LazymcVolumeName,
@@ -655,7 +654,7 @@ func (r *MinecraftReconciler) reconcileConfigMap(
 		return nil, err
 	}
 
-	if mc.Spec.AutoPause.Enabled {
+	if *mc.Spec.AutoPause.Enabled {
 		// Force internal port by replacing the enforced standard port
 		target := fmt.Sprintf("server-port=%d", constants.ServerPort)
 		replacement := fmt.Sprintf("server-port=%d", constants.InternalServerPort)
@@ -693,15 +692,13 @@ func (r *MinecraftReconciler) reconcileConfigMap(
 			cm.Data[constants.WhiteListName] = v
 		}
 
-		// Generate lazymc.toml and start.sh from templates
+		// Generate lazymc.toml from templates
 		//nolint:nestif // autopause configuration adds necessary nesting
-		if mc.Spec.AutoPause.Enabled {
+		if *mc.Spec.AutoPause.Enabled {
 			// Determine backend command
 			cmd := buildServerCommand(mc)
 
 			rconEnabled := true
-			// TODO: rconPassword is managed using Secret or similar.
-			rconPassword := constants.RconDefaultPassword
 			rconPort := constants.RconPort
 
 			if v, ok := userProps["enable-rcon"]; ok {
@@ -709,24 +706,20 @@ func (r *MinecraftReconciler) reconcileConfigMap(
 					rconEnabled = false
 				}
 			}
-			// TODO: customize password and manage secret
-			// if v, ok := userProps["rcon.password"]; ok {
-			// 	rconPassword = v
-			// }
 			if v, ok := userProps["rcon.port"]; ok {
 				if portVal, parseErr := strconv.Atoi(v); parseErr == nil {
 					rconPort = int32(portVal) //nolint:gosec // port values are within int32 range
 				}
 			}
 
+			// The rcon password is injected by mcing-init from secret via env.
 			lazymcConfig := LazymcConfig{
-				PublicPort:   constants.ServerPort,
-				ServerPort:   constants.InternalServerPort,
-				Command:      cmd,
-				SleepAfter:   int32(mc.Spec.AutoPause.TimeoutSeconds), //nolint:gosec // timeout is within int32 range
-				RconEnabled:  rconEnabled,
-				RconPort:     rconPort,
-				RconPassword: rconPassword,
+				PublicPort:  constants.ServerPort,
+				ServerPort:  constants.InternalServerPort,
+				Command:     cmd,
+				SleepAfter:  int32(mc.Spec.AutoPause.TimeoutSeconds), //nolint:gosec // timeout is within int32 range
+				RconEnabled: rconEnabled,
+				RconPort:    rconPort,
 			}
 
 			lazymcToml, lazymcTomlErr := config.ExecuteTemplate(lazymcTomlTmpl, lazymcConfig)

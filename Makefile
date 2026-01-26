@@ -178,7 +178,7 @@ build-image-controller: build-controller ## Build docker image with the manager.
 	$(CONTAINER_TOOL) build --build-arg TARGETPLATFORM=. --target controller -t ${CONTROLLER_IMG} .
 
 .PHONY: build-image-init
-# GITHUB_TOKEN という環境変数が空でなければフラグをセット
+# Set the flag if the GITHUB_TOKEN environment variable is not empty
 ifneq ($(GITHUB_TOKEN),)
     SECRET_FLAG := --secret id=github_token,env=GITHUB_TOKEN
 endif

@@ -21,7 +21,7 @@ AutoPause defines the auto-pause configuration for the Minecraft server.
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| enabled | Enabled enables the auto-pause function. | bool | false |
+| enabled | Enabled enables the auto-pause function. | *bool | false |
 | timeoutSeconds | TimeoutSeconds is the time in seconds to wait before pausing the server. Default is 300 seconds. | int | false |
 
 [Back to Custom Resources](#custom-resources)

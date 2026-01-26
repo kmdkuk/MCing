@@ -114,7 +114,7 @@ func testAutoPause() {
 
 		logs, _, err := kubectl("logs", stsName+"-0", "-c", "minecraft")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(logs).To(ContainSubstring("> Failed to RCON server to sleep: authentication failed"))
+		Expect(logs).NotTo(ContainSubstring("> Failed to RCON server to sleep: authentication failed"))
 
 		// Cleanup
 		manifest = renderTemplate(autopauseYAML, nil)

@@ -162,6 +162,10 @@ var _ = Describe("Minecraft controller", func() {
 					"Name":      Equal(constants.ConfigVolumeName),
 					"MountPath": Equal(constants.ConfigPath),
 				}),
+				"2": MatchFields(IgnoreExtras, Fields{
+					"Name":      Equal(constants.LazymcVolumeName),
+					"MountPath": Equal(constants.LazymcPath),
+				}),
 			}),
 			"Lifecycle": PointTo(MatchFields(IgnoreExtras, Fields{
 				"PreStop": PointTo(MatchFields(IgnoreExtras, Fields{
@@ -354,7 +358,6 @@ var _ = Describe("Minecraft controller", func() {
 		mc := makeMinecraft("autopause-test", namespace)
 		mc.Spec.ServerPropertiesConfigMapName = &cm.Name
 		mc.Spec.AutoPause = mcingv1alpha1.AutoPause{
-			Enabled:        true,
 			TimeoutSeconds: 600,
 		}
 		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
@@ -415,7 +418,7 @@ var _ = Describe("Minecraft controller", func() {
 		By("deploying Minecraft resource with AutoPause disabled")
 		mc := makeMinecraft("no-autopause-test", namespace)
 		mc.Spec.AutoPause = mcingv1alpha1.AutoPause{
-			Enabled:        false,
+			Enabled:        ptr.To(false),
 			TimeoutSeconds: 600,
 		}
 		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
@@ -428,20 +431,15 @@ var _ = Describe("Minecraft controller", func() {
 
 		// Verify ConfigMap content for lazymc.toml
 		generatedCm := &corev1.ConfigMap{}
-		Eventually(func() error {
+		Eventually(func(g Gomega) {
 			err := k8sClient.Get(
 				ctx,
 				types.NamespacedName{Namespace: mc.Namespace, Name: mc.PrefixedName()},
 				generatedCm,
 			)
-			if err != nil {
-				return err
-			}
+			g.Expect(err).NotTo(HaveOccurred())
 			_, ok := generatedCm.Data[constants.LazymcConfigName]
-			if ok {
-				return fmt.Errorf("lazymc.toml found in %s", generatedCm.Name)
-			}
-			return nil
+			g.Expect(ok).To(BeFalse(), fmt.Sprintf("lazymc.toml found in %s", generatedCm.Name))
 		}).Should(Succeed())
 
 		// Verify Main Container Command what dont use lazymc

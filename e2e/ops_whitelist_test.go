@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // dot imports for tests
@@ -169,21 +170,13 @@ func testOpsWhitelist() {
 		By("delete ops-whitelist instance")
 		kubectlSafeWithInput(noOpsManifest, "delete", "-f", "-")
 		Eventually(func(g Gomega) {
-			stdout, _, err := kubectl("get", "pod", "-o", "json")
+			stdout, _, err := kubectl("get", "pod", "-o", "json", fmt.Sprintf("%s-0", stsName))
 			g.Expect(err).ShouldNot(HaveOccurred())
 			pods := &corev1.PodList{}
 			err = json.Unmarshal(stdout, pods)
 			g.Expect(err).ShouldNot(HaveOccurred())
 
-			// Filter for our specific pod because other parallel tests might be running
-			found := false
-			for _, pod := range pods.Items {
-				if pod.Name == stsName+"-0" {
-					found = true
-					break
-				}
-			}
-			g.Expect(found).Should(BeFalse(), "Pod %s should be deleted", stsName+"-0")
+			g.Expect(pods.Items).Should(BeEmpty())
 		}).Should(Succeed())
 	})
 }

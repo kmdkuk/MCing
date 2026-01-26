@@ -23,7 +23,6 @@ const (
 	InternalServerPort     = int32(25566)
 	RconPortName           = "rcon-port"
 	RconPort               = int32(25575)
-	RconDefaultPassword    = "minecraft" // TODO: dont use
 	DataVolumeName         = "minecraft-data"
 	DataPath               = "/data"
 	ServerPropsName        = "server.properties"
@@ -41,6 +40,7 @@ const (
 
 	LazymcVolumeName       = "lazymc"
 	LazymcConfigVolumeName = "lazymc-config"
+	LazymcInitPath         = "/lazymc"
 	LazymcPath             = "/opt/lazymc"
 	LazymcConfigName       = "lazymc.toml"
 	LazymcBinName          = "lazymc"

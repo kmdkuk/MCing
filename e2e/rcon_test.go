@@ -15,8 +15,6 @@ var minecraftRconTemplate string
 //go:embed testdata/secret-rcon.yaml.tmpl
 var secretRconTemplate string
 
-// function moved to suite_test.go
-
 func testRcon() {
 	Describe("RCON Password", func() {
 		It("should work with auto-generated secret", func() {

@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: datapack-no-autopause-props
 data:
-  server-port: "67890"
+  server-port: "67890" #This setting should be ignored.
 ---
 apiVersion: mcing.kmdkuk.com/v1alpha1
 kind: Minecraft
@@ -13,7 +13,6 @@ spec:
   serverPropertiesConfigMapName: datapack-no-autopause-props
   autoPause:
     enabled: false
-    timeoutSeconds: 30
   podTemplate:
     spec:
       containers:
