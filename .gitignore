@@ -25,6 +25,9 @@ tmp/
 
 dist/
 
+kubectl-mcing
+!kubectl-mcing/
+
 mcing-controller
 mcing-init
 mcing-agent

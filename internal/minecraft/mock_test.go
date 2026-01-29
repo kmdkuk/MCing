@@ -48,6 +48,30 @@ func (m *mockAgentConn) SyncOps(
 	return &proto.SyncOpsResponse{}, nil
 }
 
+func (m *mockAgentConn) SaveOff(
+	_ context.Context,
+	_ *proto.SaveOffRequest,
+	_ ...grpc.CallOption,
+) (*proto.SaveOffResponse, error) {
+	return &proto.SaveOffResponse{}, nil
+}
+
+func (m *mockAgentConn) SaveAll(
+	_ context.Context,
+	_ *proto.SaveAllRequest,
+	_ ...grpc.CallOption,
+) (*proto.SaveAllResponse, error) {
+	return &proto.SaveAllResponse{}, nil
+}
+
+func (m *mockAgentConn) SaveOn(
+	_ context.Context,
+	_ *proto.SaveOnRequest,
+	_ ...grpc.CallOption,
+) (*proto.SaveOnResponse, error) {
+	return &proto.SaveOnResponse{}, nil
+}
+
 func (m *mockAgentConn) Close() error {
 	return nil
 }

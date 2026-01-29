@@ -126,3 +126,21 @@ func Deop(remoteConsole Console, users []string) error {
 	}
 	return nil
 }
+
+// SaveOff disables the server auto-save.
+func SaveOff(remoteConsole Console) error {
+	_, err := exec(remoteConsole, "save-off")
+	return err
+}
+
+// SaveAllFlush saves the server to disk.
+func SaveAllFlush(remoteConsole Console) error {
+	_, err := exec(remoteConsole, "save-all", "flush")
+	return err
+}
+
+// SaveOn enables the server auto-save.
+func SaveOn(remoteConsole Console) error {
+	_, err := exec(remoteConsole, "save-on")
+	return err
+}

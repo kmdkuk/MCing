@@ -6,6 +6,7 @@
 ### Sub Resources
 
 * [AutoPause](#autopause)
+* [Backup](#backup)
 * [MinecraftList](#minecraftlist)
 * [MinecraftSpec](#minecraftspec)
 * [ObjectMeta](#objectmeta)
@@ -23,6 +24,16 @@ AutoPause defines the auto-pause configuration for the Minecraft server.
 | ----- | ----------- | ------ | -------- |
 | enabled | Enabled enables the auto-pause function. | *bool | false |
 | timeoutSeconds | TimeoutSeconds is the time in seconds to wait before pausing the server. Default is 300 seconds. | int | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### Backup
+
+Backup defines the backup configuration for the Minecraft server.
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| excludes | Excludes is a list of file patterns to exclude from the backup. | []string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -64,6 +75,7 @@ MinecraftSpec defines the desired state of Minecraft.
 | otherConfigMapName | OtherConfigMapName is a `ConfigMap` name of other configurations file(eg. banned-ips.json, ops.json etc) | *string | false |
 | rconPasswordSecretName | RconPasswordSecretName is a `Secret` name for RCON password. | *string | false |
 | autoPause | AutoPause configuration | [AutoPause](#autopause) | false |
+| backup | Backup configuration | [Backup](#backup) | false |
 
 [Back to Custom Resources](#custom-resources)
 
