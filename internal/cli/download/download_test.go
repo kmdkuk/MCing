@@ -14,7 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
@@ -98,32 +97,25 @@ func TestDownloader_Run(t *testing.T) {
 	_ = mcingv1alpha1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
 
-	mc := &mcingv1alpha1.Minecraft{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-mc",
-			Namespace: "default",
-		},
-		Spec: mcingv1alpha1.MinecraftSpec{
-			Backup: mcingv1alpha1.Backup{
-				Excludes: []string{"logs"},
-			},
-		},
-	}
-
-	fakeClient := fake.NewClientBuilder().
-		WithScheme(scheme).
-		WithObjects(mc).
-		Build()
-
 	tests := []struct {
 		name        string
-		k8sClient   client.Client
+		minecraft   *mcingv1alpha1.Minecraft
 		setupMocks  func(*MockKubeExecutor, *MockAgentClient)
 		expectedErr bool
 	}{
 		{
-			name:      "Success",
-			k8sClient: fakeClient,
+			name: "Success",
+			minecraft: &mcingv1alpha1.Minecraft{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-mc",
+					Namespace: "default",
+				},
+				Spec: mcingv1alpha1.MinecraftSpec{
+					Backup: mcingv1alpha1.Backup{
+						Excludes: []string{"logs"},
+					},
+				},
+			},
 			setupMocks: func(mk *MockKubeExecutor, _ *MockAgentClient) {
 				stopCh := make(chan struct{})
 				// PortForward
@@ -139,17 +131,109 @@ func TestDownloader_Run(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			name:      "PortForward Failure",
-			k8sClient: fakeClient,
+			name: "PortForward Failure",
+			minecraft: &mcingv1alpha1.Minecraft{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-mc",
+					Namespace: "default",
+				},
+				Spec: mcingv1alpha1.MinecraftSpec{
+					Backup: mcingv1alpha1.Backup{
+						Excludes: []string{"logs"},
+					},
+				},
+			},
 			setupMocks: func(mk *MockKubeExecutor, _ *MockAgentClient) {
 				mk.On("PortForward", "default", "mcing-test-mc-0", 9080, mock.Anything, mock.Anything).
 					Return(0, (chan struct{})(nil), errors.New("portforward failed"))
+
+				// Check sleeping status
+				mk.On("Exec", mock.Anything, "default", "mcing-test-mc-0", "minecraft",
+					[]string{"pgrep", "java"},
+					mock.Anything, mock.Anything, mock.Anything).
+					Return(nil)
 			},
 			expectedErr: true,
 		},
 		{
-			name:      "SaveOff Failure",
-			k8sClient: fakeClient,
+			name: "Sleeping Server (AutoPause Enabled)",
+			minecraft: &mcingv1alpha1.Minecraft{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-mc",
+					Namespace: "default",
+				},
+				Spec: mcingv1alpha1.MinecraftSpec{
+					AutoPause: mcingv1alpha1.AutoPause{
+						Enabled: new(bool),
+					},
+					Backup: mcingv1alpha1.Backup{
+						Excludes: []string{"logs"},
+					},
+				},
+			},
+			setupMocks: func(mk *MockKubeExecutor, _ *MockAgentClient) {
+				// 1. PortForward fails
+				mk.On("PortForward", "default", "mcing-test-mc-0", 9080, mock.Anything, mock.Anything).
+					Return(0, (chan struct{})(nil), errors.New("connection refused"))
+
+				// 2. checkSleepingAndWarn -> isServerSleeping -> Exec("pgrep java")
+				// Returns error "exit code 1" mimicking process not found
+				mk.On("Exec", mock.Anything, "default", "mcing-test-mc-0", "minecraft",
+					[]string{"pgrep", "java"},
+					mock.Anything, mock.Anything, mock.Anything).
+					Return(errors.New("command terminated with exit code 1"))
+
+				// 3. Fallback to Download -> Exec("tar")
+				mk.On("Exec", mock.Anything, "default", "mcing-test-mc-0", "minecraft",
+					[]string{"tar", "czf", "-", "-C", "/data", "--exclude", "session.lock", "--exclude", "logs", "."},
+					mock.Anything, mock.Anything, mock.Anything).
+					Return(nil)
+			},
+			expectedErr: false,
+		},
+		{
+			name: "Not Sleeping Server (Connection Error)",
+			minecraft: &mcingv1alpha1.Minecraft{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-mc",
+					Namespace: "default",
+				},
+				Spec: mcingv1alpha1.MinecraftSpec{
+					AutoPause: mcingv1alpha1.AutoPause{
+						Enabled: new(bool),
+					},
+					Backup: mcingv1alpha1.Backup{
+						Excludes: []string{"logs"},
+					},
+				},
+			},
+			setupMocks: func(mk *MockKubeExecutor, _ *MockAgentClient) {
+				// 1. PortForward fails
+				mk.On("PortForward", "default", "mcing-test-mc-0", 9080, mock.Anything, mock.Anything).
+					Return(0, (chan struct{})(nil), errors.New("connection refused"))
+
+				// 2. checkSleepingAndWarn -> isServerSleeping -> Exec("pgrep java")
+				// Returns nil (success), meaning process found
+				mk.On("Exec", mock.Anything, "default", "mcing-test-mc-0", "minecraft",
+					[]string{"pgrep", "java"},
+					mock.Anything, mock.Anything, mock.Anything).
+					Return(nil)
+			},
+			expectedErr: true,
+		},
+		{
+			name: "SaveOff Failure",
+			minecraft: &mcingv1alpha1.Minecraft{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-mc",
+					Namespace: "default",
+				},
+				Spec: mcingv1alpha1.MinecraftSpec{
+					Backup: mcingv1alpha1.Backup{
+						Excludes: []string{"logs"},
+					},
+				},
+			},
 			setupMocks: func(mk *MockKubeExecutor, ma *MockAgentClient) {
 				stopCh := make(chan struct{})
 				mk.On("PortForward", "default", "mcing-test-mc-0", 9080, mock.Anything, mock.Anything).
@@ -157,12 +241,28 @@ func TestDownloader_Run(t *testing.T) {
 
 				ma.On("SaveOff", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, errors.New("saveoff failed"))
+
+				// Check sleeping status
+				mk.On("Exec", mock.Anything, "default", "mcing-test-mc-0", "minecraft",
+					[]string{"pgrep", "java"},
+					mock.Anything, mock.Anything, mock.Anything).
+					Return(nil)
 			},
 			expectedErr: true,
 		},
 		{
-			name:      "Exec Failure (tar)",
-			k8sClient: fakeClient,
+			name: "Exec Failure (tar)",
+			minecraft: &mcingv1alpha1.Minecraft{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-mc",
+					Namespace: "default",
+				},
+				Spec: mcingv1alpha1.MinecraftSpec{
+					Backup: mcingv1alpha1.Backup{
+						Excludes: []string{"logs"},
+					},
+				},
+			},
 			setupMocks: func(mk *MockKubeExecutor, ma *MockAgentClient) {
 				stopCh := make(chan struct{})
 				mk.On("PortForward", "default", "mcing-test-mc-0", 9080, mock.Anything, mock.Anything).
@@ -187,6 +287,17 @@ func TestDownloader_Run(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.minecraft.Spec.AutoPause.Enabled != nil {
+				// Helper to set enabled to true for pointers
+				val := true
+				tt.minecraft.Spec.AutoPause.Enabled = &val
+			}
+
+			fakeClient := fake.NewClientBuilder().
+				WithScheme(scheme).
+				WithObjects(tt.minecraft).
+				Build()
+
 			mockKube := new(MockKubeExecutor)
 			mockAgent := new(MockAgentClient)
 
@@ -216,7 +327,7 @@ func TestDownloader_Run(t *testing.T) {
 				Output:        "test-output.tar.gz",
 			}
 
-			d := NewDownloader(opts, tt.k8sClient, mockKube)
+			d := NewDownloader(opts, fakeClient, mockKube)
 			d.agentFactory = func(_ int) (agent.AgentClient, func() error, error) {
 				return mockAgent, func() error { return nil }, nil
 			}

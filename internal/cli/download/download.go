@@ -1,10 +1,12 @@
 package download
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -106,6 +108,31 @@ func (d *Downloader) Run() error {
 	}
 
 	podName := mc.PodName()
+	ctx := context.Background()
+
+	cleanup, err := d.setupBackup(ctx, &mc)
+	if err != nil {
+		shouldSkip, checkErr := d.checkSleepingAndWarn(ctx, &mc, err)
+		if checkErr != nil {
+			return checkErr
+		}
+		if !shouldSkip {
+			return err
+		}
+	} else {
+		defer cleanup()
+	}
+
+	excludes := []string{"session.lock"}
+	if mc.Spec.Backup.Excludes != nil {
+		excludes = append(excludes, mc.Spec.Backup.Excludes...)
+	}
+
+	return d.performDownload(podName, excludes)
+}
+
+func (d *Downloader) setupBackup(ctx context.Context, mc *mcingv1alpha1.Minecraft) (func(), error) {
+	podName := mc.PodName()
 
 	// Port forward to agent
 	localPort, stopCh, err := d.kubeExecutor.PortForward(
@@ -116,35 +143,83 @@ func (d *Downloader) Run() error {
 		os.Stderr, // Log errors to stderr
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer close(stopCh)
+
 	agentClient, closeConn, err := d.agentFactory(localPort)
 	if err != nil {
-		return err
+		close(stopCh)
+		return nil, err
 	}
-	defer func() {
-		_ = closeConn()
-	}()
 
-	ctx := context.Background()
 	if err := d.prepareBackup(ctx, agentClient); err != nil {
-		return err
+		_ = closeConn()
+		close(stopCh)
+		return nil, err
 	}
-	defer func() {
+
+	return func() {
 		// New context for cleanup as main context might be cancelled
 		cleanupCtx := context.Background()
 		if err := d.cleanupBackup(cleanupCtx, agentClient); err != nil {
 			klog.Errorf("Failed to execute save-on: %v", err)
 		}
-	}()
+		_ = closeConn()
+		close(stopCh)
+	}, nil
+}
 
-	excludes := []string{"session.lock"}
-	if mc.Spec.Backup.Excludes != nil {
-		excludes = append(excludes, mc.Spec.Backup.Excludes...)
+func (d *Downloader) checkSleepingAndWarn(
+	ctx context.Context,
+	mc *mcingv1alpha1.Minecraft,
+	originalErr error,
+) (bool, error) {
+	isSleeping, err := d.isServerSleeping(ctx, mc)
+	if err != nil {
+		// Failed to check sleep status, return original error combined with check error
+		return false, fmt.Errorf("%w (also failed to check sleep status: %v)", originalErr, err)
+	}
+	if isSleeping {
+		klog.Warningf(
+			"Server appears to be sleeping (AutoPause enabled). Skipping backup preparation (save-off/save-all). Original error: %v",
+			originalErr,
+		)
+		return true, nil
+	}
+	return false, originalErr
+}
+
+// isServerSleeping checks if the Minecraft server is sleeping loop.
+// TODO: This check should be performed by the controller and reflected in the resource status.
+// For example, Status.Phase should indicate "Sleeping" or similar.
+// Then, this CLI command can just check the status instead of executing pgrep.
+func (d *Downloader) isServerSleeping(ctx context.Context, mc *mcingv1alpha1.Minecraft) (bool, error) {
+	if mc.Spec.AutoPause.Enabled != nil && !*mc.Spec.AutoPause.Enabled {
+		return false, nil
 	}
 
-	return d.performDownload(podName, excludes)
+	var stdout bytes.Buffer
+	// Check if java process exists. "pgrep java" exit code 1 means no process found.
+	err := d.kubeExecutor.Exec(
+		ctx,
+		d.Options.Namespace,
+		mc.PodName(),
+		d.Options.Container,
+		[]string{"pgrep", "java"},
+		nil,
+		&stdout,
+		nil,
+	)
+	if err != nil {
+		// If command terminated with exit code 1, it implies process not found -> Sleeping
+		if strings.Contains(err.Error(), "exit code 1") {
+			return true, nil
+		}
+		return false, err
+	}
+
+	// If err is nil, process found -> Not sleeping
+	return false, nil
 }
 
 func (d *Downloader) prepareBackup(ctx context.Context, client agent.AgentClient) error {
