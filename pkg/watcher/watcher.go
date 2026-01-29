@@ -9,7 +9,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/kmdkuk/mcing/pkg/constants"
-
 	"github.com/kmdkuk/mcing/pkg/log"
 	"github.com/kmdkuk/mcing/pkg/rcon"
 )
