@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"io"
 	"log" //nolint:depguard // logger wrapper
 	"os"
 	"path/filepath"
@@ -57,15 +58,15 @@ func init() {
 	if version.Version == "DEV" {
 		minLevel = DEBUG
 	}
-	logger = NewLogger(minLevel)
+	logger = NewLogger(minLevel, os.Stdout)
 }
 
 // NewLogger creates a new Logger.
-func NewLogger(l Level) *Logger {
+func NewLogger(l Level, w io.Writer) *Logger {
 	levelPrefix, _ := l.Prefix()
 	return &Logger{
 		level:  l,
-		logger: log.New(os.Stdout, levelPrefix, log.Ldate|log.Ltime),
+		logger: log.New(w, levelPrefix, log.Ldate|log.Ltime),
 	}
 }
 

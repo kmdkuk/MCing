@@ -208,7 +208,7 @@ func runAgent(f flags) error {
 	wg.Add(1)
 	go func(ctx context.Context) {
 		defer wg.Done()
-		err := watcher.Watch(ctx, conn, watcherInterval)
+		err := watcher.Watch(ctx, conn, watcherInterval, watcher.NewDefaultConfig())
 		if err != nil {
 			zapLogger.Error("failed to watch", zap.Error(err))
 		}
