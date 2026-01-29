@@ -1,4 +1,3 @@
-//nolint:cyclop // complex logic
 package watcher
 
 import (
@@ -8,30 +7,38 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	james4krcon "github.com/james4k/rcon"
 
+	"github.com/kmdkuk/mcing/pkg/constants"
 	"github.com/kmdkuk/mcing/pkg/log"
 	"github.com/kmdkuk/mcing/pkg/rcon"
 )
 
-const (
-	dataPath        = "/data"
-	configPath      = "/mcing-config"
-	serverPropsName = "server.properties"
-	serverPropsPath = configPath + "/" + serverPropsName
-)
+// Config represents the configuration for the watcher.
+type Config struct {
+	DataPath   string
+	ConfigPath string
+}
+
+// NewDefaultConfig returns a new default configuration.
+func NewDefaultConfig() Config {
+	return Config{
+		DataPath:   constants.DataPath,
+		ConfigPath: constants.ConfigPath,
+	}
+}
 
 // Watch watches the RCON server.
 //
-//nolint:cyclop,gocognit // complex logic
-func Watch(ctx context.Context, conn *james4krcon.RemoteConsole, interval time.Duration) error {
+//nolint:gocognit // complex logic
+func Watch(ctx context.Context, conn rcon.Console, interval time.Duration, cfg Config) error {
 	tick := time.NewTicker(interval)
 	defer tick.Stop()
 
 	preConfig := map[string][]byte{}
 
 	var err error
-	preConfig[serverPropsName], err = os.ReadFile(serverPropsPath)
+
+	preConfig[constants.ServerPropsName], err = os.ReadFile(filepath.Join(cfg.ConfigPath, constants.ServerPropsName))
 	if err != nil {
 		return err
 	}
@@ -41,11 +48,12 @@ func Watch(ctx context.Context, conn *james4krcon.RemoteConsole, interval time.D
 		case <-tick.C:
 		case <-ctx.Done():
 			log.Debug("quit")
+			return nil
 		}
 
 		reload := false
 		for k, v := range preConfig {
-			path := filepath.Join(configPath, k)
+			path := filepath.Join(cfg.ConfigPath, k)
 			current, err := os.ReadFile(path)
 			if err != nil {
 				continue
@@ -53,9 +61,9 @@ func Watch(ctx context.Context, conn *james4krcon.RemoteConsole, interval time.D
 			if cmp.Equal(string(current), string(v)) {
 				continue
 			}
-			dataPath := filepath.Join(dataPath, k)
+			dataPath := filepath.Join(cfg.DataPath, k)
 			err = os.Remove(dataPath)
-			if err != nil {
+			if err != nil && !os.IsNotExist(err) {
 				continue
 			}
 			err = os.WriteFile(dataPath, current, 0o600)

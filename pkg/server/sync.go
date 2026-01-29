@@ -22,7 +22,7 @@ func (s agentService) SyncWhitelist(
 	log := s.logger.With(zap.String("func", "syncWhitelist"))
 	log.Info("start sync white list")
 	// parse /data/server.peroperties using config.ParseServerProps
-	props, err := config.ParseServerPropsFromPath(path.Join(constants.DataPath, constants.ServerPropsName))
+	props, err := config.ParseServerPropsFromPath(path.Join(s.dataPath, constants.ServerPropsName))
 	if err != nil {
 		return &proto.SyncWhitelistResponse{}, err
 	}
@@ -73,7 +73,7 @@ type opsJSON struct {
 func (s agentService) SyncOps(_ context.Context, req *proto.SyncOpsRequest) (*proto.SyncOpsResponse, error) {
 	log := s.logger.With(zap.String("func", "syncOps"))
 	log.Info("start sync ops")
-	raw, err := os.ReadFile(path.Join(constants.DataPath, constants.OpsName))
+	raw, err := os.ReadFile(path.Join(s.dataPath, constants.OpsName))
 	if err != nil {
 		return &proto.SyncOpsResponse{}, err
 	}
