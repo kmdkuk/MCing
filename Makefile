@@ -86,9 +86,7 @@ lint-fix: ## Run golangci-lint linter and perform fixes
 
 .PHONY: test
 test: manifests generate fmt vet lint ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION) -p path)" go test ./api/... -coverprofile cover.out
-	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION) -p path)" go test ./internal/... -coverprofile cover.out
-	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION) -p path)" go test ./pkg/... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION) -p path)" go test ./api/... ./internal/... ./pkg/... -coverprofile cover.out
 
 .PHONY: start
 start: ## launc mcing-dev cluster
