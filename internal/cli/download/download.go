@@ -3,16 +3,15 @@ package download
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
-	"os/signal"
-	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/exec"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
@@ -37,28 +36,17 @@ func defaultAgentClientFactory(port int) (agent.AgentClient, func() error, error
 
 // Options struct for holding download command options.
 type Options struct {
-	genericclioptions.IOStreams
-
-	ConfigFlags *genericclioptions.ConfigFlags
-
 	Namespace     string
 	MinecraftName string
 	Output        string
-	Container     string
 }
 
 // NewOptions creates a new Options struct.
-func NewOptions(
-	streams genericclioptions.IOStreams,
-	configFlags *genericclioptions.ConfigFlags,
-) *Options {
+func NewOptions() *Options {
 	return &Options{
-		ConfigFlags:   configFlags,
-		IOStreams:     streams,
 		Namespace:     "",
 		MinecraftName: "",
 		Output:        "",
-		Container:     "",
 	}
 }
 
@@ -96,10 +84,10 @@ func NewDownloader(
 }
 
 // Run executes the download workflow.
-func (d *Downloader) Run() error {
+func (d *Downloader) Run(ctx context.Context) error {
 	var mc mcingv1alpha1.Minecraft
 	err := d.k8sClient.Get(
-		context.Background(),
+		ctx,
 		types.NamespacedName{Namespace: d.Options.Namespace, Name: d.Options.MinecraftName},
 		&mc,
 	)
@@ -108,18 +96,16 @@ func (d *Downloader) Run() error {
 	}
 
 	podName := mc.PodName()
-	ctx := context.Background()
 
-	cleanup, err := d.setupBackup(ctx, &mc)
+	shouldSkipSetup, err := d.checkSleepingAndWarn(ctx, &mc)
 	if err != nil {
-		shouldSkip, checkErr := d.checkSleepingAndWarn(ctx, &mc, err)
-		if checkErr != nil {
-			return checkErr
-		}
-		if !shouldSkip {
+		return err
+	}
+	if !shouldSkipSetup {
+		cleanup, err := d.setupBackup(ctx, &mc)
+		if err != nil {
 			return err
 		}
-	} else {
 		defer cleanup()
 	}
 
@@ -128,7 +114,7 @@ func (d *Downloader) Run() error {
 		excludes = append(excludes, mc.Spec.Backup.Excludes...)
 	}
 
-	return d.performDownload(podName, excludes)
+	return d.performDownload(ctx, podName, excludes)
 }
 
 func (d *Downloader) setupBackup(ctx context.Context, mc *mcingv1alpha1.Minecraft) (func(), error) {
@@ -172,21 +158,18 @@ func (d *Downloader) setupBackup(ctx context.Context, mc *mcingv1alpha1.Minecraf
 func (d *Downloader) checkSleepingAndWarn(
 	ctx context.Context,
 	mc *mcingv1alpha1.Minecraft,
-	originalErr error,
 ) (bool, error) {
 	isSleeping, err := d.isServerSleeping(ctx, mc)
 	if err != nil {
-		// Failed to check sleep status, return original error combined with check error
-		return false, fmt.Errorf("%w (also failed to check sleep status: %w)", originalErr, err)
+		return false, err
 	}
 	if isSleeping {
 		klog.Warningf(
-			"Server appears to be sleeping (AutoPause enabled). Skipping backup preparation (save-off/save-all). Original error: %v",
-			originalErr,
+			"Server appears to be sleeping (AutoPause enabled). Skipping backup preparation (save-off/save-all).",
 		)
 		return true, nil
 	}
-	return false, originalErr
+	return false, nil
 }
 
 // isServerSleeping checks if the Minecraft server is sleeping loop.
@@ -204,7 +187,7 @@ func (d *Downloader) isServerSleeping(ctx context.Context, mc *mcingv1alpha1.Min
 		ctx,
 		d.Options.Namespace,
 		mc.PodName(),
-		d.Options.Container,
+		constants.MinecraftContainerName,
 		[]string{"pgrep", "java"},
 		nil,
 		&stdout,
@@ -212,7 +195,8 @@ func (d *Downloader) isServerSleeping(ctx context.Context, mc *mcingv1alpha1.Min
 	)
 	if err != nil {
 		// If command terminated with exit code 1, it implies process not found -> Sleeping
-		if strings.Contains(err.Error(), "exit code 1") {
+		var exitErr exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitStatus() == 1 {
 			return true, nil
 		}
 		return false, err
@@ -229,7 +213,7 @@ func (d *Downloader) prepareBackup(ctx context.Context, client agent.AgentClient
 	}
 
 	klog.Info("Saving game to disk...")
-	if _, err := client.SaveAll(ctx, &agent.SaveAllRequest{}); err != nil {
+	if _, err := client.SaveAllFlush(ctx, &agent.SaveAllFlushRequest{}); err != nil {
 		return fmt.Errorf("failed to execute save-all: %w", err)
 	}
 	return nil
@@ -241,7 +225,7 @@ func (d *Downloader) cleanupBackup(ctx context.Context, client agent.AgentClient
 	return err
 }
 
-func (d *Downloader) performDownload(podName string, excludes []string) error {
+func (d *Downloader) performDownload(ctx context.Context, podName string, excludes []string) error {
 	klog.Infof("Downloading data to %s...", d.Options.Output)
 	tarCmd := []string{"tar", "czf", "-", "-C", "/data"}
 	for _, ex := range excludes {
@@ -255,22 +239,11 @@ func (d *Downloader) performDownload(podName string, excludes []string) error {
 	}
 	defer outFile.Close()
 
-	// Handle interrupt signal to cancel the stream
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt)
-	go func() {
-		<-sigCh
-		cancel()
-	}()
-
 	if err := d.kubeExecutor.Exec(
 		ctx,
 		d.Options.Namespace,
 		podName,
-		d.Options.Container,
+		constants.MinecraftContainerName,
 		tarCmd,
 		nil,
 		outFile,

@@ -15,12 +15,15 @@ func (s agentService) SaveOff(_ context.Context, _ *proto.SaveOffRequest) (*prot
 	return &proto.SaveOffResponse{}, nil
 }
 
-func (s agentService) SaveAll(_ context.Context, _ *proto.SaveAllRequest) (*proto.SaveAllResponse, error) {
+func (s agentService) SaveAllFlush(
+	_ context.Context,
+	_ *proto.SaveAllFlushRequest,
+) (*proto.SaveAllFlushResponse, error) {
 	err := rcon.SaveAllFlush(s.conn)
 	if err != nil {
 		return nil, err
 	}
-	return &proto.SaveAllResponse{}, nil
+	return &proto.SaveAllFlushResponse{}, nil
 }
 
 func (s agentService) SaveOn(_ context.Context, _ *proto.SaveOnRequest) (*proto.SaveOnResponse, error) {

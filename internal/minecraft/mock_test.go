@@ -56,12 +56,12 @@ func (m *mockAgentConn) SaveOff(
 	return &proto.SaveOffResponse{}, nil
 }
 
-func (m *mockAgentConn) SaveAll(
+func (m *mockAgentConn) SaveAllFlush(
 	_ context.Context,
-	_ *proto.SaveAllRequest,
+	_ *proto.SaveAllFlushRequest,
 	_ ...grpc.CallOption,
-) (*proto.SaveAllResponse, error) {
-	return &proto.SaveAllResponse{}, nil
+) (*proto.SaveAllFlushResponse, error) {
+	return &proto.SaveAllFlushResponse{}, nil
 }
 
 func (m *mockAgentConn) SaveOn(

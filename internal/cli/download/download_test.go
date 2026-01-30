@@ -13,7 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/util/exec"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
@@ -66,16 +66,16 @@ func (m *MockAgentClient) SaveOff(
 }
 
 //nolint:errcheck // mock implementation
-func (m *MockAgentClient) SaveAll(
+func (m *MockAgentClient) SaveAllFlush(
 	ctx context.Context,
-	in *agent.SaveAllRequest,
+	in *agent.SaveAllFlushRequest,
 	opts ...grpc.CallOption,
-) (*agent.SaveAllResponse, error) {
+) (*agent.SaveAllFlushResponse, error) {
 	args := m.Called(ctx, in, opts)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*agent.SaveAllResponse), args.Error(1)
+	return args.Get(0).(*agent.SaveAllFlushResponse), args.Error(1)
 }
 
 //nolint:errcheck // mock implementation
@@ -117,6 +117,12 @@ func TestDownloader_Run(t *testing.T) {
 				},
 			},
 			setupMocks: func(mk *MockKubeExecutor, _ *MockAgentClient) {
+				// Check sleeping status
+				mk.On("Exec", mock.Anything, "default", "mcing-test-mc-0", "minecraft",
+					[]string{"pgrep", "java"},
+					mock.Anything, mock.Anything, mock.Anything).
+					Return(nil)
+
 				stopCh := make(chan struct{})
 				// PortForward
 				mk.On("PortForward", "default", "mcing-test-mc-0", 9080, mock.Anything, mock.Anything).
@@ -144,14 +150,14 @@ func TestDownloader_Run(t *testing.T) {
 				},
 			},
 			setupMocks: func(mk *MockKubeExecutor, _ *MockAgentClient) {
-				mk.On("PortForward", "default", "mcing-test-mc-0", 9080, mock.Anything, mock.Anything).
-					Return(0, (chan struct{})(nil), errors.New("portforward failed"))
-
 				// Check sleeping status
 				mk.On("Exec", mock.Anything, "default", "mcing-test-mc-0", "minecraft",
 					[]string{"pgrep", "java"},
 					mock.Anything, mock.Anything, mock.Anything).
 					Return(nil)
+
+				mk.On("PortForward", "default", "mcing-test-mc-0", 9080, mock.Anything, mock.Anything).
+					Return(0, (chan struct{})(nil), errors.New("portforward failed"))
 			},
 			expectedErr: true,
 		},
@@ -172,16 +178,14 @@ func TestDownloader_Run(t *testing.T) {
 				},
 			},
 			setupMocks: func(mk *MockKubeExecutor, _ *MockAgentClient) {
-				// 1. PortForward fails
-				mk.On("PortForward", "default", "mcing-test-mc-0", 9080, mock.Anything, mock.Anything).
-					Return(0, (chan struct{})(nil), errors.New("connection refused"))
-
-				// 2. checkSleepingAndWarn -> isServerSleeping -> Exec("pgrep java")
+				// 1. checkSleepingAndWarn -> isServerSleeping -> Exec("pgrep java")
 				// Returns error "exit code 1" mimicking process not found
 				mk.On("Exec", mock.Anything, "default", "mcing-test-mc-0", "minecraft",
 					[]string{"pgrep", "java"},
 					mock.Anything, mock.Anything, mock.Anything).
-					Return(errors.New("command terminated with exit code 1"))
+					Return(&exec.CodeExitError{Err: errors.New("command terminated with exit code 1"), Code: 1})
+
+				// 2. PortForward is SKIPPED because server is sleeping.
 
 				// 3. Fallback to Download -> Exec("tar")
 				mk.On("Exec", mock.Anything, "default", "mcing-test-mc-0", "minecraft",
@@ -264,14 +268,20 @@ func TestDownloader_Run(t *testing.T) {
 				},
 			},
 			setupMocks: func(mk *MockKubeExecutor, ma *MockAgentClient) {
+				// Check sleeping status
+				mk.On("Exec", mock.Anything, "default", "mcing-test-mc-0", "minecraft",
+					[]string{"pgrep", "java"},
+					mock.Anything, mock.Anything, mock.Anything).
+					Return(nil)
+
 				stopCh := make(chan struct{})
 				mk.On("PortForward", "default", "mcing-test-mc-0", 9080, mock.Anything, mock.Anything).
 					Return(12345, stopCh, nil)
 
 				ma.On("SaveOff", mock.Anything, mock.Anything, mock.Anything).
 					Return(&agent.SaveOffResponse{}, nil)
-				ma.On("SaveAll", mock.Anything, mock.Anything, mock.Anything).
-					Return(&agent.SaveAllResponse{}, nil)
+				ma.On("SaveAllFlush", mock.Anything, mock.Anything, mock.Anything).
+					Return(&agent.SaveAllFlushResponse{}, nil)
 
 				mk.On("Exec", mock.Anything, "default", "mcing-test-mc-0", "minecraft",
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything).
@@ -310,8 +320,8 @@ func TestDownloader_Run(t *testing.T) {
 				mockAgent.On("SaveOff", mock.Anything, mock.Anything, mock.Anything).
 					Return(&agent.SaveOffResponse{}, nil).
 					Maybe()
-				mockAgent.On("SaveAll", mock.Anything, mock.Anything, mock.Anything).
-					Return(&agent.SaveAllResponse{}, nil).
+				mockAgent.On("SaveAllFlush", mock.Anything, mock.Anything, mock.Anything).
+					Return(&agent.SaveAllFlushResponse{}, nil).
 					Maybe()
 				mockAgent.On("SaveOn", mock.Anything, mock.Anything, mock.Anything).
 					Return(&agent.SaveOnResponse{}, nil).
@@ -319,11 +329,8 @@ func TestDownloader_Run(t *testing.T) {
 			}
 
 			opts := &Options{
-				IOStreams:     genericclioptions.NewTestIOStreamsDiscard(),
-				ConfigFlags:   genericclioptions.NewConfigFlags(true),
 				Namespace:     "default",
 				MinecraftName: "test-mc",
-				Container:     "minecraft",
 				Output:        "test-output.tar.gz",
 			}
 
@@ -332,7 +339,7 @@ func TestDownloader_Run(t *testing.T) {
 				return mockAgent, func() error { return nil }, nil
 			}
 
-			err := d.Run()
+			err := d.Run(context.Background())
 			if tt.expectedErr {
 				require.Error(t, err)
 			} else {

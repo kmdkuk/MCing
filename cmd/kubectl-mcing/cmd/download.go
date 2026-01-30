@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"context"
+	"os"
+	"os/signal"
+
 	"github.com/spf13/cobra"
 
 	"github.com/kmdkuk/mcing/internal/cli/download"
@@ -9,7 +13,7 @@ import (
 
 // NewDownloadCmd creates a new download command.
 func NewDownloadCmd(opts *MCingOptions) *cobra.Command {
-	o := download.NewOptions(opts.IOStreams, opts.ConfigFlags)
+	o := download.NewOptions()
 	cmd := &cobra.Command{
 		Use:   "download <minecraft-name>",
 		Short: "Download minecraft data directory",
@@ -26,7 +30,7 @@ func NewDownloadCmd(opts *MCingOptions) *cobra.Command {
 
 			if o.Namespace == "" {
 				var err error
-				o.Namespace, _, err = o.ConfigFlags.ToRawKubeConfigLoader().Namespace()
+				o.Namespace, _, err = opts.ConfigFlags.ToRawKubeConfigLoader().Namespace()
 				if err != nil {
 					return err
 				}
@@ -38,12 +42,20 @@ func NewDownloadCmd(opts *MCingOptions) *cobra.Command {
 			}
 
 			d := download.NewDownloader(o, opts.K8sClient, kubeExecutor)
-			return d.Run()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			sigCh := make(chan os.Signal, 1)
+			signal.Notify(sigCh, os.Interrupt)
+			go func() {
+				<-sigCh
+				cancel()
+			}()
+			return d.Run(ctx)
 		},
 	}
 
 	cmd.Flags().StringVarP(&o.Output, "output", "o", "", "Output filename (default: <minecraft-name>-data.tar.gz)")
-	cmd.Flags().StringVarP(&o.Container, "container", "c", "minecraft", "Container name")
 
 	return cmd
 }

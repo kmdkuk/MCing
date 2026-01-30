@@ -6,8 +6,8 @@
 - [pkg/proto/agentrpc.proto](#pkg_proto_agentrpc-proto)
     - [ReloadRequest](#mcing-ReloadRequest)
     - [ReloadResponse](#mcing-ReloadResponse)
-    - [SaveAllRequest](#mcing-SaveAllRequest)
-    - [SaveAllResponse](#mcing-SaveAllResponse)
+    - [SaveAllFlushRequest](#mcing-SaveAllFlushRequest)
+    - [SaveAllFlushResponse](#mcing-SaveAllFlushResponse)
     - [SaveOffRequest](#mcing-SaveOffRequest)
     - [SaveOffResponse](#mcing-SaveOffResponse)
     - [SaveOnRequest](#mcing-SaveOnRequest)
@@ -50,19 +50,19 @@ ReloadResponse is the response message of Reload
 
 
 
-<a name="mcing-SaveAllRequest"></a>
+<a name="mcing-SaveAllFlushRequest"></a>
 
-### SaveAllRequest
-
-
+### SaveAllFlushRequest
 
 
 
 
 
-<a name="mcing-SaveAllResponse"></a>
 
-### SaveAllResponse
+
+<a name="mcing-SaveAllFlushResponse"></a>
+
+### SaveAllFlushResponse
 
 
 
@@ -178,7 +178,7 @@ Agent provides services for MCing.
 | SyncWhitelist | [SyncWhitelistRequest](#mcing-SyncWhitelistRequest) | [SyncWhitelistResponse](#mcing-SyncWhitelistResponse) |  |
 | SyncOps | [SyncOpsRequest](#mcing-SyncOpsRequest) | [SyncOpsResponse](#mcing-SyncOpsResponse) |  |
 | SaveOff | [SaveOffRequest](#mcing-SaveOffRequest) | [SaveOffResponse](#mcing-SaveOffResponse) |  |
-| SaveAll | [SaveAllRequest](#mcing-SaveAllRequest) | [SaveAllResponse](#mcing-SaveAllResponse) |  |
+| SaveAllFlush | [SaveAllFlushRequest](#mcing-SaveAllFlushRequest) | [SaveAllFlushResponse](#mcing-SaveAllFlushResponse) |  |
 | SaveOn | [SaveOnRequest](#mcing-SaveOnRequest) | [SaveOnResponse](#mcing-SaveOnResponse) |  |
 
  

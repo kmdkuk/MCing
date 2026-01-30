@@ -345,26 +345,26 @@ func (*SaveOffResponse) Descriptor() ([]byte, []int) {
 	return file_pkg_proto_agentrpc_proto_rawDescGZIP(), []int{7}
 }
 
-type SaveAllRequest struct {
+type SaveAllFlushRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SaveAllRequest) Reset() {
-	*x = SaveAllRequest{}
+func (x *SaveAllFlushRequest) Reset() {
+	*x = SaveAllFlushRequest{}
 	mi := &file_pkg_proto_agentrpc_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SaveAllRequest) String() string {
+func (x *SaveAllFlushRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SaveAllRequest) ProtoMessage() {}
+func (*SaveAllFlushRequest) ProtoMessage() {}
 
-func (x *SaveAllRequest) ProtoReflect() protoreflect.Message {
+func (x *SaveAllFlushRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_pkg_proto_agentrpc_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -376,31 +376,31 @@ func (x *SaveAllRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SaveAllRequest.ProtoReflect.Descriptor instead.
-func (*SaveAllRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use SaveAllFlushRequest.ProtoReflect.Descriptor instead.
+func (*SaveAllFlushRequest) Descriptor() ([]byte, []int) {
 	return file_pkg_proto_agentrpc_proto_rawDescGZIP(), []int{8}
 }
 
-type SaveAllResponse struct {
+type SaveAllFlushResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SaveAllResponse) Reset() {
-	*x = SaveAllResponse{}
+func (x *SaveAllFlushResponse) Reset() {
+	*x = SaveAllFlushResponse{}
 	mi := &file_pkg_proto_agentrpc_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SaveAllResponse) String() string {
+func (x *SaveAllFlushResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SaveAllResponse) ProtoMessage() {}
+func (*SaveAllFlushResponse) ProtoMessage() {}
 
-func (x *SaveAllResponse) ProtoReflect() protoreflect.Message {
+func (x *SaveAllFlushResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_pkg_proto_agentrpc_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -412,8 +412,8 @@ func (x *SaveAllResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SaveAllResponse.ProtoReflect.Descriptor instead.
-func (*SaveAllResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use SaveAllFlushResponse.ProtoReflect.Descriptor instead.
+func (*SaveAllFlushResponse) Descriptor() ([]byte, []int) {
 	return file_pkg_proto_agentrpc_proto_rawDescGZIP(), []int{9}
 }
 
@@ -504,17 +504,17 @@ const file_pkg_proto_agentrpc_proto_rawDesc = "" +
 	"\x05users\x18\x01 \x03(\tR\x05users\"\x11\n" +
 	"\x0fSyncOpsResponse\"\x10\n" +
 	"\x0eSaveOffRequest\"\x11\n" +
-	"\x0fSaveOffResponse\"\x10\n" +
-	"\x0eSaveAllRequest\"\x11\n" +
-	"\x0fSaveAllResponse\"\x0f\n" +
+	"\x0fSaveOffResponse\"\x15\n" +
+	"\x13SaveAllFlushRequest\"\x16\n" +
+	"\x14SaveAllFlushResponse\"\x0f\n" +
 	"\rSaveOnRequest\"\x10\n" +
-	"\x0eSaveOnResponse2\xef\x02\n" +
+	"\x0eSaveOnResponse2\xfe\x02\n" +
 	"\x05Agent\x125\n" +
 	"\x06Reload\x12\x14.mcing.ReloadRequest\x1a\x15.mcing.ReloadResponse\x12J\n" +
 	"\rSyncWhitelist\x12\x1b.mcing.SyncWhitelistRequest\x1a\x1c.mcing.SyncWhitelistResponse\x128\n" +
 	"\aSyncOps\x12\x15.mcing.SyncOpsRequest\x1a\x16.mcing.SyncOpsResponse\x128\n" +
-	"\aSaveOff\x12\x15.mcing.SaveOffRequest\x1a\x16.mcing.SaveOffResponse\x128\n" +
-	"\aSaveAll\x12\x15.mcing.SaveAllRequest\x1a\x16.mcing.SaveAllResponse\x125\n" +
+	"\aSaveOff\x12\x15.mcing.SaveOffRequest\x1a\x16.mcing.SaveOffResponse\x12G\n" +
+	"\fSaveAllFlush\x12\x1a.mcing.SaveAllFlushRequest\x1a\x1b.mcing.SaveAllFlushResponse\x125\n" +
 	"\x06SaveOn\x12\x14.mcing.SaveOnRequest\x1a\x15.mcing.SaveOnResponseB#Z!github.com/kmdkuk/mcing/pkg/protob\x06proto3"
 
 var (
@@ -539,8 +539,8 @@ var file_pkg_proto_agentrpc_proto_goTypes = []any{
 	(*SyncOpsResponse)(nil),       // 5: mcing.SyncOpsResponse
 	(*SaveOffRequest)(nil),        // 6: mcing.SaveOffRequest
 	(*SaveOffResponse)(nil),       // 7: mcing.SaveOffResponse
-	(*SaveAllRequest)(nil),        // 8: mcing.SaveAllRequest
-	(*SaveAllResponse)(nil),       // 9: mcing.SaveAllResponse
+	(*SaveAllFlushRequest)(nil),   // 8: mcing.SaveAllFlushRequest
+	(*SaveAllFlushResponse)(nil),  // 9: mcing.SaveAllFlushResponse
 	(*SaveOnRequest)(nil),         // 10: mcing.SaveOnRequest
 	(*SaveOnResponse)(nil),        // 11: mcing.SaveOnResponse
 }
@@ -549,13 +549,13 @@ var file_pkg_proto_agentrpc_proto_depIdxs = []int32{
 	2,  // 1: mcing.Agent.SyncWhitelist:input_type -> mcing.SyncWhitelistRequest
 	4,  // 2: mcing.Agent.SyncOps:input_type -> mcing.SyncOpsRequest
 	6,  // 3: mcing.Agent.SaveOff:input_type -> mcing.SaveOffRequest
-	8,  // 4: mcing.Agent.SaveAll:input_type -> mcing.SaveAllRequest
+	8,  // 4: mcing.Agent.SaveAllFlush:input_type -> mcing.SaveAllFlushRequest
 	10, // 5: mcing.Agent.SaveOn:input_type -> mcing.SaveOnRequest
 	1,  // 6: mcing.Agent.Reload:output_type -> mcing.ReloadResponse
 	3,  // 7: mcing.Agent.SyncWhitelist:output_type -> mcing.SyncWhitelistResponse
 	5,  // 8: mcing.Agent.SyncOps:output_type -> mcing.SyncOpsResponse
 	7,  // 9: mcing.Agent.SaveOff:output_type -> mcing.SaveOffResponse
-	9,  // 10: mcing.Agent.SaveAll:output_type -> mcing.SaveAllResponse
+	9,  // 10: mcing.Agent.SaveAllFlush:output_type -> mcing.SaveAllFlushResponse
 	11, // 11: mcing.Agent.SaveOn:output_type -> mcing.SaveOnResponse
 	6,  // [6:12] is the sub-list for method output_type
 	0,  // [0:6] is the sub-list for method input_type
