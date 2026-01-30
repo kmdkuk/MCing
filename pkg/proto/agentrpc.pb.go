@@ -273,6 +273,222 @@ func (*SyncOpsResponse) Descriptor() ([]byte, []int) {
 	return file_pkg_proto_agentrpc_proto_rawDescGZIP(), []int{5}
 }
 
+type SaveOffRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveOffRequest) Reset() {
+	*x = SaveOffRequest{}
+	mi := &file_pkg_proto_agentrpc_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveOffRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveOffRequest) ProtoMessage() {}
+
+func (x *SaveOffRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_proto_agentrpc_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveOffRequest.ProtoReflect.Descriptor instead.
+func (*SaveOffRequest) Descriptor() ([]byte, []int) {
+	return file_pkg_proto_agentrpc_proto_rawDescGZIP(), []int{6}
+}
+
+type SaveOffResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveOffResponse) Reset() {
+	*x = SaveOffResponse{}
+	mi := &file_pkg_proto_agentrpc_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveOffResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveOffResponse) ProtoMessage() {}
+
+func (x *SaveOffResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_proto_agentrpc_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveOffResponse.ProtoReflect.Descriptor instead.
+func (*SaveOffResponse) Descriptor() ([]byte, []int) {
+	return file_pkg_proto_agentrpc_proto_rawDescGZIP(), []int{7}
+}
+
+type SaveAllFlushRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveAllFlushRequest) Reset() {
+	*x = SaveAllFlushRequest{}
+	mi := &file_pkg_proto_agentrpc_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveAllFlushRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveAllFlushRequest) ProtoMessage() {}
+
+func (x *SaveAllFlushRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_proto_agentrpc_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveAllFlushRequest.ProtoReflect.Descriptor instead.
+func (*SaveAllFlushRequest) Descriptor() ([]byte, []int) {
+	return file_pkg_proto_agentrpc_proto_rawDescGZIP(), []int{8}
+}
+
+type SaveAllFlushResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveAllFlushResponse) Reset() {
+	*x = SaveAllFlushResponse{}
+	mi := &file_pkg_proto_agentrpc_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveAllFlushResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveAllFlushResponse) ProtoMessage() {}
+
+func (x *SaveAllFlushResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_proto_agentrpc_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveAllFlushResponse.ProtoReflect.Descriptor instead.
+func (*SaveAllFlushResponse) Descriptor() ([]byte, []int) {
+	return file_pkg_proto_agentrpc_proto_rawDescGZIP(), []int{9}
+}
+
+type SaveOnRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveOnRequest) Reset() {
+	*x = SaveOnRequest{}
+	mi := &file_pkg_proto_agentrpc_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveOnRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveOnRequest) ProtoMessage() {}
+
+func (x *SaveOnRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_proto_agentrpc_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveOnRequest.ProtoReflect.Descriptor instead.
+func (*SaveOnRequest) Descriptor() ([]byte, []int) {
+	return file_pkg_proto_agentrpc_proto_rawDescGZIP(), []int{10}
+}
+
+type SaveOnResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveOnResponse) Reset() {
+	*x = SaveOnResponse{}
+	mi := &file_pkg_proto_agentrpc_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveOnResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveOnResponse) ProtoMessage() {}
+
+func (x *SaveOnResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_proto_agentrpc_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveOnResponse.ProtoReflect.Descriptor instead.
+func (*SaveOnResponse) Descriptor() ([]byte, []int) {
+	return file_pkg_proto_agentrpc_proto_rawDescGZIP(), []int{11}
+}
+
 var File_pkg_proto_agentrpc_proto protoreflect.FileDescriptor
 
 const file_pkg_proto_agentrpc_proto_rawDesc = "" +
@@ -286,11 +502,20 @@ const file_pkg_proto_agentrpc_proto_rawDesc = "" +
 	"\x15SyncWhitelistResponse\"&\n" +
 	"\x0eSyncOpsRequest\x12\x14\n" +
 	"\x05users\x18\x01 \x03(\tR\x05users\"\x11\n" +
-	"\x0fSyncOpsResponse2\xc4\x01\n" +
+	"\x0fSyncOpsResponse\"\x10\n" +
+	"\x0eSaveOffRequest\"\x11\n" +
+	"\x0fSaveOffResponse\"\x15\n" +
+	"\x13SaveAllFlushRequest\"\x16\n" +
+	"\x14SaveAllFlushResponse\"\x0f\n" +
+	"\rSaveOnRequest\"\x10\n" +
+	"\x0eSaveOnResponse2\xfe\x02\n" +
 	"\x05Agent\x125\n" +
 	"\x06Reload\x12\x14.mcing.ReloadRequest\x1a\x15.mcing.ReloadResponse\x12J\n" +
 	"\rSyncWhitelist\x12\x1b.mcing.SyncWhitelistRequest\x1a\x1c.mcing.SyncWhitelistResponse\x128\n" +
-	"\aSyncOps\x12\x15.mcing.SyncOpsRequest\x1a\x16.mcing.SyncOpsResponseB#Z!github.com/kmdkuk/mcing/pkg/protob\x06proto3"
+	"\aSyncOps\x12\x15.mcing.SyncOpsRequest\x1a\x16.mcing.SyncOpsResponse\x128\n" +
+	"\aSaveOff\x12\x15.mcing.SaveOffRequest\x1a\x16.mcing.SaveOffResponse\x12G\n" +
+	"\fSaveAllFlush\x12\x1a.mcing.SaveAllFlushRequest\x1a\x1b.mcing.SaveAllFlushResponse\x125\n" +
+	"\x06SaveOn\x12\x14.mcing.SaveOnRequest\x1a\x15.mcing.SaveOnResponseB#Z!github.com/kmdkuk/mcing/pkg/protob\x06proto3"
 
 var (
 	file_pkg_proto_agentrpc_proto_rawDescOnce sync.Once
@@ -304,7 +529,7 @@ func file_pkg_proto_agentrpc_proto_rawDescGZIP() []byte {
 	return file_pkg_proto_agentrpc_proto_rawDescData
 }
 
-var file_pkg_proto_agentrpc_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_pkg_proto_agentrpc_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_pkg_proto_agentrpc_proto_goTypes = []any{
 	(*ReloadRequest)(nil),         // 0: mcing.ReloadRequest
 	(*ReloadResponse)(nil),        // 1: mcing.ReloadResponse
@@ -312,19 +537,31 @@ var file_pkg_proto_agentrpc_proto_goTypes = []any{
 	(*SyncWhitelistResponse)(nil), // 3: mcing.SyncWhitelistResponse
 	(*SyncOpsRequest)(nil),        // 4: mcing.SyncOpsRequest
 	(*SyncOpsResponse)(nil),       // 5: mcing.SyncOpsResponse
+	(*SaveOffRequest)(nil),        // 6: mcing.SaveOffRequest
+	(*SaveOffResponse)(nil),       // 7: mcing.SaveOffResponse
+	(*SaveAllFlushRequest)(nil),   // 8: mcing.SaveAllFlushRequest
+	(*SaveAllFlushResponse)(nil),  // 9: mcing.SaveAllFlushResponse
+	(*SaveOnRequest)(nil),         // 10: mcing.SaveOnRequest
+	(*SaveOnResponse)(nil),        // 11: mcing.SaveOnResponse
 }
 var file_pkg_proto_agentrpc_proto_depIdxs = []int32{
-	0, // 0: mcing.Agent.Reload:input_type -> mcing.ReloadRequest
-	2, // 1: mcing.Agent.SyncWhitelist:input_type -> mcing.SyncWhitelistRequest
-	4, // 2: mcing.Agent.SyncOps:input_type -> mcing.SyncOpsRequest
-	1, // 3: mcing.Agent.Reload:output_type -> mcing.ReloadResponse
-	3, // 4: mcing.Agent.SyncWhitelist:output_type -> mcing.SyncWhitelistResponse
-	5, // 5: mcing.Agent.SyncOps:output_type -> mcing.SyncOpsResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: mcing.Agent.Reload:input_type -> mcing.ReloadRequest
+	2,  // 1: mcing.Agent.SyncWhitelist:input_type -> mcing.SyncWhitelistRequest
+	4,  // 2: mcing.Agent.SyncOps:input_type -> mcing.SyncOpsRequest
+	6,  // 3: mcing.Agent.SaveOff:input_type -> mcing.SaveOffRequest
+	8,  // 4: mcing.Agent.SaveAllFlush:input_type -> mcing.SaveAllFlushRequest
+	10, // 5: mcing.Agent.SaveOn:input_type -> mcing.SaveOnRequest
+	1,  // 6: mcing.Agent.Reload:output_type -> mcing.ReloadResponse
+	3,  // 7: mcing.Agent.SyncWhitelist:output_type -> mcing.SyncWhitelistResponse
+	5,  // 8: mcing.Agent.SyncOps:output_type -> mcing.SyncOpsResponse
+	7,  // 9: mcing.Agent.SaveOff:output_type -> mcing.SaveOffResponse
+	9,  // 10: mcing.Agent.SaveAllFlush:output_type -> mcing.SaveAllFlushResponse
+	11, // 11: mcing.Agent.SaveOn:output_type -> mcing.SaveOnResponse
+	6,  // [6:12] is the sub-list for method output_type
+	0,  // [0:6] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_pkg_proto_agentrpc_proto_init() }
@@ -338,7 +575,7 @@ func file_pkg_proto_agentrpc_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_proto_agentrpc_proto_rawDesc), len(file_pkg_proto_agentrpc_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

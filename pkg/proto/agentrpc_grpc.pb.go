@@ -22,6 +22,9 @@ const (
 	Agent_Reload_FullMethodName        = "/mcing.Agent/Reload"
 	Agent_SyncWhitelist_FullMethodName = "/mcing.Agent/SyncWhitelist"
 	Agent_SyncOps_FullMethodName       = "/mcing.Agent/SyncOps"
+	Agent_SaveOff_FullMethodName       = "/mcing.Agent/SaveOff"
+	Agent_SaveAllFlush_FullMethodName  = "/mcing.Agent/SaveAllFlush"
+	Agent_SaveOn_FullMethodName        = "/mcing.Agent/SaveOn"
 )
 
 // AgentClient is the client API for Agent service.
@@ -34,6 +37,9 @@ type AgentClient interface {
 	Reload(ctx context.Context, in *ReloadRequest, opts ...grpc.CallOption) (*ReloadResponse, error)
 	SyncWhitelist(ctx context.Context, in *SyncWhitelistRequest, opts ...grpc.CallOption) (*SyncWhitelistResponse, error)
 	SyncOps(ctx context.Context, in *SyncOpsRequest, opts ...grpc.CallOption) (*SyncOpsResponse, error)
+	SaveOff(ctx context.Context, in *SaveOffRequest, opts ...grpc.CallOption) (*SaveOffResponse, error)
+	SaveAllFlush(ctx context.Context, in *SaveAllFlushRequest, opts ...grpc.CallOption) (*SaveAllFlushResponse, error)
+	SaveOn(ctx context.Context, in *SaveOnRequest, opts ...grpc.CallOption) (*SaveOnResponse, error)
 }
 
 type agentClient struct {
@@ -74,6 +80,36 @@ func (c *agentClient) SyncOps(ctx context.Context, in *SyncOpsRequest, opts ...g
 	return out, nil
 }
 
+func (c *agentClient) SaveOff(ctx context.Context, in *SaveOffRequest, opts ...grpc.CallOption) (*SaveOffResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveOffResponse)
+	err := c.cc.Invoke(ctx, Agent_SaveOff_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentClient) SaveAllFlush(ctx context.Context, in *SaveAllFlushRequest, opts ...grpc.CallOption) (*SaveAllFlushResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveAllFlushResponse)
+	err := c.cc.Invoke(ctx, Agent_SaveAllFlush_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *agentClient) SaveOn(ctx context.Context, in *SaveOnRequest, opts ...grpc.CallOption) (*SaveOnResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveOnResponse)
+	err := c.cc.Invoke(ctx, Agent_SaveOn_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AgentServer is the server API for Agent service.
 // All implementations must embed UnimplementedAgentServer
 // for forward compatibility.
@@ -84,6 +120,9 @@ type AgentServer interface {
 	Reload(context.Context, *ReloadRequest) (*ReloadResponse, error)
 	SyncWhitelist(context.Context, *SyncWhitelistRequest) (*SyncWhitelistResponse, error)
 	SyncOps(context.Context, *SyncOpsRequest) (*SyncOpsResponse, error)
+	SaveOff(context.Context, *SaveOffRequest) (*SaveOffResponse, error)
+	SaveAllFlush(context.Context, *SaveAllFlushRequest) (*SaveAllFlushResponse, error)
+	SaveOn(context.Context, *SaveOnRequest) (*SaveOnResponse, error)
 	mustEmbedUnimplementedAgentServer()
 }
 
@@ -102,6 +141,15 @@ func (UnimplementedAgentServer) SyncWhitelist(context.Context, *SyncWhitelistReq
 }
 func (UnimplementedAgentServer) SyncOps(context.Context, *SyncOpsRequest) (*SyncOpsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SyncOps not implemented")
+}
+func (UnimplementedAgentServer) SaveOff(context.Context, *SaveOffRequest) (*SaveOffResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SaveOff not implemented")
+}
+func (UnimplementedAgentServer) SaveAllFlush(context.Context, *SaveAllFlushRequest) (*SaveAllFlushResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SaveAllFlush not implemented")
+}
+func (UnimplementedAgentServer) SaveOn(context.Context, *SaveOnRequest) (*SaveOnResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SaveOn not implemented")
 }
 func (UnimplementedAgentServer) mustEmbedUnimplementedAgentServer() {}
 func (UnimplementedAgentServer) testEmbeddedByValue()               {}
@@ -178,6 +226,60 @@ func _Agent_SyncOps_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Agent_SaveOff_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveOffRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServer).SaveOff(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Agent_SaveOff_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServer).SaveOff(ctx, req.(*SaveOffRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Agent_SaveAllFlush_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveAllFlushRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServer).SaveAllFlush(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Agent_SaveAllFlush_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServer).SaveAllFlush(ctx, req.(*SaveAllFlushRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Agent_SaveOn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveOnRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServer).SaveOn(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Agent_SaveOn_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServer).SaveOn(ctx, req.(*SaveOnRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Agent_ServiceDesc is the grpc.ServiceDesc for Agent service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -196,6 +298,18 @@ var Agent_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SyncOps",
 			Handler:    _Agent_SyncOps_Handler,
+		},
+		{
+			MethodName: "SaveOff",
+			Handler:    _Agent_SaveOff_Handler,
+		},
+		{
+			MethodName: "SaveAllFlush",
+			Handler:    _Agent_SaveAllFlush_Handler,
+		},
+		{
+			MethodName: "SaveOn",
+			Handler:    _Agent_SaveOn_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

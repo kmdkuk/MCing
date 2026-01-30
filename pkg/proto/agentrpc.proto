@@ -10,6 +10,9 @@ service Agent {
     rpc Reload(ReloadRequest) returns (ReloadResponse);
     rpc SyncWhitelist(SyncWhitelistRequest) returns (SyncWhitelistResponse);
     rpc SyncOps(SyncOpsRequest) returns (SyncOpsResponse);
+    rpc SaveOff(SaveOffRequest) returns (SaveOffResponse);
+    rpc SaveAllFlush(SaveAllFlushRequest) returns (SaveAllFlushResponse);
+    rpc SaveOn(SaveOnRequest) returns (SaveOnResponse);
 }
 
 /**
@@ -48,3 +51,12 @@ message SyncOpsRequest {
 */
 message SyncOpsResponse {
 }
+
+message SaveOffRequest {}
+message SaveOffResponse {}
+
+message SaveAllFlushRequest {}
+message SaveAllFlushResponse {}
+
+message SaveOnRequest {}
+message SaveOnResponse {}

@@ -57,6 +57,17 @@ type MinecraftSpec struct {
 	// AutoPause configuration
 	// +optional
 	AutoPause AutoPause `json:"autoPause,omitempty"`
+
+	// Backup configuration
+	// +optional
+	Backup Backup `json:"backup,omitempty"`
+}
+
+// Backup defines the backup configuration for the Minecraft server.
+type Backup struct {
+	// Excludes is a list of file patterns to exclude from the backup.
+	// +optional
+	Excludes []string `json:"excludes,omitempty"`
 }
 
 // AutoPause defines the auto-pause configuration for the Minecraft server.

@@ -53,6 +53,16 @@ spec:
                       Default is 300 seconds.
                     type: integer
                 type: object
+              backup:
+                description: Backup configuration
+                properties:
+                  excludes:
+                    description: Excludes is a list of file patterns to exclude from
+                      the backup.
+                    items:
+                      type: string
+                    type: array
+                type: object
               ops:
                 description: operators on server. exec /op or /deop
                 properties:
