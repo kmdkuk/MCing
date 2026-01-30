@@ -3,7 +3,7 @@ module github.com/kmdkuk/mcing
 go 1.25.5
 
 require (
-	github.com/Tnze/go-mc v1.20.1
+	github.com/Tnze/go-mc v1.20.2
 	github.com/go-logr/logr v1.4.3
 	github.com/google/go-cmp v0.7.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
