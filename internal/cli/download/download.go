@@ -177,7 +177,7 @@ func (d *Downloader) checkSleepingAndWarn(
 	isSleeping, err := d.isServerSleeping(ctx, mc)
 	if err != nil {
 		// Failed to check sleep status, return original error combined with check error
-		return false, fmt.Errorf("%w (also failed to check sleep status: %v)", originalErr, err)
+		return false, fmt.Errorf("%w (also failed to check sleep status: %w)", originalErr, err)
 	}
 	if isSleeping {
 		klog.Warningf(

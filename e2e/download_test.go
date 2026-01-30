@@ -2,26 +2,15 @@ package e2e
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"path/filepath"
-	"time"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // dot imports for tests
 	. "github.com/onsi/gomega"    //nolint:revive // dot imports for tests
 )
 
 func testDownload() {
-	var ns string
-
-	BeforeEach(func() {
-		ns = "e2e-download-" + randomString(6)
-		createNamespace(ns)
-	})
-
-	AfterEach(func() {
-		kubectlSafe("delete", "ns", ns)
-	})
+	ns := "default"
 
 	DescribeTable("should download backup from a running server",
 		func(name string, autoPause bool) {
@@ -63,14 +52,4 @@ func testDownload() {
 		Entry("with AutoPause disabled", "minecraft-autopause-disabled-running-java", false),
 		Entry("with AutoPause enabled", "minecraft-autopause-enabled-sleeping-java", true),
 	)
-}
-
-func randomString(n int) string {
-	const letters = "abcdefghijklmnopqrstuvwxyz0123456789"
-	b := make([]byte, n)
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	for i := range b {
-		b[i] = letters[r.Intn(len(letters))]
-	}
-	return string(b)
 }
