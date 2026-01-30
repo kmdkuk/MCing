@@ -1,0 +1,20 @@
+apiVersion: mcing.kmdkuk.com/v1alpha1
+kind: Minecraft
+metadata:
+  name: {{.Name}}
+  namespace: {{.Namespace}}
+spec:
+  autoPause:
+    enabled: {{.AutoPause}}
+  podTemplate:
+    spec:
+      containers:
+{{ template "minecraft-container" . }}
+  volumeClaimTemplates:
+    - metadata:
+        name: minecraft-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi

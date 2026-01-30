@@ -35,7 +35,8 @@ stop: ## Delete kind cluster
 
 .PHONY: test
 test: ## Run e2e tests
-	KINDTEST=1 \
+	$(MAKE) -C $(PROJECT_DIR) build-kubectl-mcing
+	KINDTEST=1 BIN_DIR=$(PROJECT_DIR)/bin \
 	go run github.com/onsi/ginkgo/v2/ginkgo -v --timeout=15m --fail-fast -p $(GINKGO_OPT) .
 
 .PHONY: bootstrap

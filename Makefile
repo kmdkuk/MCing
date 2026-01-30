@@ -151,7 +151,7 @@ build-agent: fmt vet $(BUILD_FILES) ## Build manager binary.
 
 .PHONY: build-kubectl-mcing
 build-kubectl-mcing: fmt vet $(BUILD_FILES) ## Build kubectl-mcing binary.
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o kubectl-mcing cmd/kubectl-mcing/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o bin/kubectl-mcing cmd/kubectl-mcing/main.go
 
 .PHONY: release-build
 release-build: ## Build release artifacts

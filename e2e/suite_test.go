@@ -32,4 +32,5 @@ var _ = Describe("mcing", func() {
 	Context("opsWhitelist", testOpsWhitelist)
 	Context("rcon", testRcon)
 	Context("autopause", testAutoPause)
+	Context("download", testDownload)
 })
