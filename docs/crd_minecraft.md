@@ -76,6 +76,7 @@ MinecraftSpec defines the desired state of Minecraft.
 | rconPasswordSecretName | RconPasswordSecretName is a `Secret` name for RCON password. | *string | false |
 | autoPause | AutoPause configuration | [AutoPause](#autopause) | false |
 | backup | Backup configuration | [Backup](#backup) | false |
+| externalHostname | ExternalHostname is the custom hostname for mc-router routing. If not set, FQDN will be generated as <name>.<namespace>.<default-domain>. Only used when mc-router is enabled on the controller. | *string | false |
 
 [Back to Custom Resources](#custom-resources)
 
