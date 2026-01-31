@@ -26,6 +26,14 @@ type Config struct {
 	initImageName        string
 	agentImageName       string
 	interval             time.Duration
+
+	// mc-router configuration
+	enableMCRouter         bool
+	mcRouterDefaultDomain  string
+	mcRouterNamespace      string
+	mcRouterServiceAccount string
+	mcRouterServiceType    string
+	mcRouterImage          string
 }
 
 // NewRootCmd represents the base command when called without any subcommands.
@@ -41,6 +49,14 @@ func NewRootCmd() *cobra.Command {
 		initImageName        string
 		agentImageName       string
 		interval             time.Duration
+
+		// mc-router configuration
+		enableMCRouter         bool
+		mcRouterDefaultDomain  string
+		mcRouterNamespace      string
+		mcRouterServiceAccount string
+		mcRouterServiceType    string
+		mcRouterImage          string
 	)
 
 	rootCmd := &cobra.Command{
@@ -51,16 +67,22 @@ func NewRootCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SilenceUsage = true
 			cfg := Config{
-				metricsAddr:          metricAddr,
-				probeAddr:            probeAddr,
-				enableLeaderElection: enableLeaderElection,
-				webhookCertPath:      webhookCertPath,
-				webhookCertName:      webhookCertName,
-				webhookCertKey:       webhookCertKey,
-				zapOpts:              zapOpts,
-				initImageName:        initImageName,
-				agentImageName:       agentImageName,
-				interval:             interval,
+				metricsAddr:            metricAddr,
+				probeAddr:              probeAddr,
+				enableLeaderElection:   enableLeaderElection,
+				webhookCertPath:        webhookCertPath,
+				webhookCertName:        webhookCertName,
+				webhookCertKey:         webhookCertKey,
+				zapOpts:                zapOpts,
+				initImageName:          initImageName,
+				agentImageName:         agentImageName,
+				interval:               interval,
+				enableMCRouter:         enableMCRouter,
+				mcRouterDefaultDomain:  mcRouterDefaultDomain,
+				mcRouterNamespace:      mcRouterNamespace,
+				mcRouterServiceAccount: mcRouterServiceAccount,
+				mcRouterServiceType:    mcRouterServiceType,
+				mcRouterImage:          mcRouterImage,
 			}
 			return subMain(cfg)
 		},
@@ -93,6 +115,20 @@ func NewRootCmd() *cobra.Command {
 		"mcing-agent image name",
 	)
 	fs.DurationVar(&interval, "check-interval", 1*time.Minute, "Interval of minecraft maintenance")
+
+	// mc-router flags
+	fs.BoolVar(&enableMCRouter, "enable-mc-router", false,
+		"Enable mc-router gateway for hostname-based Minecraft server routing")
+	fs.StringVar(&mcRouterDefaultDomain, "mc-router-default-domain", "minecraft.local",
+		"Default domain for mc-router FQDN generation (<name>.<namespace>.<domain>)")
+	fs.StringVar(&mcRouterNamespace, "mc-router-namespace", "mcing-gateway",
+		"Namespace where mc-router gateway will be deployed")
+	fs.StringVar(&mcRouterServiceAccount, "mc-router-service-account", "mc-router",
+		"Service account name for mc-router")
+	fs.StringVar(&mcRouterServiceType, "mc-router-service-type", "LoadBalancer",
+		"Service type for mc-router gateway (LoadBalancer or NodePort)")
+	fs.StringVar(&mcRouterImage, "mc-router-image", "itzg/mc-router:latest",
+		"mc-router container image")
 
 	goflags := flag.NewFlagSet("klog", flag.ExitOnError)
 	klog.InitFlags(goflags)

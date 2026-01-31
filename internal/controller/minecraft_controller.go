@@ -58,6 +58,7 @@ type MinecraftReconciler struct {
 	initImageName    string
 	agentImageName   string
 	minecraftManager minecraft.MinecraftManager
+	gatewayConfig    GatewayConfig
 }
 
 // NewMinecraftReconciler returns a new MinecraftReconciler.
@@ -67,6 +68,7 @@ func NewMinecraftReconciler(
 	scheme *runtime.Scheme,
 	initImageName, agentImageName string,
 	minecraftManager minecraft.MinecraftManager,
+	gatewayConfig GatewayConfig,
 ) *MinecraftReconciler {
 	l := log.WithName("Minecraft")
 	return &MinecraftReconciler{
@@ -76,6 +78,7 @@ func NewMinecraftReconciler(
 		initImageName:    initImageName,
 		agentImageName:   agentImageName,
 		minecraftManager: minecraftManager,
+		gatewayConfig:    gatewayConfig,
 	}
 }
 
@@ -521,7 +524,30 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 		labels := labelSet(mc, constants.AppComponentServer)
 		sSpec := &corev1.ServiceSpec{}
 		tmpl := mc.Spec.ServiceTemplate
-		if !headless && tmpl != nil {
+
+		// Handle service configuration based on type and mc-router settings
+		switch {
+		case !headless && r.gatewayConfig.Enabled:
+			// When mc-router is enabled and this is NOT the headless service,
+			// force ClusterIP type and add the mc-router annotation
+			externalServerName := mc.GetExternalServerName(r.gatewayConfig.DefaultDomain)
+			if svc.Annotations == nil {
+				svc.Annotations = make(map[string]string)
+			}
+			svc.Annotations[constants.MCRouterAnnotation] = externalServerName
+
+			// Still allow other annotations and labels from template
+			if tmpl != nil {
+				svc.Annotations = config.MergeMap(svc.Annotations, tmpl.Annotations)
+				// Ensure mc-router annotation is not overwritten
+				svc.Annotations[constants.MCRouterAnnotation] = externalServerName
+				svc.Labels = config.MergeMap(svc.Labels, tmpl.Labels)
+			}
+			svc.Labels = config.MergeMap(svc.Labels, labels)
+
+			// Force ClusterIP type when mc-router is enabled
+			sSpec.Type = corev1.ServiceTypeClusterIP
+		case !headless && tmpl != nil:
 			svc.Annotations = config.MergeMap(svc.Annotations, tmpl.Annotations)
 			svc.Labels = config.MergeMap(svc.Labels, tmpl.Labels)
 			svc.Labels = config.MergeMap(svc.Labels, labels)
@@ -529,7 +555,7 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 			if tmpl.Spec != nil {
 				tmpl.Spec.DeepCopyInto(sSpec)
 			}
-		} else {
+		default:
 			svc.Labels = config.MergeMap(svc.Labels, labels)
 		}
 
@@ -541,6 +567,7 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 		} else {
 			sSpec.ClusterIP = svc.Spec.ClusterIP
 			sSpec.ClusterIPs = svc.Spec.ClusterIPs
+			// Only set type from existing service if not already set (e.g., by mc-router or template)
 			if len(sSpec.Type) == 0 {
 				sSpec.Type = svc.Spec.Type
 			}
