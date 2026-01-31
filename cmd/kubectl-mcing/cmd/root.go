@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	mcingv1alpha1 "github.com/kmdkuk/mcing/api/v1alpha1"
+	"github.com/kmdkuk/mcing/pkg/version"
 )
 
 // MCingOptions holds configuration and clients for subcommands.
@@ -39,8 +40,9 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	rootCmd := &cobra.Command{
-		Use:   "mcing",
-		Short: "kubectl plugin for mcing",
+		Use:     "mcing",
+		Version: version.Version,
+		Short:   "kubectl plugin for mcing",
 		Long: `mcing is a kubectl plugin for mcing.
 
 This plugin provides commands to interact with Minecraft servers managed by MCing.
@@ -80,6 +82,7 @@ This plugin provides commands to interact with Minecraft servers managed by MCin
 	rootCmd.PersistentFlags().AddGoFlagSet(flag.CommandLine)
 
 	rootCmd.AddCommand(NewDownloadCmd(o))
+	rootCmd.AddCommand(NewVersionCmd())
 
 	return rootCmd
 }

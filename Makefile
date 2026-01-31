@@ -139,15 +139,15 @@ build: fmt vet $(BUILD_FILES) build-controller build-init build-agent ## Build m
 
 .PHONY: build-controller
 build-controller: fmt vet $(BUILD_FILES) ## Build manager binary.
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o mcing-controller cmd/mcing-controller/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o bin/mcing-controller cmd/mcing-controller/main.go
 
 .PHONY: build-init
 build-init: fmt vet $(BUILD_FILES) ## Build manager binary.
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o mcing-init cmd/mcing-init/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o bin/mcing-init cmd/mcing-init/main.go
 
 .PHONY: build-agent
 build-agent: fmt vet $(BUILD_FILES) ## Build manager binary.
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o mcing-agent cmd/mcing-agent/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$(GO_LDFLAGS)" -a -o bin/mcing-agent cmd/mcing-agent/main.go
 
 .PHONY: build-kubectl-mcing
 build-kubectl-mcing: fmt vet $(BUILD_FILES) ## Build kubectl-mcing binary.
@@ -177,7 +177,7 @@ build-image: build build-image-controller build-image-init build-image-agent ## 
 .PHONY: build-image-controller
 .PHONY: build-image-controller
 build-image-controller: build-controller ## Build docker image with the manager.
-	$(CONTAINER_TOOL) build --build-arg TARGETPLATFORM=. --target controller -t ${CONTROLLER_IMG} .
+	$(CONTAINER_TOOL) build --build-arg TARGETPLATFORM=./bin --target controller -t ${CONTROLLER_IMG} .
 
 .PHONY: build-image-init
 # Set the flag if the GITHUB_TOKEN environment variable is not empty
@@ -185,11 +185,11 @@ ifneq ($(GITHUB_TOKEN),)
     SECRET_FLAG := --secret id=github_token,env=GITHUB_TOKEN
 endif
 build-image-init: build-init ## Build docker image with the manager.
-	$(CONTAINER_TOOL) build --build-arg TARGETPLATFORM=. ${SECRET_FLAG} --target init -t ${INIT_IMG} .
+	$(CONTAINER_TOOL) build --build-arg TARGETPLATFORM=./bin ${SECRET_FLAG} --target init -t ${INIT_IMG} .
 
 .PHONY: build-image-agent
 build-image-agent: build-agent ## Build docker image with the manager.
-	$(CONTAINER_TOOL) build --build-arg TARGETPLATFORM=. --target agent -t ${AGENT_IMG} .
+	$(CONTAINER_TOOL) build --build-arg TARGETPLATFORM=./bin --target agent -t ${AGENT_IMG} .
 
 .PHONY: tag
 tag: build tag-controller tag-init tag-agent ## Tag docker image with the manager.
