@@ -394,7 +394,6 @@ func makeMinecraftContainer(
 			FailureThreshold:    autopauseReadinessFailureThreshold,
 		}
 
-		// Wrap command with lazymc via tini to handle zombies and signals
 		c.Command = []string{filepath.Join(constants.LazymcPath, constants.LazymcBinName)}
 		c.Args = []string{"--config", filepath.Join(constants.LazymcPath, constants.LazymcConfigName)}
 		c.VolumeMounts = append(c.VolumeMounts, corev1.VolumeMount{
@@ -590,12 +589,14 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 		sSpec.Selector = labels
 
 		var serverNodePort, rconNodePort int32
-		for _, p := range svc.Spec.Ports {
-			switch p.Name {
-			case constants.ServerPortName:
-				serverNodePort = p.NodePort
-			case constants.RconPortName:
-				rconNodePort = p.NodePort
+		if sSpec.Type != corev1.ServiceTypeClusterIP {
+			for _, p := range svc.Spec.Ports {
+				switch p.Name {
+				case constants.ServerPortName:
+					serverNodePort = p.NodePort
+				case constants.RconPortName:
+					rconNodePort = p.NodePort
+				}
 			}
 		}
 		sSpec.Ports = append(sSpec.Ports, corev1.ServicePort{

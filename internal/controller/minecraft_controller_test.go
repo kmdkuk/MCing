@@ -445,7 +445,7 @@ var _ = Describe("Minecraft controller", func() {
 			g.Expect(ok).To(BeFalse(), fmt.Sprintf("lazymc.toml found in %s", generatedCm.Name))
 		}).Should(Succeed())
 
-		// Verify Main Container Command what dont use lazymc
+		// Verify Main Container Command what don't use lazymc
 		Expect(s.Spec.Template.Spec.Containers[0].Command).To(BeEmpty())
 		Expect(s.Spec.Template.Spec.Containers[0].Args).To(BeEmpty())
 
@@ -587,6 +587,47 @@ var _ = Describe("Minecraft controller with mc-router", func() {
 			g.Expect(err).ShouldNot(HaveOccurred())
 			// Service should be ClusterIP despite template specifying LoadBalancer
 			g.Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeClusterIP))
+		}).Should(Succeed())
+	})
+
+	It("should clear NodePort when forcing ClusterIP", func() {
+		mc := makeMinecraft("mc-router-nodeport", mcRouterNamespace)
+		svc := &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      mc.PrefixedName(),
+				Namespace: mcRouterNamespace,
+			},
+			Spec: corev1.ServiceSpec{
+				Type: corev1.ServiceTypeNodePort,
+				Ports: []corev1.ServicePort{
+					{
+						Name:     constants.ServerPortName,
+						Protocol: corev1.ProtocolTCP,
+						Port:     constants.ServerPort,
+						NodePort: 30001,
+					},
+					{
+						Name:     constants.RconPortName,
+						Protocol: corev1.ProtocolTCP,
+						Port:     constants.RconPort,
+						NodePort: 30002,
+					},
+				},
+			},
+		}
+		Expect(k8sClient.Create(ctx, svc)).To(Succeed())
+		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+		Eventually(func(g Gomega) {
+			err := k8sClient.Get(ctx, types.NamespacedName{
+				Name:      mc.PrefixedName(),
+				Namespace: mcRouterNamespace,
+			}, svc)
+			g.Expect(err).ShouldNot(HaveOccurred())
+			g.Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeClusterIP))
+			for _, port := range svc.Spec.Ports {
+				g.Expect(port.NodePort).To(BeZero())
+			}
 		}).Should(Succeed())
 	})
 
