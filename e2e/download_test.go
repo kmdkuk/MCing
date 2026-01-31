@@ -48,6 +48,9 @@ func testDownload() {
 
 			By("Verifying the downloaded archive")
 			verifyArchive(outputFile, "./world/artifact.txt", dummyContent)
+
+			// Cleanup (skip on failure)
+			kubectlSafeWithInput(manifest, "delete", "-f", "-")
 		},
 		Entry("with AutoPause disabled", "minecraft-autopause-disabled-running-java", false),
 		Entry("with AutoPause enabled", "minecraft-autopause-enabled-sleeping-java", true),

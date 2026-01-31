@@ -243,6 +243,7 @@ func (r *GatewayReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return nil
 	}
 	return ctrl.NewControllerManagedBy(mgr).
+		Named("gateway").
 		For(&mcingv1alpha1.Minecraft{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.Service{}).
