@@ -48,6 +48,27 @@ builds:
       - -X github.com/kmdkuk/mcing/pkg/version.Revision={{ .ShortCommit }}
       - -X github.com/kmdkuk/mcing/pkg/version.BuildDate={{ .CommitDate }}
       - -X github.com/kmdkuk/mcing/pkg/version.Version={{ .Version }}
+  - id: kubectl-mcing
+    env:
+      - CGO_ENABLED=0
+    main: ./cmd/kubectl-mcing
+    binary: kubectl-mcing
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -X github.com/kmdkuk/mcing/pkg/version.Revision={{ .ShortCommit }}
+      - -X github.com/kmdkuk/mcing/pkg/version.BuildDate={{ .CommitDate }}
+      - -X github.com/kmdkuk/mcing/pkg/version.Version={{ .Version }}
+
+archives:
+  - id: kubectl-mcing
+    ids:
+      - kubectl-mcing
 
 dockers_v2:
   - id: mcing-controller

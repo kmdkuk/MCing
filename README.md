@@ -1,7 +1,6 @@
-[![CI](https://github.com/kmdkuk/mcing/actions/workflows/ci.yaml/badge.svg)](https://github.com/kmdkuk/mcing/actions/workflows/ci.yaml)
-
 # MCing
 
+[![CI](https://github.com/kmdkuk/mcing/actions/workflows/ci.yaml/badge.svg)](https://github.com/kmdkuk/mcing/actions/workflows/ci.yaml)
 
 MCing is a Kubernetes operator for Minecraft server.
 
@@ -10,11 +9,23 @@ MCing is a Kubernetes operator for Minecraft server.
 - Support Server Image: [itzg/minecraft-server](https://hub.docker.com/r/itzg/minecraft-server)
 - Kubernetes: 1.32 1.33 1.34
 
+## kubectl plugin installation
+
+### go install
+
+```bash
+go install github.com/kmdkuk/mcing/cmd/kubectl-mcing@latest
+```
+
+### Binary
+
+Download the binary from [GitHub Releases](https://github.com/kmdkuk/mcing/releases).
+
 ## Quick start
 
 You can quickly run MCing using [kind](https://kind.sigs.k8s.io/).
 
-```
+```sh
 $ cd e2e
 $ make start bootstrap
 $ cat <<EOF > minecraft-sample.yaml
@@ -69,7 +80,7 @@ $ ../bin/kubectl --kubeconfig .kubeconfig port-forward svc/mcing-minecraft-sampl
 
 if you can use aqua, it can be developed as follows
 
-```
+```sh
 $ cd MCing
 $ aqua i
 $ make start
@@ -86,7 +97,8 @@ v0.30.4, built 2022-06-16
 You can access localhost:10350 to check build and controller logs.
 
 For termination, the following
-```
+
+```sh
 # Exit the tilt up command by typing ctrl-c
 $ tilt down
 $ make stop
@@ -94,7 +106,7 @@ $ make stop
 
 ## Documentation
 
-See https://kmdk.uk/MCing
+See <https://kmdk.uk/MCing>
 
 ## Docker images
 
