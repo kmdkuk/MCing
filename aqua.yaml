@@ -12,7 +12,7 @@ packages:
   - name: kubernetes-sigs/kind@v0.31.0
   - name: tilt-dev/tilt@v0.36.3
   - name: tilt-dev/ctlptl@v0.9.0
-  - name: mikefarah/yq@v4.52.1
+  - name: mikefarah/yq@v4.52.2
   - name: kubernetes-sigs/controller-tools/controller-gen@v0.20.0
   - name: kubernetes-sigs/controller-runtime/setup-envtest@v0.23.1
   - name: rust-lang/mdBook@v0.5.2
