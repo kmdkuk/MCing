@@ -180,7 +180,7 @@ kubectl mcing download minecraft-sample -o backup.tar.gz
 | ----- | ---------- | -------- | ---------------------- |
 | 25565 | minecraft  | TCP      | Minecraft server port  |
 | 25575 | rcon       | TCP      | RCON management port   |
-| 6565  | agent      | TCP      | mcing-agent gRPC port  |
+| 9080  | agent      | TCP      | mcing-agent gRPC port  |
 
 ## gRPC API (mcing-agent)
 
