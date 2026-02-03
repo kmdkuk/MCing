@@ -7,6 +7,21 @@
 
 
         <!-- Custom HTML head -->
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+        <script>
+          mermaid.initialize({ startOnLoad: false });
+          document.addEventListener("DOMContentLoaded", function() {
+            const codeBlocks = document.querySelectorAll("code.language-mermaid");
+            codeBlocks.forEach(function(code) {
+              const pre = code.parentElement;
+              const div = document.createElement("div");
+              div.className = "mermaid";
+              div.textContent = code.textContent;
+              pre.parentElement.replaceChild(div, pre);
+            });
+            mermaid.run();
+          });
+        </script>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -35,10 +50,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-4d8b1dea.js";
+            window.path_to_searchindex_js = "searchindex-c714a043.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-dffe8370.js"></script>
+        <script src="toc-c43d4f55.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -307,6 +322,87 @@ metadata:
 stringData:
   rcon-password: "your-super-strong-password"
 </code></pre>
+<h2 id="auto-pause"><a class="header" href="#auto-pause">Auto-Pause</a></h2>
+<p>MCing supports automatic server pausing when no players are connected, using <a href="https://github.com/timvisee/lazymc">lazymc</a>. This helps reduce resource usage for idle servers.</p>
+<h3 id="enabling-auto-pause"><a class="header" href="#enabling-auto-pause">Enabling Auto-Pause</a></h3>
+<pre><code class="language-yaml">apiVersion: mcing.kmdkuk.com/v1alpha1
+kind: Minecraft
+metadata:
+  name: minecraft-sample
+spec:
+  autoPause:
+    enabled: true
+    timeoutSeconds: 300  # Pause after 5 minutes of inactivity (default)
+  # ... other fields
+</code></pre>
+<h3 id="how-it-works"><a class="header" href="#how-it-works">How it works</a></h3>
+<ol>
+<li>When enabled, lazymc runs as the main process and proxies connections to the Minecraft server</li>
+<li>The Minecraft server starts when a player connects</li>
+<li>After <code>timeoutSeconds</code> of no player activity, the server is paused</li>
+<li>The server automatically resumes when a new player connects</li>
+</ol>
+<blockquote class="blockquote-tag blockquote-tag-note">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
+<p>Auto-pause is enabled by default. Set <code>autoPause.enabled: false</code> to disable it.</p>
+</blockquote>
+<h2 id="operators-and-whitelist"><a class="header" href="#operators-and-whitelist">Operators and Whitelist</a></h2>
+<p>MCing can manage operators and whitelist through the Minecraft CR spec.</p>
+<h3 id="operators"><a class="header" href="#operators">Operators</a></h3>
+<pre><code class="language-yaml">spec:
+  ops:
+    users:
+      - player1
+      - player2
+</code></pre>
+<p>The controller executes <code>/op</code> or <code>/deop</code> commands via RCON to sync the operators list.</p>
+<h3 id="whitelist"><a class="header" href="#whitelist">Whitelist</a></h3>
+<pre><code class="language-yaml">spec:
+  whitelist:
+    enabled: true
+    users:
+      - allowed_player1
+      - allowed_player2
+</code></pre>
+<p>When <code>whitelist.enabled</code> is <code>true</code>, the controller executes <code>/whitelist on</code> and manages the whitelist via <code>/whitelist add</code> and <code>/whitelist remove</code> commands.</p>
+<h2 id="backup-and-download"><a class="header" href="#backup-and-download">Backup and Download</a></h2>
+<p>MCing provides a kubectl plugin for downloading server data.</p>
+<h3 id="installing-kubectl-mcing"><a class="header" href="#installing-kubectl-mcing">Installing kubectl-mcing</a></h3>
+<pre><code class="language-console">go install github.com/kmdkuk/mcing/cmd/kubectl-mcing@latest
+</code></pre>
+<p>Or download from <a href="https://github.com/kmdkuk/mcing/releases">GitHub Releases</a>.</p>
+<h3 id="downloading-server-data"><a class="header" href="#downloading-server-data">Downloading Server Data</a></h3>
+<pre><code class="language-console">kubectl mcing download &lt;minecraft-name&gt; [-o output.tar.gz] [-n namespace]
+</code></pre>
+<p>This command:</p>
+<ol>
+<li>Executes <code>save-off</code> to disable auto-save</li>
+<li>Executes <code>save-all flush</code> to ensure all data is written</li>
+<li>Compresses and downloads the <code>/data</code> directory</li>
+<li>Executes <code>save-on</code> to re-enable auto-save</li>
+</ol>
+<h3 id="excluding-files-from-backup"><a class="header" href="#excluding-files-from-backup">Excluding Files from Backup</a></h3>
+<p>You can exclude files from the backup using the <code>backup.excludes</code> field:</p>
+<pre><code class="language-yaml">spec:
+  backup:
+    excludes:
+      - "*.jar"
+      - "logs/*"
+      - "cache/*"
+</code></pre>
+<h2 id="mc-router-hostname-based-routing"><a class="header" href="#mc-router-hostname-based-routing">mc-router (Hostname-based Routing)</a></h2>
+<p>When mc-router is enabled on the controller, you can use custom hostnames to access your Minecraft servers.</p>
+<h3 id="using-custom-hostname"><a class="header" href="#using-custom-hostname">Using Custom Hostname</a></h3>
+<pre><code class="language-yaml">spec:
+  externalHostname: "survival.mc.example.com"
+</code></pre>
+<p>If not specified, the hostname is automatically generated as <code>&lt;name&gt;.&lt;namespace&gt;.&lt;default-domain&gt;</code>.</p>
+<h3 id="dns-configuration"><a class="header" href="#dns-configuration">DNS Configuration</a></h3>
+<p>Point a wildcard DNS record to the mc-router service’s external IP:</p>
+<pre><code class="language-text">*.mc.example.com -&gt; &lt;mc-router-external-ip&gt;
+</code></pre>
+<p>Players can then connect using hostnames like <code>survival.mc.example.com:25565</code>.</p>
+<p>See <a href="setup.html#enabling-mc-router-hostname-based-routing">Deploy MCing</a> for controller configuration.</p>
 
                     </main>
 
@@ -316,7 +412,7 @@ stringData:
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="crd.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="architecture.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -330,7 +426,7 @@ stringData:
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="crd.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="architecture.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>

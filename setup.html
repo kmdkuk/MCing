@@ -7,6 +7,21 @@
 
 
         <!-- Custom HTML head -->
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+        <script>
+          mermaid.initialize({ startOnLoad: false });
+          document.addEventListener("DOMContentLoaded", function() {
+            const codeBlocks = document.querySelectorAll("code.language-mermaid");
+            codeBlocks.forEach(function(code) {
+              const pre = code.parentElement;
+              const div = document.createElement("div");
+              div.className = "mermaid";
+              div.textContent = code.textContent;
+              pre.parentElement.replaceChild(div, pre);
+            });
+            mermaid.run();
+          });
+        </script>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -35,10 +50,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-4d8b1dea.js";
+            window.path_to_searchindex_js = "searchindex-c714a043.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-dffe8370.js"></script>
+        <script src="toc-c43d4f55.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -181,6 +196,7 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="deploying-mcing"><a class="header" href="#deploying-mcing">Deploying MCing</a></h1>
+<h2 id="basic-installation"><a class="header" href="#basic-installation">Basic Installation</a></h2>
 <ol>
 <li>
 <p>(Optional) Prepare cert-manager</p>
@@ -197,6 +213,62 @@ $ kubectl apply -f install.yaml
 </code></pre>
 </li>
 </ol>
+<h2 id="customizing-controller-settings"><a class="header" href="#customizing-controller-settings">Customizing Controller Settings</a></h2>
+<p>To customize the MCing controller, download and edit <code>install.yaml</code> before applying:</p>
+<pre><code class="language-console">$ curl -fsLO https://github.com/kmdkuk/MCing/releases/latest/download/install.yaml
+# Edit install.yaml to add/modify controller flags
+$ kubectl apply -f install.yaml
+</code></pre>
+<h3 id="controller-flags"><a class="header" href="#controller-flags">Controller Flags</a></h3>
+<p>The MCing controller supports the following flags:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--metrics-bind-address</code></td><td><code>:8080</code></td><td>The address the metric endpoint binds to</td></tr>
+<tr><td><code>--health-probe-bind-address</code></td><td><code>:8081</code></td><td>The address the probe endpoint binds to</td></tr>
+<tr><td><code>--leader-elect</code></td><td><code>false</code></td><td>Enable leader election for HA</td></tr>
+<tr><td><code>--check-interval</code></td><td><code>1m</code></td><td>Interval of Minecraft server maintenance checks</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="enabling-mc-router-hostname-based-routing"><a class="header" href="#enabling-mc-router-hostname-based-routing">Enabling mc-router (Hostname-based Routing)</a></h3>
+<p>mc-router allows multiple Minecraft servers to share a single external IP/port by routing based on hostname.</p>
+<p>Add the following flags to the controller deployment:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--enable-mc-router</code></td><td><code>false</code></td><td>Enable mc-router gateway</td></tr>
+<tr><td><code>--mc-router-default-domain</code></td><td><code>minecraft.local</code></td><td>Default domain for FQDN generation (<code>&lt;name&gt;.&lt;namespace&gt;.&lt;domain&gt;</code>)</td></tr>
+<tr><td><code>--mc-router-namespace</code></td><td><code>mcing-gateway</code></td><td>Namespace for mc-router deployment</td></tr>
+<tr><td><code>--mc-router-service-type</code></td><td><code>LoadBalancer</code></td><td>Service type (<code>LoadBalancer</code> or <code>NodePort</code>)</td></tr>
+<tr><td><code>--mc-router-image</code></td><td><code>itzg/mc-router:latest</code></td><td>mc-router container image</td></tr>
+</tbody>
+</table>
+</div>
+<p>Example deployment patch:</p>
+<pre><code class="language-yaml">spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        args:
+        - --leader-elect
+        - --enable-mc-router
+        - --mc-router-default-domain=mc.example.com
+        - --mc-router-service-type=LoadBalancer
+</code></pre>
+<p>When mc-router is enabled:</p>
+<ul>
+<li>Each Minecraft server gets a hostname: <code>&lt;name&gt;.&lt;namespace&gt;.&lt;default-domain&gt;</code> (or custom <code>externalHostname</code>)</li>
+<li>Services are created as ClusterIP type and routed through mc-router</li>
+<li>Point your DNS wildcard (<code>*.mc.example.com</code>) to the mc-router service</li>
+</ul>
 
                     </main>
 

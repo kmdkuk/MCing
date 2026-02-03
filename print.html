@@ -8,6 +8,21 @@
 
 
         <!-- Custom HTML head -->
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+        <script>
+          mermaid.initialize({ startOnLoad: false });
+          document.addEventListener("DOMContentLoaded", function() {
+            const codeBlocks = document.querySelectorAll("code.language-mermaid");
+            codeBlocks.forEach(function(code) {
+              const pre = code.parentElement;
+              const div = document.createElement("div");
+              div.className = "mermaid";
+              div.textContent = code.textContent;
+              pre.parentElement.replaceChild(div, pre);
+            });
+            mermaid.run();
+          });
+        </script>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -36,10 +51,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-4d8b1dea.js";
+            window.path_to_searchindex_js = "searchindex-c714a043.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-dffe8370.js"></script>
+        <script src="toc-c43d4f55.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -187,6 +202,7 @@
 </ol>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="deploying-mcing"><a class="header" href="#deploying-mcing">Deploying MCing</a></h1>
+<h2 id="basic-installation"><a class="header" href="#basic-installation">Basic Installation</a></h2>
 <ol>
 <li>
 <p>(Optional) Prepare cert-manager</p>
@@ -203,6 +219,62 @@ $ kubectl apply -f install.yaml
 </code></pre>
 </li>
 </ol>
+<h2 id="customizing-controller-settings"><a class="header" href="#customizing-controller-settings">Customizing Controller Settings</a></h2>
+<p>To customize the MCing controller, download and edit <code>install.yaml</code> before applying:</p>
+<pre><code class="language-console">$ curl -fsLO https://github.com/kmdkuk/MCing/releases/latest/download/install.yaml
+# Edit install.yaml to add/modify controller flags
+$ kubectl apply -f install.yaml
+</code></pre>
+<h3 id="controller-flags"><a class="header" href="#controller-flags">Controller Flags</a></h3>
+<p>The MCing controller supports the following flags:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--metrics-bind-address</code></td><td><code>:8080</code></td><td>The address the metric endpoint binds to</td></tr>
+<tr><td><code>--health-probe-bind-address</code></td><td><code>:8081</code></td><td>The address the probe endpoint binds to</td></tr>
+<tr><td><code>--leader-elect</code></td><td><code>false</code></td><td>Enable leader election for HA</td></tr>
+<tr><td><code>--check-interval</code></td><td><code>1m</code></td><td>Interval of Minecraft server maintenance checks</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="enabling-mc-router-hostname-based-routing"><a class="header" href="#enabling-mc-router-hostname-based-routing">Enabling mc-router (Hostname-based Routing)</a></h3>
+<p>mc-router allows multiple Minecraft servers to share a single external IP/port by routing based on hostname.</p>
+<p>Add the following flags to the controller deployment:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--enable-mc-router</code></td><td><code>false</code></td><td>Enable mc-router gateway</td></tr>
+<tr><td><code>--mc-router-default-domain</code></td><td><code>minecraft.local</code></td><td>Default domain for FQDN generation (<code>&lt;name&gt;.&lt;namespace&gt;.&lt;domain&gt;</code>)</td></tr>
+<tr><td><code>--mc-router-namespace</code></td><td><code>mcing-gateway</code></td><td>Namespace for mc-router deployment</td></tr>
+<tr><td><code>--mc-router-service-type</code></td><td><code>LoadBalancer</code></td><td>Service type (<code>LoadBalancer</code> or <code>NodePort</code>)</td></tr>
+<tr><td><code>--mc-router-image</code></td><td><code>itzg/mc-router:latest</code></td><td>mc-router container image</td></tr>
+</tbody>
+</table>
+</div>
+<p>Example deployment patch:</p>
+<pre><code class="language-yaml">spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        args:
+        - --leader-elect
+        - --enable-mc-router
+        - --mc-router-default-domain=mc.example.com
+        - --mc-router-service-type=LoadBalancer
+</code></pre>
+<p>When mc-router is enabled:</p>
+<ul>
+<li>Each Minecraft server gets a hostname: <code>&lt;name&gt;.&lt;namespace&gt;.&lt;default-domain&gt;</code> (or custom <code>externalHostname</code>)</li>
+<li>Services are created as ClusterIP type and routed through mc-router</li>
+<li>Point your DNS wildcard (<code>*.mc.example.com</code>) to the mc-router service</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="usage"><a class="header" href="#usage">Usage</a></h1>
 <h2 id="starting-simple-server"><a class="header" href="#starting-simple-server">Starting simple server</a></h2>
@@ -331,6 +403,287 @@ metadata:
 stringData:
   rcon-password: "your-super-strong-password"
 </code></pre>
+<h2 id="auto-pause"><a class="header" href="#auto-pause">Auto-Pause</a></h2>
+<p>MCing supports automatic server pausing when no players are connected, using <a href="https://github.com/timvisee/lazymc">lazymc</a>. This helps reduce resource usage for idle servers.</p>
+<h3 id="enabling-auto-pause"><a class="header" href="#enabling-auto-pause">Enabling Auto-Pause</a></h3>
+<pre><code class="language-yaml">apiVersion: mcing.kmdkuk.com/v1alpha1
+kind: Minecraft
+metadata:
+  name: minecraft-sample
+spec:
+  autoPause:
+    enabled: true
+    timeoutSeconds: 300  # Pause after 5 minutes of inactivity (default)
+  # ... other fields
+</code></pre>
+<h3 id="how-it-works"><a class="header" href="#how-it-works">How it works</a></h3>
+<ol>
+<li>When enabled, lazymc runs as the main process and proxies connections to the Minecraft server</li>
+<li>The Minecraft server starts when a player connects</li>
+<li>After <code>timeoutSeconds</code> of no player activity, the server is paused</li>
+<li>The server automatically resumes when a new player connects</li>
+</ol>
+<blockquote class="blockquote-tag blockquote-tag-note">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
+<p>Auto-pause is enabled by default. Set <code>autoPause.enabled: false</code> to disable it.</p>
+</blockquote>
+<h2 id="operators-and-whitelist"><a class="header" href="#operators-and-whitelist">Operators and Whitelist</a></h2>
+<p>MCing can manage operators and whitelist through the Minecraft CR spec.</p>
+<h3 id="operators"><a class="header" href="#operators">Operators</a></h3>
+<pre><code class="language-yaml">spec:
+  ops:
+    users:
+      - player1
+      - player2
+</code></pre>
+<p>The controller executes <code>/op</code> or <code>/deop</code> commands via RCON to sync the operators list.</p>
+<h3 id="whitelist"><a class="header" href="#whitelist">Whitelist</a></h3>
+<pre><code class="language-yaml">spec:
+  whitelist:
+    enabled: true
+    users:
+      - allowed_player1
+      - allowed_player2
+</code></pre>
+<p>When <code>whitelist.enabled</code> is <code>true</code>, the controller executes <code>/whitelist on</code> and manages the whitelist via <code>/whitelist add</code> and <code>/whitelist remove</code> commands.</p>
+<h2 id="backup-and-download"><a class="header" href="#backup-and-download">Backup and Download</a></h2>
+<p>MCing provides a kubectl plugin for downloading server data.</p>
+<h3 id="installing-kubectl-mcing"><a class="header" href="#installing-kubectl-mcing">Installing kubectl-mcing</a></h3>
+<pre><code class="language-console">go install github.com/kmdkuk/mcing/cmd/kubectl-mcing@latest
+</code></pre>
+<p>Or download from <a href="https://github.com/kmdkuk/mcing/releases">GitHub Releases</a>.</p>
+<h3 id="downloading-server-data"><a class="header" href="#downloading-server-data">Downloading Server Data</a></h3>
+<pre><code class="language-console">kubectl mcing download &lt;minecraft-name&gt; [-o output.tar.gz] [-n namespace]
+</code></pre>
+<p>This command:</p>
+<ol>
+<li>Executes <code>save-off</code> to disable auto-save</li>
+<li>Executes <code>save-all flush</code> to ensure all data is written</li>
+<li>Compresses and downloads the <code>/data</code> directory</li>
+<li>Executes <code>save-on</code> to re-enable auto-save</li>
+</ol>
+<h3 id="excluding-files-from-backup"><a class="header" href="#excluding-files-from-backup">Excluding Files from Backup</a></h3>
+<p>You can exclude files from the backup using the <code>backup.excludes</code> field:</p>
+<pre><code class="language-yaml">spec:
+  backup:
+    excludes:
+      - "*.jar"
+      - "logs/*"
+      - "cache/*"
+</code></pre>
+<h2 id="mc-router-hostname-based-routing"><a class="header" href="#mc-router-hostname-based-routing">mc-router (Hostname-based Routing)</a></h2>
+<p>When mc-router is enabled on the controller, you can use custom hostnames to access your Minecraft servers.</p>
+<h3 id="using-custom-hostname"><a class="header" href="#using-custom-hostname">Using Custom Hostname</a></h3>
+<pre><code class="language-yaml">spec:
+  externalHostname: "survival.mc.example.com"
+</code></pre>
+<p>If not specified, the hostname is automatically generated as <code>&lt;name&gt;.&lt;namespace&gt;.&lt;default-domain&gt;</code>.</p>
+<h3 id="dns-configuration"><a class="header" href="#dns-configuration">DNS Configuration</a></h3>
+<p>Point a wildcard DNS record to the mc-router service’s external IP:</p>
+<pre><code class="language-text">*.mc.example.com -&gt; &lt;mc-router-external-ip&gt;
+</code></pre>
+<p>Players can then connect using hostnames like <code>survival.mc.example.com:25565</code>.</p>
+<p>See <a href="#enabling-mc-router-hostname-based-routing">Deploy MCing</a> for controller configuration.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="architecture"><a class="header" href="#architecture">Architecture</a></h1>
+<p>This document describes the architecture and components used by MCing.</p>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>MCing is a Kubernetes operator that manages Minecraft servers. When you create a <code>Minecraft</code> custom resource, the controller creates and manages the following resources:</p>
+<pre><code class="language-mermaid">graph TD
+    subgraph cluster ["Kubernetes Cluster"]
+        subgraph mcing-system ["mcing-system namespace"]
+            Controller["mcing-controller&lt;br/&gt;(Deployment)"]
+        end
+
+        subgraph user-namespace ["user namespace"]
+            subgraph STS ["StatefulSet mcing-NAME"]
+                subgraph Pod ["Pod"]
+                    Init["init: mcing-init"]
+                    MC["minecraft&lt;br/&gt;(user image)"]
+                    Agent["mcing-agent&lt;br/&gt;(sidecar)"]
+                end
+                Volumes["Volumes:&lt;br/&gt;minecraft-data PVC&lt;br/&gt;config ConfigMap"]
+            end
+
+            Svc["Service mcing-NAME&lt;br/&gt;:25565 minecraft&lt;br/&gt;:25575 rcon"]
+            Headless["Service headless&lt;br/&gt;mcing-NAME-headless&lt;br/&gt;For StatefulSet DNS"]
+        end
+
+        subgraph mcing-gateway ["mcing-gateway namespace&lt;br/&gt;(if mc-router enabled)"]
+            Router["mc-router&lt;br/&gt;(Deployment)"]
+        end
+    end
+
+    %% Controller creates resources
+    Controller --&gt;|creates| STS
+    Controller --&gt;|creates| Svc
+    Controller --&gt;|creates| Headless
+    Controller -.-&gt;|creates if enabled| Router
+
+    %% mc-router routes to services
+    Router -.-&gt;|routes by hostname| Svc
+
+    %% StatefulSet uses headless for DNS
+    STS -.-&gt;|serviceName| Headless
+
+    %% Styling
+    style mcing-system fill:#e8f4ea,stroke:#333
+    style user-namespace fill:#fff,stroke:#333
+    style mcing-gateway fill:#f0e8f4,stroke:#333
+    style Controller fill:#2e7d32,color:#fff
+    style Router fill:#7b1fa2,color:#fff
+    style STS fill:#1565c0,color:#fff
+    style Pod fill:#fff,stroke:#1565c0
+    style Svc fill:#bbdefb,stroke:#1565c0
+    style Headless fill:#bbdefb,stroke:#1565c0
+</code></pre>
+<h2 id="components"><a class="header" href="#components">Components</a></h2>
+<h3 id="mcing-controller"><a class="header" href="#mcing-controller">MCing Controller</a></h3>
+<p>The main controller that watches <code>Minecraft</code> custom resources and manages the lifecycle of Minecraft servers.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Image</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ghcr.io/kmdkuk/mcing-controller</code></td><td>MCing controller</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="pod-containers"><a class="header" href="#pod-containers">Pod Containers</a></h3>
+<p>Each Minecraft server pod contains the following containers:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Container</th><th>Image</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>mcing-init</code></td><td><code>ghcr.io/kmdkuk/mcing-init</code></td><td>Init container that prepares config files</td></tr>
+<tr><td><code>minecraft</code></td><td>User-specified (e.g., <code>itzg/minecraft-server</code>)</td><td>The actual Minecraft server</td></tr>
+<tr><td><code>mcing-agent</code></td><td><code>ghcr.io/kmdkuk/mcing-agent</code></td><td>Sidecar for RCON operations and server management</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="external-dependencies"><a class="header" href="#external-dependencies">External Dependencies</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Image</th><th>Purpose</th><th>Used When</th></tr>
+</thead>
+<tbody>
+<tr><td><code>itzg/minecraft-server</code></td><td>Recommended Minecraft server image</td><td>User choice</td></tr>
+<tr><td><code>itzg/mc-router</code></td><td>Hostname-based routing proxy for Minecraft</td><td><code>--enable-mc-router</code></td></tr>
+<tr><td><code>timberio/vector</code> (lazymc)</td><td>Embedded in mcing-init for auto-pause feature</td><td><code>autoPause.enabled=true</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="features"><a class="header" href="#features">Features</a></h2>
+<h3 id="auto-pause-lazymc"><a class="header" href="#auto-pause-lazymc">Auto-Pause (lazymc)</a></h3>
+<p>When <code>autoPause.enabled</code> is set to <code>true</code>, MCing uses <a href="https://github.com/timvisee/lazymc">lazymc</a> to automatically pause the Minecraft server when no players are connected.</p>
+<p><strong>How it works:</strong></p>
+<ol>
+<li>The <code>mcing-init</code> container downloads and configures lazymc</li>
+<li>lazymc runs as the main process instead of the Minecraft server directly</li>
+<li>lazymc starts/stops the actual Minecraft server based on player connections</li>
+<li>The server pauses after <code>timeoutSeconds</code> (default: 300) of inactivity</li>
+</ol>
+<p><strong>Configuration:</strong></p>
+<pre><code class="language-yaml">spec:
+  autoPause:
+    enabled: true
+    timeoutSeconds: 300  # 5 minutes
+</code></pre>
+<h3 id="mc-router-hostname-based-routing-1"><a class="header" href="#mc-router-hostname-based-routing-1">mc-router (Hostname-based Routing)</a></h3>
+<p>When mc-router is enabled, multiple Minecraft servers can share a single external IP address. Players connect using hostnames like <code>server1.minecraft.example.com</code>.</p>
+<p><strong>How it works:</strong></p>
+<ol>
+<li>mc-router is deployed in the <code>mcing-gateway</code> namespace</li>
+<li>Each Minecraft service gets an annotation with its hostname</li>
+<li>mc-router reads these annotations and routes connections accordingly</li>
+<li>DNS wildcard points to mc-router’s external IP</li>
+</ol>
+<p><strong>Architecture with mc-router:</strong></p>
+<pre><code class="language-mermaid">graph TD
+    Players["Players"]
+
+    subgraph Internet
+        Host1["server1.mc.example.com:25565"]
+        Host2["server2.mc.example.com:25565"]
+    end
+
+    Router["mc-router (LoadBalancer)&lt;br/&gt;External IP: x.x.x.x:25565"]
+
+    subgraph Kubernetes
+        Server1["server1&lt;br/&gt;(ClusterIP)"]
+        Server2["server2&lt;br/&gt;(ClusterIP)"]
+    end
+
+    Players --&gt; Host1
+    Players --&gt; Host2
+    Host1 --&gt; Router
+    Host2 --&gt; Router
+    Router --&gt;|hostname: server1.*| Server1
+    Router --&gt;|hostname: server2.*| Server2
+
+    style Router fill:#7b1fa2,color:#fff
+    style Server1 fill:#1565c0,color:#fff
+    style Server2 fill:#1565c0,color:#fff
+    style Players fill:#fff,stroke:#333
+</code></pre>
+<h3 id="backup-support"><a class="header" href="#backup-support">Backup Support</a></h3>
+<p>The <code>backup.excludes</code> field allows specifying file patterns to exclude from backups performed via <code>kubectl-mcing download</code>.</p>
+<pre><code class="language-yaml">spec:
+  backup:
+    excludes:
+      - "*.jar"
+      - "logs/*"
+</code></pre>
+<h2 id="kubectl-mcing-plugin"><a class="header" href="#kubectl-mcing-plugin">kubectl-mcing Plugin</a></h2>
+<p>The <code>kubectl-mcing</code> plugin provides CLI utilities for managing Minecraft servers:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>download</code></td><td>Download and compress the server’s data directory</td></tr>
+</tbody>
+</table>
+</div>
+<p>Example:</p>
+<pre><code class="language-console">kubectl mcing download minecraft-sample -o backup.tar.gz
+</code></pre>
+<h2 id="ports"><a class="header" href="#ports">Ports</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Port</th><th>Name</th><th>Protocol</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>25565</td><td>minecraft</td><td>TCP</td><td>Minecraft server port</td></tr>
+<tr><td>25575</td><td>rcon</td><td>TCP</td><td>RCON management port</td></tr>
+<tr><td>9080</td><td>agent</td><td>TCP</td><td>mcing-agent gRPC port</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="grpc-api-mcing-agent"><a class="header" href="#grpc-api-mcing-agent">gRPC API (mcing-agent)</a></h2>
+<p>The mcing-agent sidecar exposes a gRPC API for server management:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Reload</code></td><td>Execute <code>/reload</code> command via RCON</td></tr>
+<tr><td><code>SyncWhitelist</code></td><td>Sync whitelist with Minecraft CR spec</td></tr>
+<tr><td><code>SyncOps</code></td><td>Sync operators with Minecraft CR spec</td></tr>
+<tr><td><code>SaveOff</code></td><td>Disable auto-save (for consistent backups)</td></tr>
+<tr><td><code>SaveAllFlush</code></td><td>Force save all chunks</td></tr>
+<tr><td><code>SaveOn</code></td><td>Re-enable auto-save</td></tr>
+</tbody>
+</table>
+</div>
+<p>See <a href="#protocol-documentation">Agent RPC Reference</a> for detailed API documentation.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="custom-resources"><a class="header" href="#custom-resources">Custom resources</a></h1>
 <div style="break-before: page; page-break-before: always;"></div>
@@ -350,7 +703,7 @@ stringData:
 <li><a href="#persistentvolumeclaim">PersistentVolumeClaim</a></li>
 <li><a href="#podtemplatespec">PodTemplateSpec</a></li>
 <li><a href="#servicetemplate">ServiceTemplate</a></li>
-<li><a href="#whitelist">Whitelist</a></li>
+<li><a href="#whitelist-1">Whitelist</a></li>
 </ul>
 <h4 id="autopause"><a class="header" href="#autopause">AutoPause</a></h4>
 <p>AutoPause defines the auto-pause configuration for the Minecraft server.</p>
@@ -420,7 +773,7 @@ stringData:
 <tr><td>volumeClaimTemplates</td><td>PersistentVolumeClaimSpec is a specification of <code>PersistentVolumeClaim</code> for persisting data in minecraft. A claim named "minecraft-data" must be included in the list.</td><td>[]<a href="#persistentvolumeclaim">PersistentVolumeClaim</a></td><td>true</td></tr>
 <tr><td>serviceTemplate</td><td>ServiceTemplate is a <code>Service</code> template.</td><td>*<a href="#servicetemplate">ServiceTemplate</a></td><td>false</td></tr>
 <tr><td>ops</td><td>operators on server. exec /op or /deop</td><td><a href="#ops">Ops</a></td><td>false</td></tr>
-<tr><td>whitelist</td><td>whitelist</td><td><a href="#whitelist">Whitelist</a></td><td>false</td></tr>
+<tr><td>whitelist</td><td>whitelist</td><td><a href="#whitelist-1">Whitelist</a></td><td>false</td></tr>
 <tr><td>serverPropertiesConfigMapName</td><td>ServerPropertiesConfigMapName is a <code>ConfigMap</code> name of <code>server.properties</code>.</td><td>*string</td><td>false</td></tr>
 <tr><td>otherConfigMapName</td><td>OtherConfigMapName is a <code>ConfigMap</code> name of other configurations file(eg. banned-ips.json, ops.json etc)</td><td>*string</td><td>false</td></tr>
 <tr><td>rconPasswordSecretName</td><td>RconPasswordSecretName is a <code>Secret</code> name for RCON password.</td><td>*string</td><td>false</td></tr>
@@ -482,7 +835,7 @@ stringData:
 </thead>
 <tbody>
 <tr><td>metadata</td><td>Standard object’s metadata.  The name in this metadata is ignored.</td><td><a href="#objectmeta">ObjectMeta</a></td><td>false</td></tr>
-<tr><td>spec</td><td>Specification of the desired behavior of the pod. The name of the MySQL server container in this spec must be <code>minecraft</code>.</td><td>corev1.PodSpec</td><td>true</td></tr>
+<tr><td>spec</td><td>Specification of the desired behavior of the pod. The name of the Minecraft server container in this spec must be <code>minecraft</code>.</td><td>corev1.PodSpec</td><td>true</td></tr>
 </tbody>
 </table>
 </div>
@@ -501,7 +854,7 @@ stringData:
 </table>
 </div>
 <p><a href="#custom-resources-1">Back to Custom Resources</a></p>
-<h4 id="whitelist"><a class="header" href="#whitelist">Whitelist</a></h4>
+<h4 id="whitelist-1"><a class="header" href="#whitelist-1">Whitelist</a></h4>
 <p>Whitelist represents the whitelist.json file.</p>
 <div class="table-wrapper">
 <table>
@@ -515,6 +868,157 @@ stringData:
 </table>
 </div>
 <p><a href="#custom-resources-1">Back to Custom Resources</a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="protocol-documentation"><a class="header" href="#protocol-documentation">Protocol Documentation</a></h1>
+<p><a name="top"></a></p>
+<h2 id="table-of-contents"><a class="header" href="#table-of-contents">Table of Contents</a></h2>
+<ul>
+<li>
+<p><a href="#pkg_proto_agentrpc-proto">pkg/proto/agentrpc.proto</a></p>
+<ul>
+<li>
+<p><a href="#mcing-ReloadRequest">ReloadRequest</a></p>
+</li>
+<li>
+<p><a href="#mcing-ReloadResponse">ReloadResponse</a></p>
+</li>
+<li>
+<p><a href="#mcing-SaveAllFlushRequest">SaveAllFlushRequest</a></p>
+</li>
+<li>
+<p><a href="#mcing-SaveAllFlushResponse">SaveAllFlushResponse</a></p>
+</li>
+<li>
+<p><a href="#mcing-SaveOffRequest">SaveOffRequest</a></p>
+</li>
+<li>
+<p><a href="#mcing-SaveOffResponse">SaveOffResponse</a></p>
+</li>
+<li>
+<p><a href="#mcing-SaveOnRequest">SaveOnRequest</a></p>
+</li>
+<li>
+<p><a href="#mcing-SaveOnResponse">SaveOnResponse</a></p>
+</li>
+<li>
+<p><a href="#mcing-SyncOpsRequest">SyncOpsRequest</a></p>
+</li>
+<li>
+<p><a href="#mcing-SyncOpsResponse">SyncOpsResponse</a></p>
+</li>
+<li>
+<p><a href="#mcing-SyncWhitelistRequest">SyncWhitelistRequest</a></p>
+</li>
+<li>
+<p><a href="#mcing-SyncWhitelistResponse">SyncWhitelistResponse</a></p>
+</li>
+<li>
+<p><a href="#mcing-Agent">Agent</a></p>
+</li>
+</ul>
+</li>
+<li>
+<p><a href="#scalar-value-types">Scalar Value Types</a></p>
+</li>
+</ul>
+<p><a name="pkg_proto_agentrpc-proto"></a></p>
+<p align="right"><a href="#top">Top</a></p>
+
+<h2 id="pkgprotoagentrpcproto"><a class="header" href="#pkgprotoagentrpcproto">pkg/proto/agentrpc.proto</a></h2>
+<p><a name="mcing-ReloadRequest"></a></p>
+<h3 id="reloadrequest"><a class="header" href="#reloadrequest">ReloadRequest</a></h3>
+<p>ReloadRequest is the request message to execute <code>/reload</code> via rcon.</p>
+<p><a name="mcing-ReloadResponse"></a></p>
+<h3 id="reloadresponse"><a class="header" href="#reloadresponse">ReloadResponse</a></h3>
+<p>ReloadResponse is the response message of Reload</p>
+<p><a name="mcing-SaveAllFlushRequest"></a></p>
+<h3 id="saveallflushrequest"><a class="header" href="#saveallflushrequest">SaveAllFlushRequest</a></h3>
+<p><a name="mcing-SaveAllFlushResponse"></a></p>
+<h3 id="saveallflushresponse"><a class="header" href="#saveallflushresponse">SaveAllFlushResponse</a></h3>
+<p><a name="mcing-SaveOffRequest"></a></p>
+<h3 id="saveoffrequest"><a class="header" href="#saveoffrequest">SaveOffRequest</a></h3>
+<p><a name="mcing-SaveOffResponse"></a></p>
+<h3 id="saveoffresponse"><a class="header" href="#saveoffresponse">SaveOffResponse</a></h3>
+<p><a name="mcing-SaveOnRequest"></a></p>
+<h3 id="saveonrequest"><a class="header" href="#saveonrequest">SaveOnRequest</a></h3>
+<p><a name="mcing-SaveOnResponse"></a></p>
+<h3 id="saveonresponse"><a class="header" href="#saveonresponse">SaveOnResponse</a></h3>
+<p><a name="mcing-SyncOpsRequest"></a></p>
+<h3 id="syncopsrequest"><a class="header" href="#syncopsrequest">SyncOpsRequest</a></h3>
+<p>SyncOpsRequest is the request message to exec /op or /deop via rcon</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>users</td><td><a href="#string">string</a></td><td>repeated</td><td></td></tr>
+</tbody>
+</table>
+</div>
+<p><a name="mcing-SyncOpsResponse"></a></p>
+<h3 id="syncopsresponse"><a class="header" href="#syncopsresponse">SyncOpsResponse</a></h3>
+<p>SyncOpsResponse is the response message of SyncOps</p>
+<p><a name="mcing-SyncWhitelistRequest"></a></p>
+<h3 id="syncwhitelistrequest"><a class="header" href="#syncwhitelistrequest">SyncWhitelistRequest</a></h3>
+<p>SyncWhitelistRequest is the request message to exec /whitelist via rcon</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>enabled</td><td><a href="#bool">bool</a></td><td></td><td></td></tr>
+<tr><td>users</td><td><a href="#string">string</a></td><td>repeated</td><td></td></tr>
+</tbody>
+</table>
+</div>
+<p><a name="mcing-SyncWhitelistResponse"></a></p>
+<h3 id="syncwhitelistresponse"><a class="header" href="#syncwhitelistresponse">SyncWhitelistResponse</a></h3>
+<p>SyncWhitelistResponse is the response message of SyncWhitelist</p>
+<p><a name="mcing-Agent"></a></p>
+<h3 id="agent"><a class="header" href="#agent">Agent</a></h3>
+<p>Agent provides services for MCing.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method Name</th><th>Request Type</th><th>Response Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>Reload</td><td><a href="#mcing-ReloadRequest">ReloadRequest</a></td><td><a href="#mcing-ReloadResponse">ReloadResponse</a></td><td></td></tr>
+<tr><td>SyncWhitelist</td><td><a href="#mcing-SyncWhitelistRequest">SyncWhitelistRequest</a></td><td><a href="#mcing-SyncWhitelistResponse">SyncWhitelistResponse</a></td><td></td></tr>
+<tr><td>SyncOps</td><td><a href="#mcing-SyncOpsRequest">SyncOpsRequest</a></td><td><a href="#mcing-SyncOpsResponse">SyncOpsResponse</a></td><td></td></tr>
+<tr><td>SaveOff</td><td><a href="#mcing-SaveOffRequest">SaveOffRequest</a></td><td><a href="#mcing-SaveOffResponse">SaveOffResponse</a></td><td></td></tr>
+<tr><td>SaveAllFlush</td><td><a href="#mcing-SaveAllFlushRequest">SaveAllFlushRequest</a></td><td><a href="#mcing-SaveAllFlushResponse">SaveAllFlushResponse</a></td><td></td></tr>
+<tr><td>SaveOn</td><td><a href="#mcing-SaveOnRequest">SaveOnRequest</a></td><td><a href="#mcing-SaveOnResponse">SaveOnResponse</a></td><td></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="scalar-value-types"><a class="header" href="#scalar-value-types">Scalar Value Types</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>.proto Type</th><th>Notes</th><th>C++</th><th>Java</th><th>Python</th><th>Go</th><th>C#</th><th>PHP</th><th>Ruby</th></tr>
+</thead>
+<tbody>
+<tr><td><a name="double" /> double</td><td></td><td>double</td><td>double</td><td>float</td><td>float64</td><td>double</td><td>float</td><td>Float</td></tr>
+<tr><td><a name="float" /> float</td><td></td><td>float</td><td>float</td><td>float</td><td>float32</td><td>float</td><td>float</td><td>Float</td></tr>
+<tr><td><a name="int32" /> int32</td><td>Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint32 instead.</td><td>int32</td><td>int</td><td>int</td><td>int32</td><td>int</td><td>integer</td><td>Bignum or Fixnum (as required)</td></tr>
+<tr><td><a name="int64" /> int64</td><td>Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint64 instead.</td><td>int64</td><td>long</td><td>int/long</td><td>int64</td><td>long</td><td>integer/string</td><td>Bignum</td></tr>
+<tr><td><a name="uint32" /> uint32</td><td>Uses variable-length encoding.</td><td>uint32</td><td>int</td><td>int/long</td><td>uint32</td><td>uint</td><td>integer</td><td>Bignum or Fixnum (as required)</td></tr>
+<tr><td><a name="uint64" /> uint64</td><td>Uses variable-length encoding.</td><td>uint64</td><td>long</td><td>int/long</td><td>uint64</td><td>ulong</td><td>integer/string</td><td>Bignum or Fixnum (as required)</td></tr>
+<tr><td><a name="sint32" /> sint32</td><td>Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int32s.</td><td>int32</td><td>int</td><td>int</td><td>int32</td><td>int</td><td>integer</td><td>Bignum or Fixnum (as required)</td></tr>
+<tr><td><a name="sint64" /> sint64</td><td>Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int64s.</td><td>int64</td><td>long</td><td>int/long</td><td>int64</td><td>long</td><td>integer/string</td><td>Bignum</td></tr>
+<tr><td><a name="fixed32" /> fixed32</td><td>Always four bytes. More efficient than uint32 if values are often greater than 2^28.</td><td>uint32</td><td>int</td><td>int</td><td>uint32</td><td>uint</td><td>integer</td><td>Bignum or Fixnum (as required)</td></tr>
+<tr><td><a name="fixed64" /> fixed64</td><td>Always eight bytes. More efficient than uint64 if values are often greater than 2^56.</td><td>uint64</td><td>long</td><td>int/long</td><td>uint64</td><td>ulong</td><td>integer/string</td><td>Bignum</td></tr>
+<tr><td><a name="sfixed32" /> sfixed32</td><td>Always four bytes.</td><td>int32</td><td>int</td><td>int</td><td>int32</td><td>int</td><td>integer</td><td>Bignum or Fixnum (as required)</td></tr>
+<tr><td><a name="sfixed64" /> sfixed64</td><td>Always eight bytes.</td><td>int64</td><td>long</td><td>int/long</td><td>int64</td><td>long</td><td>integer/string</td><td>Bignum</td></tr>
+<tr><td><a name="bool" /> bool</td><td></td><td>bool</td><td>boolean</td><td>boolean</td><td>bool</td><td>bool</td><td>boolean</td><td>TrueClass/FalseClass</td></tr>
+<tr><td><a name="string" /> string</td><td>A string must always contain UTF-8 encoded or 7-bit ASCII text.</td><td>string</td><td>String</td><td>str/unicode</td><td>string</td><td>string</td><td>string</td><td>String (UTF-8)</td></tr>
+<tr><td><a name="bytes" /> bytes</td><td>May contain any arbitrary sequence of bytes.</td><td>string</td><td>ByteString</td><td>str</td><td>[]byte</td><td>ByteString</td><td>string</td><td>String (ASCII-8BIT)</td></tr>
+</tbody>
+</table>
+</div>
 
                     </main>
 

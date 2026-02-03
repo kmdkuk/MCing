@@ -8,6 +8,21 @@
 
 
         <!-- Custom HTML head -->
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+        <script>
+          mermaid.initialize({ startOnLoad: false });
+          document.addEventListener("DOMContentLoaded", function() {
+            const codeBlocks = document.querySelectorAll("code.language-mermaid");
+            codeBlocks.forEach(function(code) {
+              const pre = code.parentElement;
+              const div = document.createElement("div");
+              div.className = "mermaid";
+              div.textContent = code.textContent;
+              pre.parentElement.replaceChild(div, pre);
+            });
+            mermaid.run();
+          });
+        </script>
 
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -36,10 +51,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-4d8b1dea.js";
+            window.path_to_searchindex_js = "searchindex-c714a043.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-dffe8370.js"></script>
+        <script src="toc-c43d4f55.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">

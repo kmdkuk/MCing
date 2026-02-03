@@ -15,6 +15,21 @@
         <meta charset="UTF-8">
         <meta name="robots" content="noindex">
         <!-- Custom HTML head -->
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+        <script>
+          mermaid.initialize({ startOnLoad: false });
+          document.addEventListener("DOMContentLoaded", function() {
+            const codeBlocks = document.querySelectorAll("code.language-mermaid");
+            codeBlocks.forEach(function(code) {
+              const pre = code.parentElement;
+              const div = document.createElement("div");
+              div.className = "mermaid";
+              div.textContent = code.textContent;
+              pre.parentElement.replaceChild(div, pre);
+            });
+            mermaid.run();
+          });
+        </script>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
         <link rel="stylesheet" href="css/variables-8adf115d.css">
@@ -26,6 +41,6 @@
         <!-- Custom theme stylesheets -->
     </head>
     <body class="sidebar-iframe-inner">
-        <ol class="chapter"><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="index.html" target="_parent">MCing</a></span></li><li class="chapter-item expanded "><li class="part-title">User manual</li></li><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="getting_started.html" target="_parent"><strong aria-hidden="true">1.</strong> Getting started</a></span><ol class="section"><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="setup.html" target="_parent"><strong aria-hidden="true">1.1.</strong> Deploy MCing</a></span></li></ol><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="usage.html" target="_parent"><strong aria-hidden="true">2.</strong> Usage</a></span></li><li class="chapter-item expanded "><li class="part-title">References</li></li><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="crd.html" target="_parent"><strong aria-hidden="true">3.</strong> Custom resources</a></span><ol class="section"><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="crd_minecraft.html" target="_parent"><strong aria-hidden="true">3.1.</strong> Minecraft</a></span></li></ol></li></ol>
+        <ol class="chapter"><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="index.html" target="_parent">MCing</a></span></li><li class="chapter-item expanded "><li class="part-title">User manual</li></li><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="getting_started.html" target="_parent"><strong aria-hidden="true">1.</strong> Getting started</a></span><ol class="section"><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="setup.html" target="_parent"><strong aria-hidden="true">1.1.</strong> Deploy MCing</a></span></li></ol><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="usage.html" target="_parent"><strong aria-hidden="true">2.</strong> Usage</a></span></li><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="architecture.html" target="_parent"><strong aria-hidden="true">3.</strong> Architecture</a></span></li><li class="chapter-item expanded "><li class="part-title">References</li></li><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="crd.html" target="_parent"><strong aria-hidden="true">4.</strong> Custom resources</a></span><ol class="section"><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="crd_minecraft.html" target="_parent"><strong aria-hidden="true">4.1.</strong> Minecraft</a></span></li></ol><li class="chapter-item expanded "><span class="chapter-link-wrapper"><a href="agentrpc.html" target="_parent"><strong aria-hidden="true">5.</strong> Agent RPC</a></span></li></ol>
     </body>
 </html>
