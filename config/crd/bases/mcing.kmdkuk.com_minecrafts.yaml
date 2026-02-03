@@ -108,7 +108,7 @@ spec:
                   spec:
                     description: |-
                       Specification of the desired behavior of the pod.
-                      The name of the MySQL server container in this spec must be `minecraft`.
+                      The name of the Minecraft server container in this spec must be `minecraft`.
                     properties:
                       activeDeadlineSeconds:
                         description: |-

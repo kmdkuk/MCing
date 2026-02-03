@@ -141,3 +141,123 @@ metadata:
 stringData:
   rcon-password: "your-super-strong-password"
 ```
+
+## Auto-Pause
+
+MCing supports automatic server pausing when no players are connected, using [lazymc](https://github.com/timvisee/lazymc). This helps reduce resource usage for idle servers.
+
+### Enabling Auto-Pause
+
+```yaml
+apiVersion: mcing.kmdkuk.com/v1alpha1
+kind: Minecraft
+metadata:
+  name: minecraft-sample
+spec:
+  autoPause:
+    enabled: true
+    timeoutSeconds: 300  # Pause after 5 minutes of inactivity (default)
+  # ... other fields
+```
+
+### How it works
+
+1. When enabled, lazymc runs as the main process and proxies connections to the Minecraft server
+2. The Minecraft server starts when a player connects
+3. After `timeoutSeconds` of no player activity, the server is paused
+4. The server automatically resumes when a new player connects
+
+> [!NOTE]
+> Auto-pause is enabled by default. Set `autoPause.enabled: false` to disable it.
+
+## Operators and Whitelist
+
+MCing can manage operators and whitelist through the Minecraft CR spec.
+
+### Operators
+
+```yaml
+spec:
+  ops:
+    users:
+      - player1
+      - player2
+```
+
+The controller executes `/op` or `/deop` commands via RCON to sync the operators list.
+
+### Whitelist
+
+```yaml
+spec:
+  whitelist:
+    enabled: true
+    users:
+      - allowed_player1
+      - allowed_player2
+```
+
+When `whitelist.enabled` is `true`, the controller executes `/whitelist on` and manages the whitelist via `/whitelist add` and `/whitelist remove` commands.
+
+## Backup and Download
+
+MCing provides a kubectl plugin for downloading server data.
+
+### Installing kubectl-mcing
+
+```console
+go install github.com/kmdkuk/mcing/cmd/kubectl-mcing@latest
+```
+
+Or download from [GitHub Releases](https://github.com/kmdkuk/mcing/releases).
+
+### Downloading Server Data
+
+```console
+kubectl mcing download <minecraft-name> [-o output.tar.gz] [-n namespace]
+```
+
+This command:
+
+1. Executes `save-off` to disable auto-save
+2. Executes `save-all flush` to ensure all data is written
+3. Compresses and downloads the `/data` directory
+4. Executes `save-on` to re-enable auto-save
+
+### Excluding Files from Backup
+
+You can exclude files from the backup using the `backup.excludes` field:
+
+```yaml
+spec:
+  backup:
+    excludes:
+      - "*.jar"
+      - "logs/*"
+      - "cache/*"
+```
+
+## mc-router (Hostname-based Routing)
+
+When mc-router is enabled on the controller, you can use custom hostnames to access your Minecraft servers.
+
+### Using Custom Hostname
+
+```yaml
+spec:
+  externalHostname: "survival.mc.example.com"
+```
+
+If not specified, the hostname is automatically generated as `<name>.<namespace>.<default-domain>`.
+
+### DNS Configuration
+
+Point a wildcard DNS record to the mc-router service's external IP:
+
+```text
+*.mc.example.com -> <mc-router-external-ip>
+```
+
+Players can then connect using hostnames like `survival.mc.example.com:25565`.
+
+See [Deploy MCing](setup.md#enabling-mc-router-hostname-based-routing) for controller configuration.

@@ -113,7 +113,7 @@ ReloadResponse is the response message of Reload
 <a name="mcing-SyncOpsRequest"></a>
 
 ### SyncOpsRequest
-SyncWhitelistRequest is the request message to exec /whitelist via rcon
+SyncOpsRequest is the request message to exec /op or /deop via rcon
 
 
 | Field | Type | Label | Description |
