@@ -535,16 +535,20 @@ func (r *MinecraftReconciler) reconcileService(ctx context.Context, mc *mcingv1a
 			}
 			svc.Annotations[constants.MCRouterAnnotation] = externalServerName
 
-			// Still allow other annotations and labels from template
+			// Still allow other annotations, labels, and spec from template
 			if tmpl != nil {
 				svc.Annotations = config.MergeMap(svc.Annotations, tmpl.Annotations)
 				// Ensure mc-router annotation is not overwritten
 				svc.Annotations[constants.MCRouterAnnotation] = externalServerName
 				svc.Labels = config.MergeMap(svc.Labels, tmpl.Labels)
+				// Apply ServiceTemplate.Spec settings (e.g., sessionAffinity, ports)
+				if tmpl.Spec != nil {
+					tmpl.Spec.DeepCopyInto(sSpec)
+				}
 			}
 			svc.Labels = config.MergeMap(svc.Labels, labels)
 
-			// Force ClusterIP type when mc-router is enabled
+			// Force ClusterIP type when mc-router is enabled (overrides template)
 			sSpec.Type = corev1.ServiceTypeClusterIP
 		case !headless && tmpl != nil:
 			svc.Annotations = config.MergeMap(svc.Annotations, tmpl.Annotations)

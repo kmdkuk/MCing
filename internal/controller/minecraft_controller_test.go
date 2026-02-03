@@ -511,12 +511,13 @@ var _ = Describe("Minecraft controller with mc-router", func() {
 		}
 
 		gatewayConfig := GatewayConfig{
-			Enabled:        true,
-			DefaultDomain:  defaultDomain,
-			Namespace:      "mcing-gateway",
-			ServiceAccount: "mc-router",
-			ServiceType:    corev1.ServiceTypeLoadBalancer,
-			Image:          "itzg/mc-router:latest",
+			Enabled:           true,
+			DefaultDomain:     defaultDomain,
+			Namespace:         "mcing-gateway",
+			ServiceAccount:    "mc-router",
+			ServiceType:       corev1.ServiceTypeLoadBalancer,
+			Image:             "itzg/mc-router:latest",
+			ReconcileInterval: 3 * time.Minute,
 		}
 
 		r := NewMinecraftReconciler(
@@ -673,6 +674,31 @@ var _ = Describe("Minecraft controller with mc-router", func() {
 			expectedFQDN := fmt.Sprintf("%s.%s.%s", mc.Name, mcRouterNamespace, defaultDomain)
 			g.Expect(svc.Annotations).To(HaveKeyWithValue(constants.MCRouterAnnotation, expectedFQDN))
 			g.Expect(svc.Annotations).To(HaveKeyWithValue("custom-annotation", "custom-value"))
+		}).Should(Succeed())
+	})
+
+	It("should preserve ServiceTemplate.Spec settings with mc-router enabled", func() {
+		mc := makeMinecraft("mc-router-spec", mcRouterNamespace)
+		mc.Spec.ServiceTemplate = &mcingv1alpha1.ServiceTemplate{
+			Spec: &corev1.ServiceSpec{
+				// Type should be overridden to ClusterIP, but other settings should be preserved
+				Type:            corev1.ServiceTypeLoadBalancer,
+				SessionAffinity: corev1.ServiceAffinityClientIP,
+			},
+		}
+		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+		svc := &corev1.Service{}
+		Eventually(func(g Gomega) {
+			err := k8sClient.Get(ctx, types.NamespacedName{
+				Name:      mc.PrefixedName(),
+				Namespace: mcRouterNamespace,
+			}, svc)
+			g.Expect(err).ShouldNot(HaveOccurred())
+			// Type should be forced to ClusterIP
+			g.Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeClusterIP))
+			// But other Spec settings should be preserved
+			g.Expect(svc.Spec.SessionAffinity).To(Equal(corev1.ServiceAffinityClientIP))
 		}).Should(Succeed())
 	})
 })

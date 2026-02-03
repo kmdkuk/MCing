@@ -82,12 +82,13 @@ var _ = Describe("Gateway controller", func() {
 		log := ctrl.Log.WithName("controllers")
 
 		gatewayConfig := GatewayConfig{
-			Enabled:        enabled,
-			DefaultDomain:  defaultDomain,
-			Namespace:      gatewayNamespace,
-			ServiceAccount: gatewayServiceAccount,
-			ServiceType:    serviceType,
-			Image:          mcRouterImage,
+			Enabled:           enabled,
+			DefaultDomain:     defaultDomain,
+			Namespace:         gatewayNamespace,
+			ServiceAccount:    gatewayServiceAccount,
+			ServiceType:       serviceType,
+			Image:             mcRouterImage,
+			ReconcileInterval: 3 * time.Minute,
 		}
 
 		r := NewGatewayReconciler(

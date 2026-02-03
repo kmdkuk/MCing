@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
@@ -28,12 +29,13 @@ const (
 
 // GatewayConfig holds mc-router gateway configuration.
 type GatewayConfig struct {
-	Enabled        bool
-	DefaultDomain  string
-	Namespace      string
-	ServiceAccount string
-	ServiceType    corev1.ServiceType
-	Image          string
+	Enabled           bool
+	DefaultDomain     string
+	Namespace         string
+	ServiceAccount    string
+	ServiceType       corev1.ServiceType
+	Image             string
+	ReconcileInterval time.Duration
 }
 
 // GatewayReconciler reconciles the mc-router gateway.
@@ -97,7 +99,8 @@ func (r *GatewayReconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl
 		return ctrl.Result{}, err
 	}
 
-	return ctrl.Result{}, nil
+	// Requeue after interval to ensure gateway resources are always present
+	return ctrl.Result{RequeueAfter: r.config.ReconcileInterval}, nil
 }
 
 func (r *GatewayReconciler) ensureNamespace(ctx context.Context) error {

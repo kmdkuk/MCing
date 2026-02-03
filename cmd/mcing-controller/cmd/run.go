@@ -87,12 +87,24 @@ func subMain(config Config) error {
 
 	// Create gateway config from command-line flags
 	gatewayConfig := controller.GatewayConfig{
-		Enabled:        config.enableMCRouter,
-		DefaultDomain:  config.mcRouterDefaultDomain,
-		Namespace:      config.mcRouterNamespace,
-		ServiceAccount: config.mcRouterServiceAccount,
-		ServiceType:    corev1.ServiceType(config.mcRouterServiceType),
-		Image:          config.mcRouterImage,
+		Enabled:           config.enableMCRouter,
+		DefaultDomain:     config.mcRouterDefaultDomain,
+		Namespace:         config.mcRouterNamespace,
+		ServiceAccount:    config.mcRouterServiceAccount,
+		ServiceType:       corev1.ServiceType(config.mcRouterServiceType),
+		Image:             config.mcRouterImage,
+		ReconcileInterval: config.mcRouterReconcileInterval,
+	}
+
+	// Validate mc-router service type
+	if gatewayConfig.Enabled {
+		if gatewayConfig.ServiceType != corev1.ServiceTypeLoadBalancer &&
+			gatewayConfig.ServiceType != corev1.ServiceTypeNodePort {
+			return fmt.Errorf(
+				"invalid mc-router-service-type %q: must be LoadBalancer or NodePort",
+				config.mcRouterServiceType,
+			)
+		}
 	}
 
 	if err = (controller.NewMinecraftReconciler(
