@@ -72,3 +72,21 @@ const (
 	WhitelistProps = "white-list"
 	RconPortProps  = "rcon.port"
 )
+
+// mc-router.
+const (
+	// MCRouterAnnotation is the annotation key for mc-router external server name.
+	MCRouterAnnotation = "mc-router.itzg.me/externalServerName"
+	// MCRouterAppName is the app name for mc-router.
+	MCRouterAppName = "mc-router"
+	// MCRouterAppComponent is the app component for mc-router.
+	MCRouterAppComponent = "gateway"
+	// MCRouterPort is the port for mc-router.
+	MCRouterPort = int32(25565)
+	// MCRouterPortName is the port name for mc-router.
+	MCRouterPortName = "minecraft"
+	// MCRouterAPIPort is the API port for mc-router.
+	MCRouterAPIPort = int32(8080)
+	// MCRouterAPIPortName is the API port name for mc-router.
+	MCRouterAPIPortName = "api"
+)

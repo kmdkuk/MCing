@@ -61,6 +61,12 @@ type MinecraftSpec struct {
 	// Backup configuration
 	// +optional
 	Backup Backup `json:"backup,omitempty"`
+
+	// ExternalHostname is the custom hostname for mc-router routing.
+	// If not set, FQDN will be generated as <name>.<namespace>.<default-domain>.
+	// Only used when mc-router is enabled on the controller.
+	// +optional
+	ExternalHostname *string `json:"externalHostname,omitempty"`
 }
 
 // Backup defines the backup configuration for the Minecraft server.
@@ -300,6 +306,16 @@ func (m *Minecraft) RconSecretName() string {
 		return *m.Spec.RconPasswordSecretName
 	}
 	return m.PrefixedName() + "-rcon-password"
+}
+
+// GetExternalServerName returns the external server name for mc-router annotation.
+// If ExternalHostname is set, it returns that value.
+// Otherwise, it generates FQDN as <name>.<namespace>.<defaultDomain>.
+func (m *Minecraft) GetExternalServerName(defaultDomain string) string {
+	if m.Spec.ExternalHostname != nil && *m.Spec.ExternalHostname != "" {
+		return *m.Spec.ExternalHostname
+	}
+	return fmt.Sprintf("%s.%s.%s", m.Name, m.Namespace, defaultDomain)
 }
 
 //+kubebuilder:object:root=true

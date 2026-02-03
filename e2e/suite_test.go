@@ -33,4 +33,5 @@ var _ = Describe("mcing", func() {
 	Context("rcon", testRcon)
 	Context("autopause", testAutoPause)
 	Context("download", testDownload)
+	Context("mcRouter", testMCRouter)
 })

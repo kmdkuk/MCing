@@ -63,6 +63,12 @@ spec:
                       type: string
                     type: array
                 type: object
+              externalHostname:
+                description: |-
+                  ExternalHostname is the custom hostname for mc-router routing.
+                  If not set, FQDN will be generated as <name>.<namespace>.<default-domain>.
+                  Only used when mc-router is enabled on the controller.
+                type: string
               ops:
                 description: operators on server. exec /op or /deop
                 properties:

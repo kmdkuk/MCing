@@ -81,6 +81,9 @@ var _ = Describe("Minecraft controller", func() {
 			"ghcr.io/kmdkuk/mcing-init:"+strings.TrimPrefix(version.Version, "v"),
 			"ghcr.io/kmdkuk/mcing-agent:"+strings.TrimPrefix(version.Version, "v"),
 			mockMinecraftMgr,
+			GatewayConfig{ //nolint:exhaustruct // mc-router disabled by default for existing tests
+				Enabled: false,
+			},
 		)
 		err = r.SetupWithManager(mgr)
 		Expect(err).ToNot(HaveOccurred())
@@ -442,7 +445,7 @@ var _ = Describe("Minecraft controller", func() {
 			g.Expect(ok).To(BeFalse(), fmt.Sprintf("lazymc.toml found in %s", generatedCm.Name))
 		}).Should(Succeed())
 
-		// Verify Main Container Command what dont use lazymc
+		// Verify Main Container Command what don't use lazymc
 		Expect(s.Spec.Template.Spec.Containers[0].Command).To(BeEmpty())
 		Expect(s.Spec.Template.Spec.Containers[0].Args).To(BeEmpty())
 
@@ -453,5 +456,249 @@ var _ = Describe("Minecraft controller", func() {
 		Expect(s.Spec.Template.Spec.Containers[0].ReadinessProbe.Exec).To(PointTo(MatchFields(IgnoreExtras, Fields{
 			"Command": Equal([]string{"mc-health"}),
 		})))
+	})
+})
+
+var _ = Describe("Minecraft controller with mc-router", func() {
+	const (
+		mcRouterNamespace = "test-mcrouter"
+		defaultDomain     = "minecraft.local"
+	)
+
+	ctx := context.Background()
+	var mgrCtx context.Context
+	var mgrCancel context.CancelFunc
+
+	BeforeEach(func() {
+		ms := &mcingv1alpha1.MinecraftList{}
+		err := k8sClient.List(ctx, ms, client.InNamespace(mcRouterNamespace))
+		Expect(err).NotTo(HaveOccurred())
+		for i := range ms.Items {
+			m := &ms.Items[i]
+			m.Finalizers = nil
+			err = k8sClient.Update(ctx, m)
+			Expect(err).NotTo(HaveOccurred())
+		}
+		svcs := &corev1.ServiceList{}
+		err = k8sClient.List(ctx, svcs, client.InNamespace(mcRouterNamespace))
+		Expect(err).NotTo(HaveOccurred())
+		for i := range svcs.Items {
+			svc := &svcs.Items[i]
+			err = k8sClient.Delete(ctx, svc)
+			Expect(err).NotTo(HaveOccurred())
+		}
+		err = k8sClient.DeleteAllOf(ctx, &mcingv1alpha1.Minecraft{}, client.InNamespace(mcRouterNamespace))
+		Expect(err).NotTo(HaveOccurred())
+		err = k8sClient.DeleteAllOf(ctx, &appsv1.StatefulSet{}, client.InNamespace(mcRouterNamespace))
+		Expect(err).NotTo(HaveOccurred())
+		err = k8sClient.DeleteAllOf(ctx, &corev1.ConfigMap{}, client.InNamespace(mcRouterNamespace))
+		Expect(err).NotTo(HaveOccurred())
+
+		mgr, err := ctrl.NewManager(k8sCfg, ctrl.Options{
+			Scheme:         scheme,
+			LeaderElection: false,
+			Metrics:        metricsserver.Options{BindAddress: "0"},
+			Controller: config.Controller{
+				SkipNameValidation: ptr.To(true),
+			},
+		})
+		Expect(err).ToNot(HaveOccurred())
+
+		log := ctrl.Log.WithName("controllers")
+
+		mockMinecraftMgr := &mockManager{ //nolint:exhaustruct // internal struct
+			minecrafts: make(map[string]struct{}),
+		}
+
+		gatewayConfig := GatewayConfig{
+			Enabled:           true,
+			DefaultDomain:     defaultDomain,
+			Namespace:         "mcing-gateway",
+			ServiceAccount:    "mc-router",
+			ServiceType:       corev1.ServiceTypeLoadBalancer,
+			Image:             "itzg/mc-router:latest",
+			ReconcileInterval: 3 * time.Minute,
+		}
+
+		r := NewMinecraftReconciler(
+			mgr.GetClient(),
+			log,
+			mgr.GetScheme(),
+			"ghcr.io/kmdkuk/mcing-init:"+strings.TrimPrefix(version.Version, "v"),
+			"ghcr.io/kmdkuk/mcing-agent:"+strings.TrimPrefix(version.Version, "v"),
+			mockMinecraftMgr,
+			gatewayConfig,
+		)
+		err = r.SetupWithManager(mgr)
+		Expect(err).ToNot(HaveOccurred())
+
+		mgrCtx, mgrCancel = context.WithCancel(context.Background()) //nolint:fatcontext // test logic
+		go func() {
+			err := mgr.Start(mgrCtx)
+			if err != nil {
+				panic(err)
+			}
+		}()
+		time.Sleep(time.Second)
+	})
+
+	AfterEach(func() {
+		mgrCancel()
+		time.Sleep(100 * time.Millisecond)
+	})
+
+	It("should create namespace", func() {
+		createNamespaces(ctx, mcRouterNamespace)
+	})
+
+	It("should add mc-router annotation to service", func() {
+		mc := makeMinecraft("mc-router-test", mcRouterNamespace)
+		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+		svc := &corev1.Service{}
+		Eventually(func(g Gomega) {
+			err := k8sClient.Get(ctx, types.NamespacedName{
+				Name:      mc.PrefixedName(),
+				Namespace: mcRouterNamespace,
+			}, svc)
+			g.Expect(err).ShouldNot(HaveOccurred())
+			g.Expect(svc.Annotations).To(HaveKeyWithValue(
+				constants.MCRouterAnnotation,
+				fmt.Sprintf("%s.%s.%s", mc.Name, mcRouterNamespace, defaultDomain),
+			))
+		}).Should(Succeed())
+	})
+
+	It("should force service type to ClusterIP when mc-router is enabled", func() {
+		mc := makeMinecraft("mc-router-clusterip", mcRouterNamespace)
+		// Try to set LoadBalancer type via ServiceTemplate
+		mc.Spec.ServiceTemplate = &mcingv1alpha1.ServiceTemplate{
+			Spec: &corev1.ServiceSpec{
+				Type: corev1.ServiceTypeLoadBalancer,
+			},
+		}
+		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+		svc := &corev1.Service{}
+		Eventually(func(g Gomega) {
+			err := k8sClient.Get(ctx, types.NamespacedName{
+				Name:      mc.PrefixedName(),
+				Namespace: mcRouterNamespace,
+			}, svc)
+			g.Expect(err).ShouldNot(HaveOccurred())
+			// Service should be ClusterIP despite template specifying LoadBalancer
+			g.Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeClusterIP))
+		}).Should(Succeed())
+	})
+
+	It("should clear NodePort when forcing ClusterIP", func() {
+		mc := makeMinecraft("mc-router-nodeport", mcRouterNamespace)
+		svc := &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      mc.PrefixedName(),
+				Namespace: mcRouterNamespace,
+			},
+			Spec: corev1.ServiceSpec{
+				Type: corev1.ServiceTypeNodePort,
+				Ports: []corev1.ServicePort{
+					{
+						Name:     constants.ServerPortName,
+						Protocol: corev1.ProtocolTCP,
+						Port:     constants.ServerPort,
+						NodePort: 30001,
+					},
+					{
+						Name:     constants.RconPortName,
+						Protocol: corev1.ProtocolTCP,
+						Port:     constants.RconPort,
+						NodePort: 30002,
+					},
+				},
+			},
+		}
+		Expect(k8sClient.Create(ctx, svc)).To(Succeed())
+		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+		Eventually(func(g Gomega) {
+			err := k8sClient.Get(ctx, types.NamespacedName{
+				Name:      mc.PrefixedName(),
+				Namespace: mcRouterNamespace,
+			}, svc)
+			g.Expect(err).ShouldNot(HaveOccurred())
+			g.Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeClusterIP))
+			for _, port := range svc.Spec.Ports {
+				g.Expect(port.NodePort).To(BeZero())
+			}
+		}).Should(Succeed())
+	})
+
+	It("should use custom ExternalHostname when specified", func() {
+		customHostname := "my-custom-server.example.com"
+		mc := makeMinecraft("mc-router-custom", mcRouterNamespace)
+		mc.Spec.ExternalHostname = &customHostname
+		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+		svc := &corev1.Service{}
+		Eventually(func(g Gomega) {
+			err := k8sClient.Get(ctx, types.NamespacedName{
+				Name:      mc.PrefixedName(),
+				Namespace: mcRouterNamespace,
+			}, svc)
+			g.Expect(err).ShouldNot(HaveOccurred())
+			g.Expect(svc.Annotations).To(HaveKeyWithValue(
+				constants.MCRouterAnnotation,
+				customHostname,
+			))
+		}).Should(Succeed())
+	})
+
+	It("should preserve other annotations from ServiceTemplate", func() {
+		mc := makeMinecraft("mc-router-annotations", mcRouterNamespace)
+		mc.Spec.ServiceTemplate = &mcingv1alpha1.ServiceTemplate{
+			ObjectMeta: mcingv1alpha1.ObjectMeta{
+				Annotations: map[string]string{
+					"custom-annotation": "custom-value",
+				},
+			},
+		}
+		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+		svc := &corev1.Service{}
+		Eventually(func(g Gomega) {
+			err := k8sClient.Get(ctx, types.NamespacedName{
+				Name:      mc.PrefixedName(),
+				Namespace: mcRouterNamespace,
+			}, svc)
+			g.Expect(err).ShouldNot(HaveOccurred())
+			// Should have both mc-router annotation and custom annotation
+			expectedFQDN := fmt.Sprintf("%s.%s.%s", mc.Name, mcRouterNamespace, defaultDomain)
+			g.Expect(svc.Annotations).To(HaveKeyWithValue(constants.MCRouterAnnotation, expectedFQDN))
+			g.Expect(svc.Annotations).To(HaveKeyWithValue("custom-annotation", "custom-value"))
+		}).Should(Succeed())
+	})
+
+	It("should preserve ServiceTemplate.Spec settings with mc-router enabled", func() {
+		mc := makeMinecraft("mc-router-spec", mcRouterNamespace)
+		mc.Spec.ServiceTemplate = &mcingv1alpha1.ServiceTemplate{
+			Spec: &corev1.ServiceSpec{
+				// Type should be overridden to ClusterIP, but other settings should be preserved
+				Type:            corev1.ServiceTypeLoadBalancer,
+				SessionAffinity: corev1.ServiceAffinityClientIP,
+			},
+		}
+		Expect(k8sClient.Create(ctx, mc)).To(Succeed())
+
+		svc := &corev1.Service{}
+		Eventually(func(g Gomega) {
+			err := k8sClient.Get(ctx, types.NamespacedName{
+				Name:      mc.PrefixedName(),
+				Namespace: mcRouterNamespace,
+			}, svc)
+			g.Expect(err).ShouldNot(HaveOccurred())
+			// Type should be forced to ClusterIP
+			g.Expect(svc.Spec.Type).To(Equal(corev1.ServiceTypeClusterIP))
+			// But other Spec settings should be preserved
+			g.Expect(svc.Spec.SessionAffinity).To(Equal(corev1.ServiceAffinityClientIP))
+		}).Should(Succeed())
 	})
 })

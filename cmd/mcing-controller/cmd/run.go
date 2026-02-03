@@ -14,6 +14,7 @@ import (
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth" // required for authentication
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -34,6 +35,8 @@ import (
 )
 
 // subMain is the actual main function.
+//
+//nolint:funlen // controller setup requires many initialization steps
 func subMain(config Config) error {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&config.zapOpts)))
 	setupLog := ctrl.Log.WithName("setup")
@@ -82,6 +85,28 @@ func subMain(config Config) error {
 
 	minecraftMgr := minecraft.NewManager(af, config.interval, mgr, mcMgrLog)
 
+	// Create gateway config from command-line flags
+	gatewayConfig := controller.GatewayConfig{
+		Enabled:           config.enableMCRouter,
+		DefaultDomain:     config.mcRouterDefaultDomain,
+		Namespace:         config.mcRouterNamespace,
+		ServiceAccount:    config.mcRouterServiceAccount,
+		ServiceType:       corev1.ServiceType(config.mcRouterServiceType),
+		Image:             config.mcRouterImage,
+		ReconcileInterval: config.mcRouterReconcileInterval,
+	}
+
+	// Validate mc-router service type
+	if gatewayConfig.Enabled {
+		if gatewayConfig.ServiceType != corev1.ServiceTypeLoadBalancer &&
+			gatewayConfig.ServiceType != corev1.ServiceTypeNodePort {
+			return fmt.Errorf(
+				"invalid mc-router-service-type %q: must be LoadBalancer or NodePort",
+				config.mcRouterServiceType,
+			)
+		}
+	}
+
 	if err = (controller.NewMinecraftReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers"),
@@ -89,9 +114,23 @@ func subMain(config Config) error {
 		config.initImageName,
 		config.agentImageName,
 		minecraftMgr,
+		gatewayConfig,
 	)).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Minecraft")
 		return err
+	}
+
+	// Register Gateway controller if mc-router is enabled
+	if gatewayConfig.Enabled {
+		if err = (controller.NewGatewayReconciler(
+			mgr.GetClient(),
+			ctrl.Log.WithName("controllers"),
+			mgr.GetScheme(),
+			gatewayConfig,
+		)).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "Gateway")
+			return err
+		}
 	}
 
 	if err = (&mcingv1alpha1.Minecraft{}).SetupWebhookWithManager(mgr); err != nil {

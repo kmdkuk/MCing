@@ -7,3 +7,15 @@
 - op: add
   path: /spec/template/spec/containers/0/args/-
   value: --init-image-name=mcing-init:e2e
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: --enable-mc-router
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: --mc-router-default-domain=minecraft.local
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: --mc-router-namespace=mcing-gateway
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: --mc-router-service-account=mc-router

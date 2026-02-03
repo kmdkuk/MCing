@@ -14,6 +14,10 @@ import (
 	"github.com/kmdkuk/mcing/pkg/version"
 )
 
+const (
+	defaultMCRouterReconcileInterval = 3 * time.Minute
+)
+
 // Config represents the configuration for the controller.
 type Config struct {
 	metricsAddr          string
@@ -26,9 +30,20 @@ type Config struct {
 	initImageName        string
 	agentImageName       string
 	interval             time.Duration
+
+	// mc-router configuration
+	enableMCRouter            bool
+	mcRouterDefaultDomain     string
+	mcRouterNamespace         string
+	mcRouterServiceAccount    string
+	mcRouterServiceType       string
+	mcRouterImage             string
+	mcRouterReconcileInterval time.Duration
 }
 
 // NewRootCmd represents the base command when called without any subcommands.
+//
+//nolint:funlen // flag setup requires many lines
 func NewRootCmd() *cobra.Command {
 	var (
 		metricAddr           string
@@ -41,6 +56,15 @@ func NewRootCmd() *cobra.Command {
 		initImageName        string
 		agentImageName       string
 		interval             time.Duration
+
+		// mc-router configuration
+		enableMCRouter            bool
+		mcRouterDefaultDomain     string
+		mcRouterNamespace         string
+		mcRouterServiceAccount    string
+		mcRouterServiceType       string
+		mcRouterImage             string
+		mcRouterReconcileInterval time.Duration
 	)
 
 	rootCmd := &cobra.Command{
@@ -51,16 +75,23 @@ func NewRootCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SilenceUsage = true
 			cfg := Config{
-				metricsAddr:          metricAddr,
-				probeAddr:            probeAddr,
-				enableLeaderElection: enableLeaderElection,
-				webhookCertPath:      webhookCertPath,
-				webhookCertName:      webhookCertName,
-				webhookCertKey:       webhookCertKey,
-				zapOpts:              zapOpts,
-				initImageName:        initImageName,
-				agentImageName:       agentImageName,
-				interval:             interval,
+				metricsAddr:               metricAddr,
+				probeAddr:                 probeAddr,
+				enableLeaderElection:      enableLeaderElection,
+				webhookCertPath:           webhookCertPath,
+				webhookCertName:           webhookCertName,
+				webhookCertKey:            webhookCertKey,
+				zapOpts:                   zapOpts,
+				initImageName:             initImageName,
+				agentImageName:            agentImageName,
+				interval:                  interval,
+				enableMCRouter:            enableMCRouter,
+				mcRouterDefaultDomain:     mcRouterDefaultDomain,
+				mcRouterNamespace:         mcRouterNamespace,
+				mcRouterServiceAccount:    mcRouterServiceAccount,
+				mcRouterServiceType:       mcRouterServiceType,
+				mcRouterImage:             mcRouterImage,
+				mcRouterReconcileInterval: mcRouterReconcileInterval,
 			}
 			return subMain(cfg)
 		},
@@ -93,6 +124,26 @@ func NewRootCmd() *cobra.Command {
 		"mcing-agent image name",
 	)
 	fs.DurationVar(&interval, "check-interval", 1*time.Minute, "Interval of minecraft maintenance")
+
+	// mc-router flags
+	fs.BoolVar(&enableMCRouter, "enable-mc-router", false,
+		"Enable mc-router gateway for hostname-based Minecraft server routing")
+	fs.StringVar(&mcRouterDefaultDomain, "mc-router-default-domain", "minecraft.local",
+		"Default domain for mc-router FQDN generation (<name>.<namespace>.<domain>)")
+	fs.StringVar(&mcRouterNamespace, "mc-router-namespace", "mcing-gateway",
+		"Namespace where mc-router gateway will be deployed")
+	fs.StringVar(&mcRouterServiceAccount, "mc-router-service-account", "mc-router",
+		"Service account name for mc-router")
+	fs.StringVar(&mcRouterServiceType, "mc-router-service-type", "LoadBalancer",
+		"Service type for mc-router gateway (LoadBalancer or NodePort)")
+	fs.StringVar(&mcRouterImage, "mc-router-image", "itzg/mc-router:latest",
+		"mc-router container image")
+	fs.DurationVar(
+		&mcRouterReconcileInterval,
+		"mc-router-reconcile-interval",
+		defaultMCRouterReconcileInterval,
+		"Interval for mc-router gateway reconciliation",
+	)
 
 	goflags := flag.NewFlagSet("klog", flag.ExitOnError)
 	klog.InitFlags(goflags)
