@@ -40,7 +40,7 @@ message SyncWhitelistResponse {
 }
 
 /**
- * SyncWhitelistRequest is the request message to exec /whitelist via rcon
+ * SyncOpsRequest is the request message to exec /op or /deop via rcon
 */
 message SyncOpsRequest {
     repeated string users = 1;

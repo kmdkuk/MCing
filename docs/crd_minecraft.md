@@ -120,7 +120,7 @@ PodTemplateSpec describes the data a pod should have when created from a templat
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | metadata | Standard object's metadata.  The name in this metadata is ignored. | [ObjectMeta](#objectmeta) | false |
-| spec | Specification of the desired behavior of the pod. The name of the MySQL server container in this spec must be `minecraft`. | corev1.PodSpec | true |
+| spec | Specification of the desired behavior of the pod. The name of the Minecraft server container in this spec must be `minecraft`. | corev1.PodSpec | true |
 
 [Back to Custom Resources](#custom-resources)
 

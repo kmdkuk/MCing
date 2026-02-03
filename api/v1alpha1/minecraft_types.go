@@ -115,7 +115,7 @@ type PodTemplateSpec struct {
 	ObjectMeta `json:"metadata,omitempty"`
 
 	// Specification of the desired behavior of the pod.
-	// The name of the MySQL server container in this spec must be `minecraft`.
+	// The name of the Minecraft server container in this spec must be `minecraft`.
 	Spec corev1.PodSpec `json:"spec"`
 }
 
