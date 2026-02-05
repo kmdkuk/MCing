@@ -1,6 +1,6 @@
 module github.com/kmdkuk/mcing
 
-go 1.25.5
+go 1.25.7
 
 require (
 	github.com/Tnze/go-mc v1.20.2
