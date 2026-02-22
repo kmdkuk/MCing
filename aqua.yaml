@@ -20,6 +20,6 @@ packages:
   - name: protocolbuffers/protobuf-go/protoc-gen-go@v1.36.11
   - name: grpc/grpc-go/protoc-gen-go-grpc@cmd/protoc-gen-go-grpc/v1.6.0
   - name: pseudomuto/protoc-gen-doc@v1.5.1
-  - name: golangci/golangci-lint@v2.9.0
+  - name: golangci/golangci-lint@v2.10.1
   - name: clamoriniere/crd-to-markdown@v0.0.3
   - name: goreleaser/goreleaser@v2.14.0
