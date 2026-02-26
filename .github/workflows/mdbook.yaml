@@ -30,7 +30,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: make book
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: book
           path: docs/book
@@ -44,7 +44,7 @@ jobs:
         with:
           ref: gh-pages
       - run: rm -rf *
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: book
       - run: ls -R
