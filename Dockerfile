@@ -10,7 +10,7 @@ USER 65532:65532
 
 ENTRYPOINT ["/mcing-controller"]
 
-FROM ubuntu:24.04 AS lazymc
+FROM ubuntu:26.04 AS lazymc
 WORKDIR /
 RUN apt update && apt install -y curl ca-certificates
 ARG LAZYMC_VERSION="v0.2.11"
