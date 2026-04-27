@@ -8,7 +8,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	github.com/james4k/rcon v0.0.0-20210222224819-34a67ca2b2d6
-	github.com/onsi/ginkgo/v2 v2.28.1
+	github.com/onsi/ginkgo/v2 v2.28.2
 	github.com/onsi/gomega v1.39.1
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
