@@ -107,7 +107,7 @@ func subMain(config Config) error {
 		}
 	}
 
-	if err = (controller.NewMinecraftReconciler(
+	if err = controller.NewMinecraftReconciler(
 		mgr.GetClient(),
 		ctrl.Log.WithName("controllers"),
 		mgr.GetScheme(),
@@ -115,19 +115,19 @@ func subMain(config Config) error {
 		config.agentImageName,
 		minecraftMgr,
 		gatewayConfig,
-	)).SetupWithManager(mgr); err != nil {
+	).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Minecraft")
 		return err
 	}
 
 	// Register Gateway controller if mc-router is enabled
 	if gatewayConfig.Enabled {
-		if err = (controller.NewGatewayReconciler(
+		if err = controller.NewGatewayReconciler(
 			mgr.GetClient(),
 			ctrl.Log.WithName("controllers"),
 			mgr.GetScheme(),
 			gatewayConfig,
-		)).SetupWithManager(mgr); err != nil {
+		).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "Gateway")
 			return err
 		}

@@ -165,7 +165,7 @@ func PortForwardCmd(ctx context.Context, namespace, name string, to int) (*exec.
 	if err != nil {
 		return nil, -1, err
 	}
-	return exec.CommandContext( //nolint:gosec // for test code
+	return exec.CommandContext(
 		ctx,
 		"kubectl",
 		"port-forward",
