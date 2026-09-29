@@ -1,8 +1,10 @@
       - name: minecraft
-        image: itzg/minecraft-server:java21-alpine
+        image: itzg/minecraft-server:java25-alpine
         env:
           - name: TYPE
             value: "PAPER"
+          - name: VERSION
+            value: "26.2"
           - name: EULA
             value: "true"
 

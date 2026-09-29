@@ -18,7 +18,7 @@ var binDir = os.Getenv("BIN_DIR")
 
 func TestE2e(t *testing.T) {
 	RegisterFailHandler(Fail)
-	SetDefaultEventuallyTimeout(3 * time.Minute)
+	SetDefaultEventuallyTimeout(5 * time.Minute)
 	SetDefaultEventuallyPollingInterval(1 * time.Second)
 	RunSpecs(t, "E2e Suite")
 }
