@@ -325,6 +325,12 @@ linters:
       # Default: true
       default-signifies-exhaustive: false
 
+    goconst:
+      # Ignore strings that match any of these regular expressions.
+      # Default: []
+      ignore-string-values:
+        - "^(true|false)$"
+
     gocognit:
       # Minimal code complexity to report.
       # Default: 30 (but we recommend 10-20)
@@ -487,6 +493,8 @@ linters:
         linters: [revive]
       - text: "should have a package comment"
         linters: [revive]
+      - path: "_test\\.go"
+        linters: [goconst]
       # - text: 'exported \S+ \S+ should have comment( \(or a comment on this block\))? or be unexported'
       #   linters: [revive]
       # - text: 'package comment should be of the form ".+"'
