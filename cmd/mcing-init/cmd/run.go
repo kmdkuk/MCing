@@ -33,6 +33,7 @@ func copyFile(from, to string) error {
 	if err != nil {
 		return err
 	}
+	//nolint:gosec // G703: to is always built from constants.*Path, never from user input
 	return os.WriteFile(to, b, 0o600)
 }
 
@@ -179,6 +180,7 @@ func buildSaveLazymcConfig(cfg Config) (err error) {
 	}
 
 	output := strings.Join(lines, "\n")
+	//nolint:gosec // G703: to is always built from constants.*Path, never from user input
 	err = os.WriteFile(to, []byte(output), 0o600)
 	if err != nil {
 		return err

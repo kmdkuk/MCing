@@ -69,7 +69,7 @@ func TestMinecraft_RconSecretName(t *testing.T) {
 					Name: "test",
 				},
 				Spec: MinecraftSpec{
-					RconPasswordSecretName: stringPtr("custom-secret"),
+					RconPasswordSecretName: new("custom-secret"),
 				},
 			},
 			want: "custom-secret",
@@ -163,8 +163,4 @@ func TestPersistentVolumeClaim_ToCoreV1(t *testing.T) {
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("PersistentVolumeClaim.ToCoreV1() mismatch (-want +got):\n%s", diff)
 	}
-}
-
-func stringPtr(s string) *string {
-	return &s
 }

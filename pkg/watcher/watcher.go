@@ -66,6 +66,7 @@ func Watch(ctx context.Context, conn rcon.Console, interval time.Duration, cfg C
 			if err != nil && !os.IsNotExist(err) {
 				continue
 			}
+			//nolint:gosec // G703: k only ever comes from constants.ServerPropsName, never from user input
 			err = os.WriteFile(dataPath, current, 0o600)
 			if err != nil {
 				continue
