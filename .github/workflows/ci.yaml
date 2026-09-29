@@ -82,6 +82,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: make test
         working-directory: e2e
+        env:
+          E2E_MAX_PROCS: "2"
       - run: make logs
         working-directory: e2e
         if: always()
