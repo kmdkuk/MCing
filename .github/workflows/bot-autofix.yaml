@@ -13,9 +13,24 @@ name: Bot PR Auto-regenerate
 # base-repo secrets/write access. Scoped to renovate[bot] only, since
 # Dependabot-authored `pull_request` runs always get a read-only
 # GITHUB_TOKEN from GitHub regardless of the permissions requested here.
+#
+# Only triggers on aqua.yaml changes: that's where every tool whose
+# version can affect generated output (protoc, protoc-gen-go,
+# controller-gen, crd-to-markdown, ...) is pinned, so most ordinary
+# Renovate PRs (action bumps, unrelated go.mod bumps, ...) never run
+# this job at all.
+#
+# Pushes using the repo's GitHub App token (same app as
+# create-release-pr.yaml), not GITHUB_TOKEN: a push authenticated as
+# GITHUB_TOKEN does not start a new pull_request-triggered run (GitHub's
+# loop-prevention), which would leave the PR's required checks stuck on
+# the old, failing SHA with nothing to validate the fixup commit. A
+# GitHub App push doesn't hit that restriction.
 on:
   pull_request:
     types: [opened, synchronize]
+    paths:
+      - "aqua.yaml"
 
 permissions:
   contents: read
@@ -24,12 +39,17 @@ jobs:
   regenerate:
     if: github.actor == 'renovate[bot]'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
+      - name: Generate GitHub App token
+        id: generate
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
       - uses: actions/checkout@v6
         with:
           ref: ${{ github.head_ref }}
+          token: ${{ steps.generate.outputs.token }}
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
