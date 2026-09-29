@@ -1,0 +1,75 @@
+name: Bot PR Auto-regenerate
+
+# Renovate's postUpgradeTasks only works on self-hosted Renovate; the
+# hosted GitHub App used in this repo silently ignores it. This workflow
+# is the equivalent for the hosted app: it regenerates code (manifests,
+# deepcopy, apidoc, proto) on Renovate dependency-bump PRs and pushes a
+# fixup commit back to the PR branch when the update changes generated
+# output (e.g. a protoc/controller-gen version bump).
+#
+# Deliberately uses `pull_request` (not `pull_request_target`): Renovate
+# branches live in this repository, not a fork, so there is no
+# trust-boundary crossing and no need to run untrusted head code with
+# base-repo secrets/write access. Scoped to renovate[bot] only, since
+# Dependabot-authored `pull_request` runs always get a read-only
+# GITHUB_TOKEN from GitHub regardless of the permissions requested here.
+#
+# Only triggers on aqua.yaml changes: that's where every tool whose
+# version can affect generated output (protoc, protoc-gen-go,
+# controller-gen, crd-to-markdown, ...) is pinned, so most ordinary
+# Renovate PRs (action bumps, unrelated go.mod bumps, ...) never run
+# this job at all.
+#
+# Pushes using the repo's GitHub App token (same app as
+# create-release-pr.yaml), not GITHUB_TOKEN: a push authenticated as
+# GITHUB_TOKEN does not start a new pull_request-triggered run (GitHub's
+# loop-prevention), which would leave the PR's required checks stuck on
+# the old, failing SHA with nothing to validate the fixup commit. A
+# GitHub App push doesn't hit that restriction.
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - "aqua.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  regenerate:
+    if: github.actor == 'renovate[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: generate
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ steps.generate.outputs.token }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: aquaproj/aqua-installer@v4.0.5
+        with:
+          aqua_version: v2.63.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Regenerate
+        run: |
+          touch pkg/proto/agentrpc.proto
+          make manifests generate apidoc proto
+      - name: Commit and push if changed
+        run: |
+          if git diff --quiet; then
+            echo "No generated-file changes; nothing to do."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: regenerate code [bot-autofix]"
+          git push origin HEAD:${{ github.head_ref }}
