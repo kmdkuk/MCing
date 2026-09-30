@@ -50,7 +50,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           token: ${{ steps.generate.outputs.token }}
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
       - uses: aquaproj/aqua-installer@v4.0.5
