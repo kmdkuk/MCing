@@ -24,7 +24,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - uses: aquaproj/aqua-installer@v4.0.5
+      - uses: aquaproj/aqua-installer@v4.1.0
         with:
           aqua_version: v2.64.0
         env:

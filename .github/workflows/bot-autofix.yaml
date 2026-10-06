@@ -53,7 +53,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      - uses: aquaproj/aqua-installer@v4.0.5
+      - uses: aquaproj/aqua-installer@v4.1.0
         with:
           aqua_version: v2.64.0
         env:
