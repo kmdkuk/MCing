@@ -13,7 +13,7 @@ packages:
   - name: tilt-dev/tilt@v0.37.8
   - name: tilt-dev/ctlptl@v0.9.6
   - name: mikefarah/yq@v4.54.1
-  - name: kubernetes-sigs/controller-tools/controller-gen@v0.22.0
+  - name: kubernetes-sigs/controller-tools/controller-gen@v0.23.0
   - name: kubernetes-sigs/controller-runtime/setup-envtest@v0.25.2
   - name: rust-lang/mdBook@v0.5.4
   - name: protocolbuffers/protobuf/protoc@v36.2
